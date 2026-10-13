@@ -1,0 +1,346 @@
+/* ==========================================================================
+   CORE TOKENS — ใช้ร่วมกันทุกโปรเจกต์ · v2 2026-10-10
+   โหลดคู่กับธีม 1 ไฟล์เสมอ:  core/tokens-core.css  →  themes/<ชื่อ>/theme.css
+   --------------------------------------------------------------------------
+   3 tiers
+   1. Primitive  (--gray-100, --indigo-500 …)   อยู่ในธีมเท่านั้น
+   2. Semantic   (--surface, --primary …)       ธีมกำหนดค่า · core ตั้งค่า default ให้บางตัว
+   3. Component  (--btn-*, --tag-* …)           อยู่ที่นี่ · อ้างอิง semantic เท่านั้น ห้าม hex / primitive
+   Semantic ที่ธีมต้องมี: ดู themes/_template/theme.css
+   ========================================================================== */
+
+/* ---------- Semantic defaults ที่ไม่ขึ้นกับแบรนด์ ---------- */
+:root {
+  /* Status (ธีม override ได้ แต่ส่วนใหญ่ไม่ต้อง) */
+  --success: #13897A; --success-strong: #128576; --success-tint: #E7F3F2; --success-tint-foreground: #0E6358;
+  --warning: #D9782A; --warning-strong: #B26222; --warning-tint: #FBF2EA; --warning-tint-foreground: #9C561E;
+  --danger: #D23F4F;  --danger-strong: #D23F4F;  --danger-tint: #FAECED;  --danger-tint-foreground: #972D39;
+  --on-danger: #FFFFFF;
+  /* สถานะบนพื้นกลับด้าน (toast สีหมึก) — ไอคอน ≥ 3:1 */
+  --success-on-inverse: #3CC4AF; --warning-on-inverse: #F0A35E; --danger-on-inverse: #F27380;
+
+  /* Media / overlay */
+  --on-media: #FFFFFF; --on-media-muted: rgba(255,255,255,.85); --on-media-border: rgba(255,255,255,.35); --on-media-fill: rgba(255,255,255,.08);
+  --glass: rgba(255,255,255,.16); --glass-border: rgba(255,255,255,.22);
+  --ph-border: #C6CBD4; --ph-bg: rgba(255,255,255,.55);
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --grain-opacity: .09;
+
+  /* Aliases (ชื่อแบบ shadcn) */
+  --foreground: var(--ink); --muted-foreground: var(--text-2); --input: var(--border-strong);
+  --focus-ring: var(--link);
+  --like: var(--link); --rating: var(--warning);
+
+  /* State layer opacity (ใช้กับ currentColor / ink) */
+  --state-hover: .08; --state-pressed: .14;
+}
+:root[data-theme="dark"] {
+  --success: #3CC4AF; --success-strong: #3CC4AF; --success-tint: rgba(60,196,175,.14); --success-tint-foreground: #3CC4AF;
+  --warning: #F0A35E; --warning-strong: #F0A35E; --warning-tint: rgba(240,163,94,.14); --warning-tint-foreground: #F0A35E;
+  --danger: #F27380;  --danger-strong: #F27380;  --danger-tint: rgba(242,115,128,.14); --danger-tint-foreground: #F27380;
+  --on-danger: #16181D;
+  --success-on-inverse: #128576; --warning-on-inverse: #B26222; --danger-on-inverse: #D23F4F;
+  --ph-border: #42464F; --ph-bg: rgba(255,255,255,.03);
+}
+
+/* ---------- Typography scale (ฟอนต์มาจากธีม: --font-sans) ---------- */
+:root {
+  --display-xl: 500 56px/1.25 var(--font-sans);   /* hero ประโยคใหญ่ · ไทยต้องมี line-height ≥ 1.25 */
+  --display-lg: 500 44px/1.2 var(--font-sans);
+  --display-md: 500 36px/1.2 var(--font-sans);
+  --headline-lg: 500 26px/1.35 var(--font-sans);
+  --headline-md: 500 22px/1.35 var(--font-sans);
+  --headline-sm: 500 20px/1.4 var(--font-sans);
+  --title-lg: 500 17px/1.45 var(--font-sans);
+  --title-md: 500 15px/1.5 var(--font-sans);
+  --body-lg: 400 16px/1.7 var(--font-sans);
+  --body-md: 400 15px/1.7 var(--font-sans);
+  --body-sm: 400 13px/1.6 var(--font-sans);
+  --label-lg: 500 13px/1.4 var(--font-sans);
+  --label-md: 500 11px/1.4 var(--font-sans);
+  --label-sm: 400 11px/1.4 var(--font-sans);
+  --caption: 400 12px/1.5 var(--font-sans);        /* ป้ายเล็ก ตัวนับ หมายเหตุใต้ช่อง (decisions #102) */
+  --caption-strong: 500 12px/1.4 var(--font-sans);
+}
+@media (max-width: 599px) {
+  :root {
+    --display-xl: 500 34px/1.3 var(--font-sans); --display-lg: 500 32px/1.2 var(--font-sans); --display-md: 500 28px/1.2 var(--font-sans);
+    --headline-lg: 500 22px/1.35 var(--font-sans); --headline-md: 500 20px/1.35 var(--font-sans);
+    --headline-sm: 500 18px/1.4 var(--font-sans); --title-lg: 500 16px/1.45 var(--font-sans);
+    --body-lg: 400 15px/1.7 var(--font-sans);
+  }
+}
+
+/* ---------- Spacing · Density · Radius · Layout ---------- */
+:root {
+  --space-0-5: 2px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px;
+  --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-16: 64px; --space-18: 72px; --space-24: 96px;
+  --compact-pad: var(--space-3); --compact-gap: var(--space-2); --row-h: 36px; --input-h: 40px; --btn-h: 36px;
+  --comfy-pad: var(--space-6); --comfy-gap: var(--space-4); --section-gap: var(--space-18);
+  /* radius = default "Balanced" · ธีม override ได้ */
+  --radius-xs: 4px; --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px; --radius-xl: 28px; --radius-full: 999px;
+  --content-max: 1120px; --reading-max: 680px; --sidebar-w: 240px; --gutter: 24px; --page-margin: 24px;
+}
+@media (max-width: 599px) { :root { --gutter: 16px; --page-margin: 16px; --section-gap: 56px; } }
+
+/* ---------- Elevation default (เงาเทากลาง · ธีม override ได้) ---------- */
+:root {
+  --elevation-1: 0 1px 3px 0 rgba(16,18,24,.05);
+  --elevation-2: 0 10px 24px -6px rgba(16,18,24,.10);
+  --elevation-3: 0 14px 36px -8px rgba(16,18,24,.14);
+  --elevation-4: 0 28px 72px -12px rgba(16,18,24,.22);
+  --elevation-thumb: 0 1px 2px rgba(16,18,24,.10), 0 0 0 .5px rgba(16,18,24,.08); /* ชิ้นที่ลอยในราง (segmented) */
+  --scrim: rgba(16,18,24,.4); --scrim-media: rgba(16,18,24,.72);
+}
+:root[data-theme="dark"] {
+  --elevation-1: 0 1px 2px rgba(0,0,0,.3); --elevation-2: 0 10px 24px -6px rgba(0,0,0,.45);
+  --elevation-3: 0 14px 36px -8px rgba(0,0,0,.55); --elevation-4: 0 28px 72px -12px rgba(0,0,0,.7);
+  --elevation-thumb: 0 1px 2px rgba(0,0,0,.35);
+  --elevation-border: rgba(255,255,255,.06); --scrim: rgba(5,6,12,.6);
+}
+
+/* ---------- Motion ---------- */
+:root {
+  --duration-instant: 100ms; --duration-fast: 160ms; --duration-base: 240ms; --duration-slow: 360ms; --duration-page: 480ms;
+  --ease-standard: cubic-bezier(.2,0,0,1); --ease-enter: cubic-bezier(0,0,0,1);
+  --ease-exit: cubic-bezier(.3,0,1,1); --ease-emphasized: cubic-bezier(.05,.7,.1,1);
+  /* ลูกเล่น (core/motion.css · patterns/motion.md) */
+  --rv-dist: 16px; --rv-dur: 600ms; --rv-stagger: 60ms;           /* ลอยขึ้นตอนเลื่อนถึง */
+  --hl-dur: 820ms; --hl-gap: 110ms;                                /* หัวข้อ hero ยกขึ้นทีละบรรทัด */
+  --track-draw: 700ms; --track-gap: 120ms;                         /* เส้นเวลาค่อยๆ ลาก */
+  --ripple-dur: 480ms; --ripple-alpha: 16%;                        /* ระลอกตอนกด (Material) */
+  --peek-w: 200px; --peek-offset: 24px; --peek-follow: 1;          /* ภาพลอยตามเมาส์ · 1 = ตามทันที ไม่หน่วง (decisions #93) */
+  --page-out: 220ms; --page-in: 480ms;                             /* เปลี่ยนหน้า */
+  --progress-h: 2px;                                               /* แถบอ่านถึงไหน */
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 100ms !important; transition-duration: 100ms !important; }
+}
+
+/* ---------- Icons — Material Symbols Rounded ---------- */
+:root { --font-icon: 'Material Symbols Rounded'; }
+.icon { font-family: var(--font-icon); font-size: 20px; line-height: 1; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+.icon.is-active { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+
+/* ==========================================================================
+   COMPONENT TOKENS — อ้างอิง semantic เท่านั้น (ไม่มีบล็อก dark: ตาม semantic เอง)
+   ========================================================================== */
+
+/* Button (components/button.md) */
+:root {
+  --btn-h-sm: 32px; --btn-h-md: 36px; --btn-h-lg: 40px; --btn-h-xl: 48px;
+  --btn-px-sm: 16px; --btn-px-md: 20px; --btn-px-lg: 24px; --btn-px-xl: 28px;
+  --btn-radius: var(--radius-full);
+  --btn-font: 500 14px/1 var(--font-sans); --btn-font-sm: 500 13px/1 var(--font-sans);
+  --btn-state-hover: var(--state-hover); --btn-state-pressed: var(--state-pressed);
+  --btn-outline-border: var(--border-control); --btn-outline-fg: var(--ink);
+  --btn-disabled-bg: var(--muted); --btn-disabled-fg: var(--text-disabled);
+  --btn-ghost-fg: var(--ink); --btn-ghost-fg-muted: var(--text-2);
+  --btn-ghost-hover: var(--muted); --btn-ghost-pressed: var(--selected); --btn-ghost-selected-hover: var(--selected-hover);
+  --btn-ghost-white-hover: rgba(255,255,255,.12); --btn-ghost-white-pressed: rgba(255,255,255,.2);
+  --btn-ghost-white-selected-hover: rgba(255,255,255,.28); --btn-ghost-white-selected-pressed: rgba(255,255,255,.34);
+  --btn-glass-bg: var(--glass); --btn-glass-border: var(--glass-border); --btn-outline-white: rgba(255,255,255,.55);
+  --btn-ghost-selected-pressed: color-mix(in srgb, var(--selected-hover) 92%, var(--ink));
+  --btn-danger-border: color-mix(in srgb, var(--danger) 45%, var(--surface));
+  --btn-danger-tint-pressed: color-mix(in srgb, var(--danger) 20%, var(--surface));
+}
+
+/* Input (components/input.md) */
+:root {
+  --input-h-sm: 36px; --input-h-md: 40px; --input-h-lg: 44px;
+  --input-radius: var(--radius-md); --input-radius-sm: 10px;
+  --input-bg: var(--muted); --input-bg-hover: var(--muted-hover); --input-bg-focus: var(--surface); --input-ring: var(--focus-ring);
+  --input-fg: var(--ink); --input-placeholder: var(--text-2);
+  --input-bg-error: var(--danger-tint); --input-border-error: var(--danger);
+  --input-bg-disabled: var(--sidebar); --input-fg-disabled: var(--text-disabled);
+}
+
+/* Chip · Tag · Status · Count (components/chip.md) */
+:root {
+  --status-fg: var(--text-2); --status-fg-progress: var(--warning-strong);
+  --tag-h: 22px; --tag-px: 9px;
+  --tag-bg: var(--muted); --tag-bg-hover: var(--muted-hover); --tag-bg-pressed: var(--selected-hover);
+  --tag-fg: var(--text-2); --tag-fg-hover: var(--ink);
+  --chip-h: 32px; --chip-h-sm: 28px; --chip-px: 14px;
+  --chip-fg: var(--text-2); --chip-fg-hover: var(--ink); --chip-bg-hover: var(--muted); --chip-bg-pressed: var(--muted-hover); --chip-fg-disabled: var(--text-3);
+  --chip-on-bg: var(--ink); --chip-on-bg-hover: var(--ink-hover); --chip-on-bg-pressed: var(--ink-pressed); --chip-on-fg: var(--on-ink);
+  --input-chip-h: 30px;
+  --chip-remove-hover: color-mix(in srgb, var(--ink) 8%, transparent); --chip-remove-pressed: color-mix(in srgb, var(--ink) 14%, transparent);
+  --count-dot: 10px; --count-h: 18px; --count-bg: var(--danger); --count-fg: var(--on-danger);
+}
+
+/* Avatar (components/avatar.md) */
+:root {
+  --avatar-24: 24px; --avatar-32: 32px; --avatar-40: 40px; --avatar-56: 56px; --avatar-96: 96px;
+  --avatar-bg: var(--primary-tint-solid); --avatar-fg: var(--primary-tint-foreground);
+  --avatar-image-border: color-mix(in srgb, var(--ink) 8%, transparent);
+  --avatar-ring: var(--surface); /* ขอบรอบ avatar ในกลุ่มซ้อน · บนพื้นหน้าเว็บให้ override เป็น --background */
+  /* presence: ป้ายสถานะเจาะช่องใน avatar (mask) ไม่ทาขอบสี จึงใช้ได้บนพื้นทุกสี */
+  --presence-gap: 2px;
+  --presence-online: var(--success); --presence-idle: var(--warning); --presence-busy: var(--danger); --presence-offline: var(--text-3);
+  --avatar-status: var(--presence-online);
+  --work-status-open: var(--presence-online); --work-status-closed: var(--presence-offline); --work-status-dot: 8px;  /* สถานะรับงานใน hero (decisions #95) */
+  --avatar-more-bg: var(--muted); --avatar-more-fg: var(--text-2);
+  --avatar-hover: color-mix(in srgb, var(--ink) 8%, transparent); --avatar-pressed: color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+/* Checkbox · Radio · Switch (components/selection.md) — Fastwork shape · AA borders */
+:root {
+  --sel-row-min: 40px; --sel-gap: 12px;
+  --sel-border: var(--border-strong); --sel-border-width: 1.5px; --sel-border-hover: var(--primary);
+  --sel-bg: var(--surface); --sel-bg-pressed: var(--primary-tint-solid);
+  --sel-on: var(--primary); --sel-on-hover: var(--primary-hover); --sel-mark: var(--primary-foreground);
+  --sel-disabled: var(--text-disabled); --sel-error: var(--danger);
+  --checkbox-size: 20px; --checkbox-radius: 6px; --checkbox-mark: 14px;
+  --radio-size: 20px; --radio-on-ring: 6px;
+  --switch-w: 44px; --switch-h: 24px; --switch-pad: 2px; --switch-pad-off: 2px;
+  --switch-thumb: 20px; --switch-thumb-off: 20px; --switch-thumb-pressed: 24px;
+  /* ปิด: รางเทาทึบ border-strong (3.19:1) + ปุ่มขาว 20 · เปิด: ราง primary + ปุ่มขาว 20 */
+  --switch-track-off: var(--border-strong); --switch-track-off-hover: var(--text-2);
+  --switch-thumb-color-off: var(--switch-thumb-color); --switch-thumb-color-off-hover: var(--switch-thumb-color);
+  --switch-track-on: var(--primary); --switch-track-on-hover: var(--primary-hover);
+  --switch-thumb-color: #FFFFFF; --switch-thumb-shadow: 0 1px 3px rgba(16,18,24,.24);
+  --switch-busy-opacity: .55; --switch-busy-delay: 400ms; --switch-spinner: 16px;
+}
+
+/* Navigation · top bar (components/navigation.md) — Apple global nav */
+:root {
+  --nav-h: 48px; --nav-blur: 16px; --nav-pad-x: 24px; --nav-gap: 28px;
+  --nav-bg: color-mix(in srgb, var(--background) 80%, transparent); --nav-border: var(--border);
+  --nav-link: var(--text-2); --nav-link-hover: var(--ink); --nav-link-current: var(--ink);
+  --nav-link-font: 400 14px/1 var(--font-sans); --nav-link-current-weight: 500;
+  /* มือถือ: แผ่นเลื่อนจากขวาแบบ shadcn Sheet */
+  --nav-sheet-bg: var(--surface); --nav-sheet-w: min(320px, 85vw); --nav-sheet-shadow: var(--elevation-4); --nav-sheet-border: var(--border);
+  --nav-sheet-link: 500 18px/1.3 var(--font-sans); --nav-sheet-row: 48px; --nav-sheet-item-radius: var(--radius-full); --nav-sheet-item-pad: 16px; --nav-scrim: var(--scrim);
+}
+@media (max-width: 599px) { :root { --nav-pad-x: 16px; } }
+
+/* Tabs · Segmented (components/tabs.md) — Apple tabs + Apple segmented ทรง pill */
+:root {
+  --tabs-h: 40px; --tabs-gap: 24px; --tabs-font: 400 15px/1 var(--font-sans); --tabs-weight-selected: 500;
+  --tabs-fg: var(--text-2); --tabs-fg-hover: var(--ink); --tabs-fg-selected: var(--ink); --tabs-fg-disabled: var(--text-disabled);
+  --tabs-indicator: var(--ink); --tabs-indicator-h: 2px; --tabs-indicator-offset: 4px;
+  --seg-h: 34px; --seg-pad: 3px; --seg-radius: var(--radius-full); --seg-font: 400 13px/1 var(--font-sans); --seg-weight-selected: 500; --seg-min-w: 88px;
+  --seg-track: var(--muted); --seg-thumb: var(--surface); --seg-thumb-shadow: var(--elevation-thumb);
+  --seg-fg: var(--text-2); --seg-fg-hover: var(--ink); --seg-fg-selected: var(--ink); --seg-fg-disabled: var(--text-disabled);
+  --tabs-move: 240ms;
+}
+:root[data-theme="dark"] { --seg-thumb: var(--selected-hover); }
+
+/* Dialog (components/dialog.md) — Spotify ปรับแล้ว */
+:root {
+  --dialog-w: 400px; --dialog-radius: 16px; --dialog-pad: 24px; --dialog-pad-mobile: 20px; --dialog-margin-mobile: 16px;
+  --dialog-bg: var(--surface); --dialog-shadow: var(--elevation-3); --dialog-scrim: var(--scrim);
+  --dialog-title: 500 17px/1.45 var(--font-sans); --dialog-body: 400 14px/1.6 var(--font-sans); --dialog-body-fg: var(--text-2);
+  --dialog-btn-h: 40px; --dialog-btn-h-mobile: 44px; --dialog-gap: 8px; --dialog-actions-top: 24px;
+  --dialog-cancel-bg: var(--muted); --dialog-cancel-bg-hover: var(--muted-hover); --dialog-cancel-fg: var(--ink);
+  --dialog-enter: 240ms; --dialog-exit: 160ms;
+}
+
+/* Toast (components/toast.md) — light: แคปซูลสีหมึก · dark: แคปซูลเทา selected */
+:root {
+  --toast-bg: var(--ink); --toast-fg: var(--on-ink); --toast-fg-2: color-mix(in srgb, var(--on-ink) 62%, var(--ink));
+  --toast-action: var(--link-on-inverse); --toast-icon-info: var(--link-on-inverse);
+  --toast-icon-success: var(--success-on-inverse); --toast-icon-warning: var(--warning-on-inverse); --toast-icon-danger: var(--danger-on-inverse);
+  --toast-h: 48px; --toast-radius: var(--radius-full); --toast-radius-2line: 16px; --toast-font: 400 14px/1.4 var(--font-sans);
+  --toast-pad: 0 8px 0 16px; --toast-icon: 20px; --toast-gap: 10px; --toast-max-w: 420px; --toast-offset: 16px;
+  --toast-shadow: var(--elevation-3); --toast-duration: 4000ms; --toast-duration-action: 6000ms;
+}
+/* โหมดมืด: ไม่กลับสี (พื้นขาวจ้าเกินไป) → แคปซูลเทาเข้มยกขึ้นหนึ่งขั้น ไม่มีขอบ */
+:root[data-theme="dark"] {
+  --toast-bg: var(--selected); --toast-fg: var(--ink); --toast-fg-2: var(--text-2);
+  --toast-action: var(--link); --toast-icon-info: var(--link);
+  --toast-icon-success: var(--success); --toast-icon-warning: var(--warning); --toast-icon-danger: var(--danger);
+}
+
+/* Menu · Popover · Tooltip (components/overlay.md) */
+:root {
+  --menu-bg: var(--raised); --menu-radius: 14px; --menu-pad: 6px; --menu-shadow: var(--elevation-3); --menu-min-w: 200px; --menu-max-w: 320px; --menu-offset: 6px;
+  --menu-item-h: 40px; --menu-item-pad: 0 12px; --menu-item-radius: var(--radius-full); --menu-item-gap: 10px; --menu-item-font: 400 14px/1.3 var(--font-sans);
+  --menu-item-fg: var(--ink); --menu-item-icon: var(--text-2); --menu-item-hover: var(--muted-hover); --menu-item-disabled: var(--text-disabled);
+  --menu-item-danger: var(--danger); --menu-item-danger-hover: var(--danger-tint); --menu-sep: var(--border); --menu-sep-inset: 12px;
+  --menu-kbd-fg: var(--text-2); --menu-sub-offset: 2px; --menu-sub-open-delay: 100ms; --menu-sub-close-delay: 250ms; /* ปุ่มลัด + เมนูย่อย (ลึกสุด 2 ชั้นย่อย) */
+  --popover-bg: var(--raised); --popover-radius: 16px; --popover-pad: 16px; --popover-shadow: var(--elevation-3); --popover-w: 280px; --popover-w-lg: 360px; --popover-offset: 8px;
+  --tooltip-bg: var(--toast-bg); --tooltip-fg: var(--toast-fg); --tooltip-font: 400 12px/1.4 var(--font-sans);
+  --tooltip-pad: 6px 10px; --tooltip-radius: 8px; --tooltip-max-w: 240px; --tooltip-offset: 8px; --tooltip-delay: 500ms;
+}
+
+/* AI: ไอคอนไล่สี (ปุ่ม ghost ที่เป็นทางเข้า AI ทุกจุด) */
+:root { --ai-grad: linear-gradient(135deg, var(--primary) 15%, var(--logo-dot-accent) 95%); }
+
+/* Side nav · rail ของแอป (components/navigation.md § Side nav) */
+:root {
+  --sidenav-w: 208px; --sidenav-rail-w: 80px; --sidenav-bg: var(--surface); --sidenav-border: var(--border);
+  --sidenav-pad: 12px; --sidenav-gap: 2px;
+  --sidenav-item-h: 40px; --sidenav-item-pad: 0 12px; --sidenav-item-radius: var(--radius-full); --sidenav-item-gap: 12px;
+  --sidenav-item-font: 500 14px/1.3 var(--font-sans); --sidenav-item-fg: var(--text-2); --sidenav-item-fg-hover: var(--ink); --sidenav-item-bg-hover: var(--muted);
+  --sidenav-item-fg-selected: var(--ink); --sidenav-item-bg-selected: var(--selected); --sidenav-item-weight-selected: 600;
+  --sidenav-rail-item-h: 60px; --sidenav-rail-font: 500 11px/1.2 var(--font-sans); --sidenav-rail-pill-w: 52px; --sidenav-rail-pill-h: 30px;
+}
+
+/* Card (components/card.md) */
+:root {
+  --card-bg: var(--surface); --card-border: var(--elevation-border); --card-shadow: var(--elevation-1); --card-shadow-hover: var(--elevation-2);
+  --project-pad: 10px; --project-radius: var(--radius-lg); --project-media-radius: calc(var(--radius-lg) - 10px);
+  --project-body-top: 12px; --project-body-inset: 4px;
+  --project-gap-tight: 2px; --project-gap-group: 10px; --project-gap-meta: 8px;
+}
+
+/* Skeleton · Empty state (components/skeleton-empty.md) */
+:root {
+  --skel-fill: var(--muted);                                          /* แท่งข้อความหลัก */
+  --skel-fill-soft: color-mix(in srgb, var(--muted) 55%, transparent); /* ภาพ + ข้อความรอง */
+  --skel-line-h: 12px; --skel-line-h-sm: 10px; --skel-line-radius: 6px; --skel-line-gap: 8px;
+  --skel-delay: 300ms;        /* โหลดเร็วกว่านี้ ไม่ต้องแสดง skeleton */
+  --skel-min-show: 400ms;     /* แสดงแล้วค้างอย่างน้อยเท่านี้ กันกะพริบ */
+  --skel-reveal: var(--duration-base) var(--ease-enter);  /* เนื้อหาจริงจางเข้า ไม่มี shimmer */
+  --empty-max-w: 360px; --empty-pad: 48px 24px; --empty-pad-sm: 24px 16px; --empty-gap: 8px; --empty-action-gap: 20px;
+  --empty-title: 500 22px/1.35 var(--font-sans); --empty-title-sm: 500 15px/1.5 var(--font-sans);
+  --empty-body: 400 14px/1.6 var(--font-sans); --empty-body-sm: 400 13px/1.6 var(--font-sans); --empty-body-fg: var(--text-2);
+}
+@media (max-width: 600px) { :root { --empty-title: 500 20px/1.4 var(--font-sans); --empty-pad: 40px 16px; } }
+
+/* Sheet (components/sheet.md) — Spotify + ขีดจับ Apple */
+:root {
+  --sheet-bg: var(--raised); --sheet-radius: var(--radius-lg); --sheet-shadow: var(--elevation-4); --sheet-scrim: var(--scrim);
+  --sheet-max-h: 90dvh;
+  --sheet-grabber: var(--border-control); --sheet-grabber-w: 36px; --sheet-grabber-h: 5px; --sheet-grabber-top: 6px;
+  --sheet-head-pad: 12px 20px 14px; --sheet-thumb: 40px; --sheet-thumb-radius: 8px;
+  --sheet-title: 500 15px/1.4 var(--font-sans); --sheet-sub: 400 13px/1.4 var(--font-sans); --sheet-sep: var(--border);
+  --sheet-row-h: 48px; --sheet-row-pad: 0 12px; --sheet-row-inset: 8px; --sheet-row-gap: 14px; --sheet-row-font: 400 15px/1.3 var(--font-sans);
+  --sheet-row-icon: var(--text-2); --sheet-row-hover: var(--muted-hover); --sheet-row-pressed: var(--selected); --sheet-row-radius: var(--radius-full);
+  --sheet-row-selected: var(--link);
+  --sheet-close-h: 48px; --sheet-close-font: 500 15px/1 var(--font-sans);
+  --sheet-enter: 320ms; --sheet-exit: 220ms; --sheet-drag-close: 0.3;   /* ลากลงเกิน 30% ของความสูง = ปิด */
+  --sheet-foot-pad: 12px 16px 8px; --sheet-foot-btn-h: 48px;   /* แบบเลือกแล้วกดยืนยัน */
+  --side-sheet-w: 400px; --side-sheet-pad: 24px; --side-sheet-title: 500 17px/1.45 var(--font-sans);
+}
+
+/* Table · Pagination (components/table.md) — แถว M3 + เรียงลำดับ Spotify + แบ่งหน้า Spotify×M3 */
+:root {
+  --table-font: 400 14px/1.4 var(--font-sans); --table-fg: var(--ink); --table-fg-2: var(--text-2);
+  --table-head-h: 40px; --table-head-font: 500 13px/1.3 var(--font-sans); --table-head-fg: var(--text-2); --table-head-fg-sorted: var(--ink); --table-head-border: var(--border);
+  --table-row-h: 52px; --table-row-h-compact: 40px; --table-cell-pad: 0 12px;
+  --table-divider: var(--border); --table-row-hover: var(--muted); --table-row-selected: var(--primary-tint);
+  --table-plain-radius: var(--radius-md);   /* แบบไม่มีเส้นคั่น: แถบ hover มน */
+  --table-thumb: 32px; --table-thumb-radius: 6px; --table-thumb-gap: 12px;
+  --table-toolbar-gap: 12px; --table-mobile-bp: 720px;
+  --pager-h: 32px; --pager-min-w: 32px; --pager-radius: var(--radius-full); --pager-font: 400 13px/1 var(--font-sans);
+  --pager-fg: var(--ink); --pager-hover: var(--muted-hover); --pager-current-bg: var(--ink); --pager-current-fg: var(--on-ink);
+  --pager-meta: 400 13px/1.4 var(--font-sans); --pager-meta-fg: var(--text-2); --pager-gap: 4px;
+}
+
+/* Command palette · Search (components/command.md) — โครง shadcn + pill + ภาพย่อ/ประวัติแบบ Spotify */
+:root {
+  --cmd-w: 560px; --cmd-max-h: min(520px, 72vh); --cmd-top: 12vh; --cmd-radius: var(--radius-lg) ;
+  --cmd-bg: var(--raised); --cmd-shadow: var(--elevation-4); --cmd-scrim: var(--scrim); --cmd-sep: var(--border);
+  --cmd-input-h: 56px; --cmd-input-font: 400 16px/1.4 var(--font-sans); --cmd-input-pad: 0 16px; --cmd-input-icon: var(--text-2);
+  --cmd-group-font: 500 12px/1.4 var(--font-sans); --cmd-group-fg: var(--text-2); --cmd-group-pad: 12px 14px 4px;
+  --cmd-item-h: 44px; --cmd-item-h-thumb: 52px; --cmd-item-pad: 0 12px; --cmd-item-inset: 6px; --cmd-item-gap: 12px;
+  --cmd-item-radius: var(--radius-full); --cmd-item-active: var(--muted-hover); --cmd-item-font: 400 14px/1.3 var(--font-sans);
+  --cmd-item-meta: 400 12px/1.3 var(--font-sans); --cmd-match-weight: 500;
+  --cmd-thumb: 32px; --cmd-thumb-radius: 6px; --cmd-kbd-fg: var(--menu-kbd-fg);
+  --cmd-foot-h: 40px; --cmd-foot-font: 400 12px/1 var(--font-sans); --cmd-foot-fg: var(--text-2);
+  --cmd-recent-max: 5; --cmd-group-max: 5; --cmd-enter: 160ms; --cmd-exit: 120ms;
+  --cmd-trigger-h: 36px; --cmd-trigger-bg: var(--muted); --cmd-trigger-bg-hover: var(--muted-hover); --cmd-trigger-fg: var(--text-2);
+}

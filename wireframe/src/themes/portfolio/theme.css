@@ -1,0 +1,84 @@
+/* ==========================================================================
+   THEME · portfolio (Phunyisa) · v1 2026-10-10
+   Cool neutral + สีแบรนด์ (ตอนนี้ Indigo · เปลี่ยนได้ที่บล็อก "สีแบรนด์") · Google Sans + Noto Sans Thai · Mesh glow · เงาอมคราม
+   โหลดหลัง core/tokens-core.css · ที่มาของทุกค่า: themes/portfolio/colors.md
+   ========================================================================== */
+
+/* ==========================================================================
+   สีแบรนด์ — เปลี่ยนสีแบรนด์ที่บล็อกนี้ที่เดียว (decisions #93)
+   ตอนนี้ = Indigo 4C45D2 + Raspberry E44464 · ทุกค่าด้านล่างไฟล์นี้อ้างจากบล็อกนี้
+   (ปุ่ม ลิงก์ วงโฟกัส พื้นอ่อน เงา พื้นมืดหลัง dialog Mesh จุดโลโก้)
+   เปลี่ยนแล้วต้องเช็ก contrast ใหม่: brand-500 บนขาว ≥ 4.5 · ขาวบน brand-500 ≥ 4.5
+   · brand-dark-500 กับตัวขาว ≥ 4.5 · brand-dark-link บน graphite-950 ≥ 4.5 (ดู colors.md)
+   ========================================================================== */
+:root {
+  /* ramp โหมดสว่าง */
+  --brand-50: #F4F4FC; --brand-100: #EAE9FA; --brand-200: #D2D0F4; --brand-300: #AEABEB; --brand-400: #827DE0;
+  --brand-500: #4C45D2; --brand-600: #3E39AC; --brand-700: #342F8F;
+  /* โหมดมืด */
+  --brand-dark-500: #5F57F0; --brand-dark-600: #554DE8; --brand-dark-link: #A29BFF; --brand-dark-tint-fg: #C3BEFF; --brand-dark-tint-solid: #2E2E58;
+  /* โทนลึกที่ใช้ย้อมเงา/พื้นมืด/Mesh */
+  --brand-deep: #363199; --brand-night: #1E1A50; --brand-midnight: #14122E;
+  /* สีรอง (จุดโลโก้ · ปลาย Mesh) */
+  --brand-accent: #E44464; --brand-accent-dark: #F0708A;
+  /* สีกลางของ Mesh เข้ม */
+  --brand-mesh-1: #6030CF; --brand-mesh-2: #AF45C4; --brand-mesh-3: #4A31B8; --brand-mesh-4: #8439C6;
+}
+
+/* ---------- Tier 1 · Primitive (ใช้ในไฟล์นี้เท่านั้น) ---------- */
+:root {
+  --white: #FFFFFF; --gray-0: #FFFFFF; --gray-25: #FAFBFC; --gray-50: #F2F3F6; --gray-100: #ECEEF2; --gray-150: #E4E7EC;
+  --gray-200: #DADEE5; --gray-300: #D0D5DD; --gray-400: #A3A8B5; --gray-500: #8A90A0; --gray-600: #636875;
+  --gray-800: #3A3D47; --gray-900: #23262E; --gray-950: #15171C;
+  --graphite-0: #ECEDF1; --graphite-50: #DADCE3; --graphite-100: #C9CCD5; --graphite-300: #A3A8B5; --graphite-500: #6B7080; --graphite-550: #6E7382;
+  --graphite-700: #3A3D47; --graphite-750: #33363F; --graphite-800: #2B2E37; --graphite-850: #2C2F38; --graphite-860: #272A32;
+  --graphite-900: #1F2128; --graphite-920: #1B1D23; --graphite-950: #16181D;
+}
+
+/* ---------- Tier 2 · Semantic · Light ---------- */
+:root {
+  --font-sans: 'Google Sans', 'Noto Sans Thai', sans-serif;
+
+  --background: var(--gray-25); --surface: var(--gray-0); --raised: var(--gray-0); --sidebar: var(--gray-50);
+  --muted: var(--gray-100); --muted-hover: var(--gray-150); --selected: var(--gray-200); --selected-hover: var(--gray-300);
+  --border: var(--gray-150); --border-control: var(--gray-300); --border-strong: var(--gray-500);
+  --ink: var(--gray-900); --ink-hover: var(--gray-800); --ink-pressed: var(--gray-950); --on-ink: var(--gray-0);
+  --text-2: var(--gray-600); --text-3: var(--gray-500); --text-disabled: var(--gray-400);
+
+  --primary: var(--brand-500); --primary-hover: var(--brand-600); --primary-foreground: var(--gray-0);
+  --primary-tint: var(--brand-100); --primary-tint-foreground: var(--brand-600); --primary-tint-solid: var(--brand-100);
+  --link: var(--brand-500); --ring: var(--brand-200); --link-on-inverse: var(--brand-dark-link);
+
+  --elevation-1: 0 1px 3px 0 color-mix(in srgb, var(--brand-deep) 3.6%, transparent);
+  --elevation-2: 0 10px 24px -6px color-mix(in srgb, var(--brand-deep) 9.6%, transparent);
+  --elevation-3: 0 14px 36px -8px color-mix(in srgb, var(--brand-deep) 13.2%, transparent);
+  --elevation-4: 0 28px 72px -12px color-mix(in srgb, var(--brand-deep) 20.4%, transparent);
+  --elevation-thumb: 0 1px 2px color-mix(in srgb, var(--brand-deep) 10%, transparent), 0 0 0 .5px color-mix(in srgb, var(--brand-deep) 8%, transparent);
+  --elevation-border: rgba(228,231,236,.7);
+  --scrim: color-mix(in srgb, var(--brand-night) 36%, transparent); --scrim-media: color-mix(in srgb, var(--brand-midnight) 72%, transparent);
+
+  /* แบรนด์เฉพาะธีมนี้ */
+  --mesh-a: radial-gradient(at 0% 0%, var(--brand-deep) 0, transparent 60%), radial-gradient(at 100% 100%, var(--brand-accent) 0, transparent 60%), radial-gradient(at 90% 10%, var(--brand-mesh-2) 0, transparent 50%), var(--brand-mesh-1);
+  --mesh-b: radial-gradient(at 10% 100%, var(--brand-deep) 0, transparent 60%), radial-gradient(at 100% 0%, var(--brand-accent) 0, transparent 55%), radial-gradient(at 40% 30%, var(--brand-mesh-4) 0, transparent 55%), var(--brand-mesh-3);
+  --mesh-soft: radial-gradient(at 20% 0%, color-mix(in srgb, var(--brand-500) 14%, var(--white)) 0, transparent 65%), radial-gradient(at 100% 100%, color-mix(in srgb, var(--brand-500) 8%, var(--white)) 0, transparent 60%), color-mix(in srgb, var(--brand-500) 4%, var(--white));
+  --logo-dot: var(--brand-500); --logo-dot-accent: var(--brand-accent);
+  --avatar-alt: var(--brand-300);
+}
+
+/* ---------- Tier 2 · Semantic · Dark (Graphite + Vivid indigo) ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: var(--graphite-950); --surface: var(--graphite-900); --raised: var(--graphite-860); --sidebar: var(--graphite-920);
+  --muted: var(--graphite-800); --muted-hover: var(--graphite-750); --selected: var(--graphite-750); --selected-hover: var(--graphite-700);
+  --border: var(--graphite-850); --border-control: var(--graphite-700); --border-strong: var(--graphite-500);
+  --ink: var(--graphite-0); --ink-hover: var(--graphite-50); --ink-pressed: var(--graphite-100); --on-ink: var(--graphite-950);
+  --text-2: var(--graphite-300); --text-3: var(--graphite-550); --text-disabled: var(--graphite-550);
+
+  --primary: var(--brand-dark-500); --primary-hover: var(--brand-dark-600); --primary-foreground: var(--gray-0);
+  --primary-tint: color-mix(in srgb, var(--brand-dark-500) 24%, transparent); --primary-tint-foreground: var(--brand-dark-tint-fg); --primary-tint-solid: var(--brand-dark-tint-solid); /* tint .24 บน surface แบบทึบ */
+  --link: var(--brand-dark-link); --ring: color-mix(in srgb, var(--brand-dark-link) 45%, transparent); --link-on-inverse: var(--brand-500);
+
+  --mesh-soft: radial-gradient(at 20% 0%, color-mix(in srgb, var(--brand-deep) 55%, transparent) 0, transparent 65%), radial-gradient(at 100% 100%, color-mix(in srgb, var(--brand-dark-500) 20%, transparent) 0, transparent 60%), var(--graphite-860);
+  --logo-dot: var(--brand-dark-link); --logo-dot-accent: var(--brand-accent-dark);
+  --avatar-alt: var(--brand-dark-500);
+}

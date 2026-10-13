@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>บัญชีของฉัน · Migma</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<style>/* inlined: ../core/tokens-core.css */
+/* ==========================================================================
+   CORE TOKENS — ใช้ร่วมกันทุกโปรเจกต์ · v2 2026-10-10
+   โหลดคู่กับธีม 1 ไฟล์เสมอ:  core/tokens-core.css  →  themes/<ชื่อ>/theme.css
+   --------------------------------------------------------------------------
+   3 tiers
+   1. Primitive  (--gray-100, --indigo-500 …)   อยู่ในธีมเท่านั้น
+   2. Semantic   (--surface, --primary …)       ธีมกำหนดค่า · core ตั้งค่า default ให้บางตัว
+   3. Component  (--btn-*, --tag-* …)           อยู่ที่นี่ · อ้างอิง semantic เท่านั้น ห้าม hex / primitive
+   Semantic ที่ธีมต้องมี: ดู themes/_template/theme.css
+   ========================================================================== */
+
+/* ---------- Semantic defaults ที่ไม่ขึ้นกับแบรนด์ ---------- */
+:root {
+  /* Status (ธีม override ได้ แต่ส่วนใหญ่ไม่ต้อง) */
+  --success: #13897A; --success-strong: #128576; --success-tint: #E7F3F2; --success-tint-foreground: #0E6358;
+  --warning: #D9782A; --warning-strong: #B26222; --warning-tint: #FBF2EA; --warning-tint-foreground: #9C561E;
+  --danger: #D23F4F;  --danger-strong: #D23F4F;  --danger-tint: #FAECED;  --danger-tint-foreground: #972D39;
+  --on-danger: #FFFFFF;
+  /* สถานะบนพื้นกลับด้าน (toast สีหมึก) — ไอคอน ≥ 3:1 */
+  --success-on-inverse: #3CC4AF; --warning-on-inverse: #F0A35E; --danger-on-inverse: #F27380;
+
+  /* Media / overlay */
+  --on-media: #FFFFFF; --on-media-muted: rgba(255,255,255,.85); --on-media-border: rgba(255,255,255,.35); --on-media-fill: rgba(255,255,255,.08);
+  --glass: rgba(255,255,255,.16); --glass-border: rgba(255,255,255,.22);
+  --ph-border: #C6CBD4; --ph-bg: rgba(255,255,255,.55);
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  --grain-opacity: .09;
+
+  /* Aliases (ชื่อแบบ shadcn) */
+  --foreground: var(--ink); --muted-foreground: var(--text-2); --input: var(--border-strong);
+  --focus-ring: var(--link);
+  --like: var(--link); --rating: var(--warning);
+
+  /* State layer opacity (ใช้กับ currentColor / ink) */
+  --state-hover: .08; --state-pressed: .14;
+}
+:root[data-theme="dark"] {
+  --success: #3CC4AF; --success-strong: #3CC4AF; --success-tint: rgba(60,196,175,.14); --success-tint-foreground: #3CC4AF;
+  --warning: #F0A35E; --warning-strong: #F0A35E; --warning-tint: rgba(240,163,94,.14); --warning-tint-foreground: #F0A35E;
+  --danger: #F27380;  --danger-strong: #F27380;  --danger-tint: rgba(242,115,128,.14); --danger-tint-foreground: #F27380;
+  --on-danger: #16181D;
+  --success-on-inverse: #128576; --warning-on-inverse: #B26222; --danger-on-inverse: #D23F4F;
+  --ph-border: #42464F; --ph-bg: rgba(255,255,255,.03);
+}
+
+/* ---------- Typography scale (ฟอนต์มาจากธีม: --font-sans) ---------- */
+:root {
+  --display-xl: 500 56px/1.25 var(--font-sans);   /* hero ประโยคใหญ่ · ไทยต้องมี line-height ≥ 1.25 */
+  --display-lg: 500 44px/1.2 var(--font-sans);
+  --display-md: 500 36px/1.2 var(--font-sans);
+  --headline-lg: 500 26px/1.35 var(--font-sans);
+  --headline-md: 500 22px/1.35 var(--font-sans);
+  --headline-sm: 500 20px/1.4 var(--font-sans);
+  --title-lg: 500 17px/1.45 var(--font-sans);
+  --title-md: 500 15px/1.5 var(--font-sans);
+  --body-lg: 400 16px/1.7 var(--font-sans);
+  --body-md: 400 15px/1.7 var(--font-sans);
+  --body-sm: 400 13px/1.6 var(--font-sans);
+  --label-lg: 500 13px/1.4 var(--font-sans);
+  --label-md: 500 11px/1.4 var(--font-sans);
+  --label-sm: 400 11px/1.4 var(--font-sans);
+  --caption: 400 12px/1.5 var(--font-sans);        /* ป้ายเล็ก ตัวนับ หมายเหตุใต้ช่อง (decisions #102) */
+  --caption-strong: 500 12px/1.4 var(--font-sans);
+}
+@media (max-width: 599px) {
+  :root {
+    --display-xl: 500 34px/1.3 var(--font-sans); --display-lg: 500 32px/1.2 var(--font-sans); --display-md: 500 28px/1.2 var(--font-sans);
+    --headline-lg: 500 22px/1.35 var(--font-sans); --headline-md: 500 20px/1.35 var(--font-sans);
+    --headline-sm: 500 18px/1.4 var(--font-sans); --title-lg: 500 16px/1.45 var(--font-sans);
+    --body-lg: 400 15px/1.7 var(--font-sans);
+  }
+}
+
+/* ---------- Spacing · Density · Radius · Layout ---------- */
+:root {
+  --space-0-5: 2px; --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px;
+  --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px; --space-16: 64px; --space-18: 72px; --space-24: 96px;
+  --compact-pad: var(--space-3); --compact-gap: var(--space-2); --row-h: 36px; --input-h: 40px; --btn-h: 36px;
+  --comfy-pad: var(--space-6); --comfy-gap: var(--space-4); --section-gap: var(--space-18);
+  /* radius = default "Balanced" · ธีม override ได้ */
+  --radius-xs: 4px; --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px; --radius-xl: 28px; --radius-full: 999px;
+  --content-max: 1120px; --reading-max: 680px; --sidebar-w: 240px; --gutter: 24px; --page-margin: 24px;
+}
+@media (max-width: 599px) { :root { --gutter: 16px; --page-margin: 16px; --section-gap: 56px; } }
+
+/* ---------- Elevation default (เงาเทากลาง · ธีม override ได้) ---------- */
+:root {
+  --elevation-1: 0 1px 3px 0 rgba(16,18,24,.05);
+  --elevation-2: 0 10px 24px -6px rgba(16,18,24,.10);
+  --elevation-3: 0 14px 36px -8px rgba(16,18,24,.14);
+  --elevation-4: 0 28px 72px -12px rgba(16,18,24,.22);
+  --elevation-thumb: 0 1px 2px rgba(16,18,24,.10), 0 0 0 .5px rgba(16,18,24,.08); /* ชิ้นที่ลอยในราง (segmented) */
+  --scrim: rgba(16,18,24,.4); --scrim-media: rgba(16,18,24,.72);
+}
+:root[data-theme="dark"] {
+  --elevation-1: 0 1px 2px rgba(0,0,0,.3); --elevation-2: 0 10px 24px -6px rgba(0,0,0,.45);
+  --elevation-3: 0 14px 36px -8px rgba(0,0,0,.55); --elevation-4: 0 28px 72px -12px rgba(0,0,0,.7);
+  --elevation-thumb: 0 1px 2px rgba(0,0,0,.35);
+  --elevation-border: rgba(255,255,255,.06); --scrim: rgba(5,6,12,.6);
+}
+
+/* ---------- Motion ---------- */
+:root {
+  --duration-instant: 100ms; --duration-fast: 160ms; --duration-base: 240ms; --duration-slow: 360ms; --duration-page: 480ms;
+  --ease-standard: cubic-bezier(.2,0,0,1); --ease-enter: cubic-bezier(0,0,0,1);
+  --ease-exit: cubic-bezier(.3,0,1,1); --ease-emphasized: cubic-bezier(.05,.7,.1,1);
+  /* ลูกเล่น (core/motion.css · patterns/motion.md) */
+  --rv-dist: 16px; --rv-dur: 600ms; --rv-stagger: 60ms;           /* ลอยขึ้นตอนเลื่อนถึง */
+  --hl-dur: 820ms; --hl-gap: 110ms;                                /* หัวข้อ hero ยกขึ้นทีละบรรทัด */
+  --track-draw: 700ms; --track-gap: 120ms;                         /* เส้นเวลาค่อยๆ ลาก */
+  --ripple-dur: 480ms; --ripple-alpha: 16%;                        /* ระลอกตอนกด (Material) */
+  --peek-w: 200px; --peek-offset: 24px; --peek-follow: 1;          /* ภาพลอยตามเมาส์ · 1 = ตามทันที ไม่หน่วง (decisions #93) */
+  --page-out: 220ms; --page-in: 480ms;                             /* เปลี่ยนหน้า */
+  --progress-h: 2px;                                               /* แถบอ่านถึงไหน */
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 100ms !important; transition-duration: 100ms !important; }
+}
+
+/* ---------- Icons — Material Symbols Rounded ---------- */
+:root { --font-icon: 'Material Symbols Rounded'; }
+.icon { font-family: var(--font-icon); font-size: 20px; line-height: 1; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+.icon.is-active { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20; }
+
+/* ==========================================================================
+   COMPONENT TOKENS — อ้างอิง semantic เท่านั้น (ไม่มีบล็อก dark: ตาม semantic เอง)
+   ========================================================================== */
+
+/* Button (components/button.md) */
+:root {
+  --btn-h-sm: 32px; --btn-h-md: 36px; --btn-h-lg: 40px; --btn-h-xl: 48px;
+  --btn-px-sm: 16px; --btn-px-md: 20px; --btn-px-lg: 24px; --btn-px-xl: 28px;
+  --btn-radius: var(--radius-full);
+  --btn-font: 500 14px/1 var(--font-sans); --btn-font-sm: 500 13px/1 var(--font-sans);
+  --btn-state-hover: var(--state-hover); --btn-state-pressed: var(--state-pressed);
+  --btn-outline-border: var(--border-control); --btn-outline-fg: var(--ink);
+  --btn-disabled-bg: var(--muted); --btn-disabled-fg: var(--text-disabled);
+  --btn-ghost-fg: var(--ink); --btn-ghost-fg-muted: var(--text-2);
+  --btn-ghost-hover: var(--muted); --btn-ghost-pressed: var(--selected); --btn-ghost-selected-hover: var(--selected-hover);
+  --btn-ghost-white-hover: rgba(255,255,255,.12); --btn-ghost-white-pressed: rgba(255,255,255,.2);
+  --btn-ghost-white-selected-hover: rgba(255,255,255,.28); --btn-ghost-white-selected-pressed: rgba(255,255,255,.34);
+  --btn-glass-bg: var(--glass); --btn-glass-border: var(--glass-border); --btn-outline-white: rgba(255,255,255,.55);
+  --btn-ghost-selected-pressed: color-mix(in srgb, var(--selected-hover) 92%, var(--ink));
+  --btn-danger-border: color-mix(in srgb, var(--danger) 45%, var(--surface));
+  --btn-danger-tint-pressed: color-mix(in srgb, var(--danger) 20%, var(--surface));
+}
+
+/* Input (components/input.md) */
+:root {
+  --input-h-sm: 36px; --input-h-md: 40px; --input-h-lg: 44px;
+  --input-radius: var(--radius-md); --input-radius-sm: 10px;
+  --input-bg: var(--muted); --input-bg-hover: var(--muted-hover); --input-bg-focus: var(--surface); --input-ring: var(--focus-ring);
+  --input-fg: var(--ink); --input-placeholder: var(--text-2);
+  --input-bg-error: var(--danger-tint); --input-border-error: var(--danger);
+  --input-bg-disabled: var(--sidebar); --input-fg-disabled: var(--text-disabled);
+}
+
+/* Chip · Tag · Status · Count (components/chip.md) */
+:root {
+  --status-fg: var(--text-2); --status-fg-progress: var(--warning-strong);
+  --tag-h: 22px; --tag-px: 9px;
+  --tag-bg: var(--muted); --tag-bg-hover: var(--muted-hover); --tag-bg-pressed: var(--selected-hover);
+  --tag-fg: var(--text-2); --tag-fg-hover: var(--ink);
+  --chip-h: 32px; --chip-h-sm: 28px; --chip-px: 14px;
+  --chip-fg: var(--text-2); --chip-fg-hover: var(--ink); --chip-bg-hover: var(--muted); --chip-bg-pressed: var(--muted-hover); --chip-fg-disabled: var(--text-3);
+  --chip-on-bg: var(--ink); --chip-on-bg-hover: var(--ink-hover); --chip-on-bg-pressed: var(--ink-pressed); --chip-on-fg: var(--on-ink);
+  --input-chip-h: 30px;
+  --chip-remove-hover: color-mix(in srgb, var(--ink) 8%, transparent); --chip-remove-pressed: color-mix(in srgb, var(--ink) 14%, transparent);
+  --count-dot: 10px; --count-h: 18px; --count-bg: var(--danger); --count-fg: var(--on-danger);
+}
+
+/* Avatar (components/avatar.md) */
+:root {
+  --avatar-24: 24px; --avatar-32: 32px; --avatar-40: 40px; --avatar-56: 56px; --avatar-96: 96px;
+  --avatar-bg: var(--primary-tint-solid); --avatar-fg: var(--primary-tint-foreground);
+  --avatar-image-border: color-mix(in srgb, var(--ink) 8%, transparent);
+  --avatar-ring: var(--surface); /* ขอบรอบ avatar ในกลุ่มซ้อน · บนพื้นหน้าเว็บให้ override เป็น --background */
+  /* presence: ป้ายสถานะเจาะช่องใน avatar (mask) ไม่ทาขอบสี จึงใช้ได้บนพื้นทุกสี */
+  --presence-gap: 2px;
+  --presence-online: var(--success); --presence-idle: var(--warning); --presence-busy: var(--danger); --presence-offline: var(--text-3);
+  --avatar-status: var(--presence-online);
+  --work-status-open: var(--presence-online); --work-status-closed: var(--presence-offline); --work-status-dot: 8px;  /* สถานะรับงานใน hero (decisions #95) */
+  --avatar-more-bg: var(--muted); --avatar-more-fg: var(--text-2);
+  --avatar-hover: color-mix(in srgb, var(--ink) 8%, transparent); --avatar-pressed: color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+/* Checkbox · Radio · Switch (components/selection.md) — Fastwork shape · AA borders */
+:root {
+  --sel-row-min: 40px; --sel-gap: 12px;
+  --sel-border: var(--border-strong); --sel-border-width: 1.5px; --sel-border-hover: var(--primary);
+  --sel-bg: var(--surface); --sel-bg-pressed: var(--primary-tint-solid);
+  --sel-on: var(--primary); --sel-on-hover: var(--primary-hover); --sel-mark: var(--primary-foreground);
+  --sel-disabled: var(--text-disabled); --sel-error: var(--danger);
+  --checkbox-size: 20px; --checkbox-radius: 6px; --checkbox-mark: 14px;
+  --radio-size: 20px; --radio-on-ring: 6px;
+  --switch-w: 44px; --switch-h: 24px; --switch-pad: 2px; --switch-pad-off: 2px;
+  --switch-thumb: 20px; --switch-thumb-off: 20px; --switch-thumb-pressed: 24px;
+  /* ปิด: รางเทาทึบ border-strong (3.19:1) + ปุ่มขาว 20 · เปิด: ราง primary + ปุ่มขาว 20 */
+  --switch-track-off: var(--border-strong); --switch-track-off-hover: var(--text-2);
+  --switch-thumb-color-off: var(--switch-thumb-color); --switch-thumb-color-off-hover: var(--switch-thumb-color);
+  --switch-track-on: var(--primary); --switch-track-on-hover: var(--primary-hover);
+  --switch-thumb-color: #FFFFFF; --switch-thumb-shadow: 0 1px 3px rgba(16,18,24,.24);
+  --switch-busy-opacity: .55; --switch-busy-delay: 400ms; --switch-spinner: 16px;
+}
+
+/* Navigation · top bar (components/navigation.md) — Apple global nav */
+:root {
+  --nav-h: 48px; --nav-blur: 16px; --nav-pad-x: 24px; --nav-gap: 28px;
+  --nav-bg: color-mix(in srgb, var(--background) 80%, transparent); --nav-border: var(--border);
+  --nav-link: var(--text-2); --nav-link-hover: var(--ink); --nav-link-current: var(--ink);
+  --nav-link-font: 400 14px/1 var(--font-sans); --nav-link-current-weight: 500;
+  /* มือถือ: แผ่นเลื่อนจากขวาแบบ shadcn Sheet */
+  --nav-sheet-bg: var(--surface); --nav-sheet-w: min(320px, 85vw); --nav-sheet-shadow: var(--elevation-4); --nav-sheet-border: var(--border);
+  --nav-sheet-link: 500 18px/1.3 var(--font-sans); --nav-sheet-row: 48px; --nav-sheet-item-radius: var(--radius-full); --nav-sheet-item-pad: 16px; --nav-scrim: var(--scrim);
+}
+@media (max-width: 599px) { :root { --nav-pad-x: 16px; } }
+
+/* Tabs · Segmented (components/tabs.md) — Apple tabs + Apple segmented ทรง pill */
+:root {
+  --tabs-h: 40px; --tabs-gap: 24px; --tabs-font: 400 15px/1 var(--font-sans); --tabs-weight-selected: 500;
+  --tabs-fg: var(--text-2); --tabs-fg-hover: var(--ink); --tabs-fg-selected: var(--ink); --tabs-fg-disabled: var(--text-disabled);
+  --tabs-indicator: var(--ink); --tabs-indicator-h: 2px; --tabs-indicator-offset: 4px;
+  --seg-h: 34px; --seg-pad: 3px; --seg-radius: var(--radius-full); --seg-font: 400 13px/1 var(--font-sans); --seg-weight-selected: 500; --seg-min-w: 88px;
+  --seg-track: var(--muted); --seg-thumb: var(--surface); --seg-thumb-shadow: var(--elevation-thumb);
+  --seg-fg: var(--text-2); --seg-fg-hover: var(--ink); --seg-fg-selected: var(--ink); --seg-fg-disabled: var(--text-disabled);
+  --tabs-move: 240ms;
+}
+:root[data-theme="dark"] { --seg-thumb: var(--selected-hover); }
+
+/* Dialog (components/dialog.md) — Spotify ปรับแล้ว */
+:root {
+  --dialog-w: 400px; --dialog-radius: 16px; --dialog-pad: 24px; --dialog-pad-mobile: 20px; --dialog-margin-mobile: 16px;
+  --dialog-bg: var(--surface); --dialog-shadow: var(--elevation-3); --dialog-scrim: var(--scrim);
+  --dialog-title: 500 17px/1.45 var(--font-sans); --dialog-body: 400 14px/1.6 var(--font-sans); --dialog-body-fg: var(--text-2);
+  --dialog-btn-h: 40px; --dialog-btn-h-mobile: 44px; --dialog-gap: 8px; --dialog-actions-top: 24px;
+  --dialog-cancel-bg: var(--muted); --dialog-cancel-bg-hover: var(--muted-hover); --dialog-cancel-fg: var(--ink);
+  --dialog-enter: 240ms; --dialog-exit: 160ms;
+}
+
+/* Toast (components/toast.md) — light: แคปซูลสีหมึก · dark: แคปซูลเทา selected */
+:root {
+  --toast-bg: var(--ink); --toast-fg: var(--on-ink); --toast-fg-2: color-mix(in srgb, var(--on-ink) 62%, var(--ink));
+  --toast-action: var(--link-on-inverse); --toast-icon-info: var(--link-on-inverse);
+  --toast-icon-success: var(--success-on-inverse); --toast-icon-warning: var(--warning-on-inverse); --toast-icon-danger: var(--danger-on-inverse);
+  --toast-h: 48px; --toast-radius: var(--radius-full); --toast-radius-2line: 16px; --toast-font: 400 14px/1.4 var(--font-sans);
+  --toast-pad: 0 8px 0 16px; --toast-icon: 20px; --toast-gap: 10px; --toast-max-w: 420px; --toast-offset: 16px;
+  --toast-shadow: var(--elevation-3); --toast-duration: 4000ms; --toast-duration-action: 6000ms;
+}
+/* โหมดมืด: ไม่กลับสี (พื้นขาวจ้าเกินไป) → แคปซูลเทาเข้มยกขึ้นหนึ่งขั้น ไม่มีขอบ */
+:root[data-theme="dark"] {
+  --toast-bg: var(--selected); --toast-fg: var(--ink); --toast-fg-2: var(--text-2);
+  --toast-action: var(--link); --toast-icon-info: var(--link);
+  --toast-icon-success: var(--success); --toast-icon-warning: var(--warning); --toast-icon-danger: var(--danger);
+}
+
+/* Menu · Popover · Tooltip (components/overlay.md) */
+:root {
+  --menu-bg: var(--raised); --menu-radius: 14px; --menu-pad: 6px; --menu-shadow: var(--elevation-3); --menu-min-w: 200px; --menu-max-w: 320px; --menu-offset: 6px;
+  --menu-item-h: 40px; --menu-item-pad: 0 12px; --menu-item-radius: var(--radius-full); --menu-item-gap: 10px; --menu-item-font: 400 14px/1.3 var(--font-sans);
+  --menu-item-fg: var(--ink); --menu-item-icon: var(--text-2); --menu-item-hover: var(--muted-hover); --menu-item-disabled: var(--text-disabled);
+  --menu-item-danger: var(--danger); --menu-item-danger-hover: var(--danger-tint); --menu-sep: var(--border); --menu-sep-inset: 12px;
+  --menu-kbd-fg: var(--text-2); --menu-sub-offset: 2px; --menu-sub-open-delay: 100ms; --menu-sub-close-delay: 250ms; /* ปุ่มลัด + เมนูย่อย (ลึกสุด 2 ชั้นย่อย) */
+  --popover-bg: var(--raised); --popover-radius: 16px; --popover-pad: 16px; --popover-shadow: var(--elevation-3); --popover-w: 280px; --popover-w-lg: 360px; --popover-offset: 8px;
+  --tooltip-bg: var(--toast-bg); --tooltip-fg: var(--toast-fg); --tooltip-font: 400 12px/1.4 var(--font-sans);
+  --tooltip-pad: 6px 10px; --tooltip-radius: 8px; --tooltip-max-w: 240px; --tooltip-offset: 8px; --tooltip-delay: 500ms;
+}
+
+/* AI: ไอคอนไล่สี (ปุ่ม ghost ที่เป็นทางเข้า AI ทุกจุด) */
+:root { --ai-grad: linear-gradient(135deg, var(--primary) 15%, var(--logo-dot-accent) 95%); }
+
+/* Side nav · rail ของแอป (components/navigation.md § Side nav) */
+:root {
+  --sidenav-w: 208px; --sidenav-rail-w: 80px; --sidenav-bg: var(--surface); --sidenav-border: var(--border);
+  --sidenav-pad: 12px; --sidenav-gap: 2px;
+  --sidenav-item-h: 40px; --sidenav-item-pad: 0 12px; --sidenav-item-radius: var(--radius-full); --sidenav-item-gap: 12px;
+  --sidenav-item-font: 500 14px/1.3 var(--font-sans); --sidenav-item-fg: var(--text-2); --sidenav-item-fg-hover: var(--ink); --sidenav-item-bg-hover: var(--muted);
+  --sidenav-item-fg-selected: var(--ink); --sidenav-item-bg-selected: var(--selected); --sidenav-item-weight-selected: 600;
+  --sidenav-rail-item-h: 60px; --sidenav-rail-font: 500 11px/1.2 var(--font-sans); --sidenav-rail-pill-w: 52px; --sidenav-rail-pill-h: 30px;
+}
+
+/* Card (components/card.md) */
+:root {
+  --card-bg: var(--surface); --card-border: var(--elevation-border); --card-shadow: var(--elevation-1); --card-shadow-hover: var(--elevation-2);
+  --project-pad: 10px; --project-radius: var(--radius-lg); --project-media-radius: calc(var(--radius-lg) - 10px);
+  --project-body-top: 12px; --project-body-inset: 4px;
+  --project-gap-tight: 2px; --project-gap-group: 10px; --project-gap-meta: 8px;
+}
+
+/* Skeleton · Empty state (components/skeleton-empty.md) */
+:root {
+  --skel-fill: var(--muted);                                          /* แท่งข้อความหลัก */
+  --skel-fill-soft: color-mix(in srgb, var(--muted) 55%, transparent); /* ภาพ + ข้อความรอง */
+  --skel-line-h: 12px; --skel-line-h-sm: 10px; --skel-line-radius: 6px; --skel-line-gap: 8px;
+  --skel-delay: 300ms;        /* โหลดเร็วกว่านี้ ไม่ต้องแสดง skeleton */
+  --skel-min-show: 400ms;     /* แสดงแล้วค้างอย่างน้อยเท่านี้ กันกะพริบ */
+  --skel-reveal: var(--duration-base) var(--ease-enter);  /* เนื้อหาจริงจางเข้า ไม่มี shimmer */
+  --empty-max-w: 360px; --empty-pad: 48px 24px; --empty-pad-sm: 24px 16px; --empty-gap: 8px; --empty-action-gap: 20px;
+  --empty-title: 500 22px/1.35 var(--font-sans); --empty-title-sm: 500 15px/1.5 var(--font-sans);
+  --empty-body: 400 14px/1.6 var(--font-sans); --empty-body-sm: 400 13px/1.6 var(--font-sans); --empty-body-fg: var(--text-2);
+}
+@media (max-width: 600px) { :root { --empty-title: 500 20px/1.4 var(--font-sans); --empty-pad: 40px 16px; } }
+
+/* Sheet (components/sheet.md) — Spotify + ขีดจับ Apple */
+:root {
+  --sheet-bg: var(--raised); --sheet-radius: var(--radius-lg); --sheet-shadow: var(--elevation-4); --sheet-scrim: var(--scrim);
+  --sheet-max-h: 90dvh;
+  --sheet-grabber: var(--border-control); --sheet-grabber-w: 36px; --sheet-grabber-h: 5px; --sheet-grabber-top: 6px;
+  --sheet-head-pad: 12px 20px 14px; --sheet-thumb: 40px; --sheet-thumb-radius: 8px;
+  --sheet-title: 500 15px/1.4 var(--font-sans); --sheet-sub: 400 13px/1.4 var(--font-sans); --sheet-sep: var(--border);
+  --sheet-row-h: 48px; --sheet-row-pad: 0 12px; --sheet-row-inset: 8px; --sheet-row-gap: 14px; --sheet-row-font: 400 15px/1.3 var(--font-sans);
+  --sheet-row-icon: var(--text-2); --sheet-row-hover: var(--muted-hover); --sheet-row-pressed: var(--selected); --sheet-row-radius: var(--radius-full);
+  --sheet-row-selected: var(--link);
+  --sheet-close-h: 48px; --sheet-close-font: 500 15px/1 var(--font-sans);
+  --sheet-enter: 320ms; --sheet-exit: 220ms; --sheet-drag-close: 0.3;   /* ลากลงเกิน 30% ของความสูง = ปิด */
+  --sheet-foot-pad: 12px 16px 8px; --sheet-foot-btn-h: 48px;   /* แบบเลือกแล้วกดยืนยัน */
+  --side-sheet-w: 400px; --side-sheet-pad: 24px; --side-sheet-title: 500 17px/1.45 var(--font-sans);
+}
+
+/* Table · Pagination (components/table.md) — แถว M3 + เรียงลำดับ Spotify + แบ่งหน้า Spotify×M3 */
+:root {
+  --table-font: 400 14px/1.4 var(--font-sans); --table-fg: var(--ink); --table-fg-2: var(--text-2);
+  --table-head-h: 40px; --table-head-font: 500 13px/1.3 var(--font-sans); --table-head-fg: var(--text-2); --table-head-fg-sorted: var(--ink); --table-head-border: var(--border);
+  --table-row-h: 52px; --table-row-h-compact: 40px; --table-cell-pad: 0 12px;
+  --table-divider: var(--border); --table-row-hover: var(--muted); --table-row-selected: var(--primary-tint);
+  --table-plain-radius: var(--radius-md);   /* แบบไม่มีเส้นคั่น: แถบ hover มน */
+  --table-thumb: 32px; --table-thumb-radius: 6px; --table-thumb-gap: 12px;
+  --table-toolbar-gap: 12px; --table-mobile-bp: 720px;
+  --pager-h: 32px; --pager-min-w: 32px; --pager-radius: var(--radius-full); --pager-font: 400 13px/1 var(--font-sans);
+  --pager-fg: var(--ink); --pager-hover: var(--muted-hover); --pager-current-bg: var(--ink); --pager-current-fg: var(--on-ink);
+  --pager-meta: 400 13px/1.4 var(--font-sans); --pager-meta-fg: var(--text-2); --pager-gap: 4px;
+}
+
+/* Command palette · Search (components/command.md) — โครง shadcn + pill + ภาพย่อ/ประวัติแบบ Spotify */
+:root {
+  --cmd-w: 560px; --cmd-max-h: min(520px, 72vh); --cmd-top: 12vh; --cmd-radius: var(--radius-lg) ;
+  --cmd-bg: var(--raised); --cmd-shadow: var(--elevation-4); --cmd-scrim: var(--scrim); --cmd-sep: var(--border);
+  --cmd-input-h: 56px; --cmd-input-font: 400 16px/1.4 var(--font-sans); --cmd-input-pad: 0 16px; --cmd-input-icon: var(--text-2);
+  --cmd-group-font: 500 12px/1.4 var(--font-sans); --cmd-group-fg: var(--text-2); --cmd-group-pad: 12px 14px 4px;
+  --cmd-item-h: 44px; --cmd-item-h-thumb: 52px; --cmd-item-pad: 0 12px; --cmd-item-inset: 6px; --cmd-item-gap: 12px;
+  --cmd-item-radius: var(--radius-full); --cmd-item-active: var(--muted-hover); --cmd-item-font: 400 14px/1.3 var(--font-sans);
+  --cmd-item-meta: 400 12px/1.3 var(--font-sans); --cmd-match-weight: 500;
+  --cmd-thumb: 32px; --cmd-thumb-radius: 6px; --cmd-kbd-fg: var(--menu-kbd-fg);
+  --cmd-foot-h: 40px; --cmd-foot-font: 400 12px/1 var(--font-sans); --cmd-foot-fg: var(--text-2);
+  --cmd-recent-max: 5; --cmd-group-max: 5; --cmd-enter: 160ms; --cmd-exit: 120ms;
+  --cmd-trigger-h: 36px; --cmd-trigger-bg: var(--muted); --cmd-trigger-bg-hover: var(--muted-hover); --cmd-trigger-fg: var(--text-2);
+}
+
+</style>
+<style>/* inlined: ../themes/portfolio/theme.css */
+/* ==========================================================================
+   THEME · portfolio (Phunyisa) · v1 2026-10-10
+   Cool neutral + สีแบรนด์ (ตอนนี้ Indigo · เปลี่ยนได้ที่บล็อก "สีแบรนด์") · Google Sans + Noto Sans Thai · Mesh glow · เงาอมคราม
+   โหลดหลัง core/tokens-core.css · ที่มาของทุกค่า: themes/portfolio/colors.md
+   ========================================================================== */
+
+/* ==========================================================================
+   สีแบรนด์ — เปลี่ยนสีแบรนด์ที่บล็อกนี้ที่เดียว (decisions #93)
+   ตอนนี้ = Indigo 4C45D2 + Raspberry E44464 · ทุกค่าด้านล่างไฟล์นี้อ้างจากบล็อกนี้
+   (ปุ่ม ลิงก์ วงโฟกัส พื้นอ่อน เงา พื้นมืดหลัง dialog Mesh จุดโลโก้)
+   เปลี่ยนแล้วต้องเช็ก contrast ใหม่: brand-500 บนขาว ≥ 4.5 · ขาวบน brand-500 ≥ 4.5
+   · brand-dark-500 กับตัวขาว ≥ 4.5 · brand-dark-link บน graphite-950 ≥ 4.5 (ดู colors.md)
+   ========================================================================== */
+:root {
+  /* ramp โหมดสว่าง */
+  --brand-50: #F4F4FC; --brand-100: #EAE9FA; --brand-200: #D2D0F4; --brand-300: #AEABEB; --brand-400: #827DE0;
+  --brand-500: #4C45D2; --brand-600: #3E39AC; --brand-700: #342F8F;
+  /* โหมดมืด */
+  --brand-dark-500: #5F57F0; --brand-dark-600: #554DE8; --brand-dark-link: #A29BFF; --brand-dark-tint-fg: #C3BEFF; --brand-dark-tint-solid: #2E2E58;
+  /* โทนลึกที่ใช้ย้อมเงา/พื้นมืด/Mesh */
+  --brand-deep: #363199; --brand-night: #1E1A50; --brand-midnight: #14122E;
+  /* สีรอง (จุดโลโก้ · ปลาย Mesh) */
+  --brand-accent: #E44464; --brand-accent-dark: #F0708A;
+  /* สีกลางของ Mesh เข้ม */
+  --brand-mesh-1: #6030CF; --brand-mesh-2: #AF45C4; --brand-mesh-3: #4A31B8; --brand-mesh-4: #8439C6;
+}
+
+/* ---------- Tier 1 · Primitive (ใช้ในไฟล์นี้เท่านั้น) ---------- */
+:root {
+  --white: #FFFFFF; --gray-0: #FFFFFF; --gray-25: #FAFBFC; --gray-50: #F2F3F6; --gray-100: #ECEEF2; --gray-150: #E4E7EC;
+  --gray-200: #DADEE5; --gray-300: #D0D5DD; --gray-400: #A3A8B5; --gray-500: #8A90A0; --gray-600: #636875;
+  --gray-800: #3A3D47; --gray-900: #23262E; --gray-950: #15171C;
+  --graphite-0: #ECEDF1; --graphite-50: #DADCE3; --graphite-100: #C9CCD5; --graphite-300: #A3A8B5; --graphite-500: #6B7080; --graphite-550: #6E7382;
+  --graphite-700: #3A3D47; --graphite-750: #33363F; --graphite-800: #2B2E37; --graphite-850: #2C2F38; --graphite-860: #272A32;
+  --graphite-900: #1F2128; --graphite-920: #1B1D23; --graphite-950: #16181D;
+}
+
+/* ---------- Tier 2 · Semantic · Light ---------- */
+:root {
+  --font-sans: 'Google Sans', 'Noto Sans Thai', sans-serif;
+
+  --background: var(--gray-25); --surface: var(--gray-0); --raised: var(--gray-0); --sidebar: var(--gray-50);
+  --muted: var(--gray-100); --muted-hover: var(--gray-150); --selected: var(--gray-200); --selected-hover: var(--gray-300);
+  --border: var(--gray-150); --border-control: var(--gray-300); --border-strong: var(--gray-500);
+  --ink: var(--gray-900); --ink-hover: var(--gray-800); --ink-pressed: var(--gray-950); --on-ink: var(--gray-0);
+  --text-2: var(--gray-600); --text-3: var(--gray-500); --text-disabled: var(--gray-400);
+
+  --primary: var(--brand-500); --primary-hover: var(--brand-600); --primary-foreground: var(--gray-0);
+  --primary-tint: var(--brand-100); --primary-tint-foreground: var(--brand-600); --primary-tint-solid: var(--brand-100);
+  --link: var(--brand-500); --ring: var(--brand-200); --link-on-inverse: var(--brand-dark-link);
+
+  --elevation-1: 0 1px 3px 0 color-mix(in srgb, var(--brand-deep) 3.6%, transparent);
+  --elevation-2: 0 10px 24px -6px color-mix(in srgb, var(--brand-deep) 9.6%, transparent);
+  --elevation-3: 0 14px 36px -8px color-mix(in srgb, var(--brand-deep) 13.2%, transparent);
+  --elevation-4: 0 28px 72px -12px color-mix(in srgb, var(--brand-deep) 20.4%, transparent);
+  --elevation-thumb: 0 1px 2px color-mix(in srgb, var(--brand-deep) 10%, transparent), 0 0 0 .5px color-mix(in srgb, var(--brand-deep) 8%, transparent);
+  --elevation-border: rgba(228,231,236,.7);
+  --scrim: color-mix(in srgb, var(--brand-night) 36%, transparent); --scrim-media: color-mix(in srgb, var(--brand-midnight) 72%, transparent);
+
+  /* แบรนด์เฉพาะธีมนี้ */
+  --mesh-a: radial-gradient(at 0% 0%, var(--brand-deep) 0, transparent 60%), radial-gradient(at 100% 100%, var(--brand-accent) 0, transparent 60%), radial-gradient(at 90% 10%, var(--brand-mesh-2) 0, transparent 50%), var(--brand-mesh-1);
+  --mesh-b: radial-gradient(at 10% 100%, var(--brand-deep) 0, transparent 60%), radial-gradient(at 100% 0%, var(--brand-accent) 0, transparent 55%), radial-gradient(at 40% 30%, var(--brand-mesh-4) 0, transparent 55%), var(--brand-mesh-3);
+  --mesh-soft: radial-gradient(at 20% 0%, color-mix(in srgb, var(--brand-500) 14%, var(--white)) 0, transparent 65%), radial-gradient(at 100% 100%, color-mix(in srgb, var(--brand-500) 8%, var(--white)) 0, transparent 60%), color-mix(in srgb, var(--brand-500) 4%, var(--white));
+  --logo-dot: var(--brand-500); --logo-dot-accent: var(--brand-accent);
+  --avatar-alt: var(--brand-300);
+}
+
+/* ---------- Tier 2 · Semantic · Dark (Graphite + Vivid indigo) ---------- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --background: var(--graphite-950); --surface: var(--graphite-900); --raised: var(--graphite-860); --sidebar: var(--graphite-920);
+  --muted: var(--graphite-800); --muted-hover: var(--graphite-750); --selected: var(--graphite-750); --selected-hover: var(--graphite-700);
+  --border: var(--graphite-850); --border-control: var(--graphite-700); --border-strong: var(--graphite-500);
+  --ink: var(--graphite-0); --ink-hover: var(--graphite-50); --ink-pressed: var(--graphite-100); --on-ink: var(--graphite-950);
+  --text-2: var(--graphite-300); --text-3: var(--graphite-550); --text-disabled: var(--graphite-550);
+
+  --primary: var(--brand-dark-500); --primary-hover: var(--brand-dark-600); --primary-foreground: var(--gray-0);
+  --primary-tint: color-mix(in srgb, var(--brand-dark-500) 24%, transparent); --primary-tint-foreground: var(--brand-dark-tint-fg); --primary-tint-solid: var(--brand-dark-tint-solid); /* tint .24 บน surface แบบทึบ */
+  --link: var(--brand-dark-link); --ring: color-mix(in srgb, var(--brand-dark-link) 45%, transparent); --link-on-inverse: var(--brand-500);
+
+  --mesh-soft: radial-gradient(at 20% 0%, color-mix(in srgb, var(--brand-deep) 55%, transparent) 0, transparent 65%), radial-gradient(at 100% 100%, color-mix(in srgb, var(--brand-dark-500) 20%, transparent) 0, transparent 60%), var(--graphite-860);
+  --logo-dot: var(--brand-dark-link); --logo-dot-accent: var(--brand-accent-dark);
+  --avatar-alt: var(--brand-dark-500);
+}
+
+</style>
+<style>
+/* Hallmark · scope: app (account) · genre: modern-minimal · theme: design-system 06-my-design-system (tokens-core + themes/portfolio)
+   ต้นแบบหลังบ้านของผู้ใช้: เข้าสู่ระบบ · ภาพรวม · เครดิต AI · การใช้ AI · แพ็กเกจ · ตั้งค่า
+   component (ปุ่ม · seg · ช่องกรอก · สวิตช์ · dialog · toast) คัดมาจาก editor.html ตรงๆ เพื่อให้หน้าตาเดียวกัน
+   ข้อมูลทุกตัวในหน้านี้เป็นตัวอย่าง เก็บในเครื่อง ยังไม่มีเซิร์ฟเวอร์ ไม่มีการตัดเงิน */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow-x:clip}
+body{background:var(--sidebar);color:var(--ink);font:var(--body-md);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+.ms{font-family:var(--font-icon);font-weight:normal;font-style:normal;display:inline-block;width:1em;height:1em;overflow:hidden;white-space:nowrap;flex:none;line-height:1;font-size:20px;font-variation-settings:'FILL' 0,'wght' 400,'opsz' 20}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.btn{--h:var(--btn-h-md);--px:var(--btn-px-md);--ic:18px;position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);height:var(--h);padding:0 var(--px);border-radius:var(--btn-radius);border:1px solid transparent;background:transparent;font:var(--btn-font);color:inherit;white-space:nowrap;cursor:pointer;text-decoration:none;user-select:none;transition:background-color 100ms var(--ease-standard),color 100ms,border-color 100ms}
+.btn .ms{font-size:var(--ic)}
+.btn::before{content:"";position:absolute;inset:50% auto auto 50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+.btn::after{content:"";position:absolute;inset:0;background:currentColor;opacity:0;transition:opacity 100ms;pointer-events:none}
+.btn:hover::after{opacity:.08}.btn:active::after{opacity:.14}
+.btn:focus-visible{outline:none;box-shadow:0 0 0 2px var(--background),0 0 0 4px var(--focus-ring)}
+.btn.sm{--h:var(--btn-h-sm);--px:var(--btn-px-sm);font-size:13px}
+.btn.lg{--h:var(--btn-h-lg);--px:var(--btn-px-lg)}
+.btn.filled{background:var(--primary);color:var(--primary-foreground)}
+.btn.tonal{background:var(--primary-tint);color:var(--primary-tint-foreground)}
+.btn.outlined{border-color:var(--btn-outline-border);background:var(--surface);color:var(--btn-outline-fg)}
+.btn.ghost{color:var(--btn-ghost-fg);--px:14px}.btn.ghost.muted{color:var(--btn-ghost-fg-muted)}
+.btn.ghost::after{display:none}.btn.ghost:hover{background:var(--btn-ghost-hover);color:var(--ink)}.btn.ghost:active,.btn.ghost[aria-pressed=true]{background:var(--btn-ghost-pressed)}
+.btn.text{color:var(--link);--px:12px}
+.btn.cancel{background:var(--dialog-cancel-bg);color:var(--dialog-cancel-fg)}.btn.cancel::after{display:none}.btn.cancel:hover{background:var(--dialog-cancel-bg-hover)}
+.btn.danger.filled{background:var(--danger);color:var(--on-danger)}
+.btn.danger.ghost{color:var(--danger)}.btn.danger.ghost:hover{background:var(--danger-tint)}
+.btn.icon{width:var(--h);padding:0}
+.btn[disabled]{background:var(--btn-disabled-bg);color:var(--btn-disabled-fg);border-color:transparent;cursor:not-allowed}.btn[disabled]::after{display:none}
+.btn.ghost[disabled]{background:none;color:var(--text-disabled)}
+.dots{display:flex;gap:var(--space-1)}.dots svg{display:block;height:20px;width:auto;overflow:visible}.dots i{width:8px;height:8px;border-radius:50%;background:var(--logo-dot)}.dots i:last-child{background:var(--logo-dot-accent)}
+.dirt{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning);flex:none}
+.seg{position:relative;display:inline-flex;height:var(--seg-h);padding:var(--seg-pad);border-radius:var(--seg-radius);background:var(--seg-track)}
+.seg button{display:inline-flex;align-items:center;gap:var(--space-2);height:100%;padding:0 var(--space-3);border:0;border-radius:var(--seg-radius);background:none;font:var(--seg-font);color:var(--seg-fg);cursor:pointer;white-space:nowrap}
+.seg button:hover{color:var(--seg-fg-hover)}
+.seg button[aria-checked=true]{background:var(--seg-thumb);box-shadow:var(--seg-thumb-shadow);color:var(--seg-fg-selected);font-weight:var(--seg-weight-selected)}
+.grp{margin:0 0 var(--space-8)}.grp-h{position:relative;display:flex;align-items:center;gap:var(--space-2);margin:0 0 var(--space-1)}.grp-h h3{font:var(--title-md);color:var(--ink);margin:0;flex:1;display:flex;align-items:center;gap:var(--space-2)}
+.grp-d{font:var(--body-sm);color:var(--text-2);margin:0 0 var(--space-4)}
+.grp-h+.fld,.grp-h+.img-f{margin-top:var(--space-3)}
+.fld{display:block;margin:0 0 var(--space-4);position:relative}
+.lb{display:flex;align-items:center;gap:var(--space-2);font:var(--label-lg);color:var(--ink);margin:0 0 var(--space-2);min-height:24px}
+.lb .cnt{font:var(--caption);color:var(--text-2);font-variant-numeric:tabular-nums}.lb .cnt.over{color:var(--danger)}
+.hint{display:block;font:var(--body-sm);color:var(--text-2);margin:var(--space-2) 0 0}.hint b{font-weight:500;color:var(--ink)}
+.inw{position:relative;display:block}
+.in{display:block;width:100%;height:var(--input-h-md);padding:0 14px;border:0;border-radius:var(--input-radius);background:var(--input-bg);color:var(--input-fg);font:var(--body-md);outline:2px solid transparent;transition:background-color 160ms var(--ease-standard)}
+.inw .in{padding-right:44px}
+.in:hover{background:var(--input-bg-hover)}.in:focus{background:var(--input-bg-focus);outline-color:var(--input-ring)}
+.in::placeholder{color:var(--input-placeholder)}
+.in:disabled{background:var(--input-bg-disabled);color:var(--input-fg-disabled)}
+.in.sm{height:var(--input-h-sm);font-size:14px;border-radius:var(--input-radius-sm)}
+.swr{display:flex;align-items:center;gap:var(--sel-gap);min-height:44px;cursor:pointer;position:relative}
+.swr .lab{flex:1;font:var(--body-md)}.swr .lab small{display:block;font:var(--body-sm);color:var(--text-2)}
+.swr input{position:absolute;opacity:0;width:1px;height:1px}
+.trk{flex:none;width:var(--switch-w);height:var(--switch-h);border-radius:var(--radius-full);background:var(--switch-track-off);display:flex;align-items:center;padding:0 var(--switch-pad-off);transition:background-color 160ms}
+.trk i{width:var(--switch-thumb-off);height:var(--switch-thumb-off);border-radius:50%;background:var(--switch-thumb-color);box-shadow:var(--switch-thumb-shadow);transition:transform 200ms var(--ease-standard)}
+.swr:hover input:not(:checked)+.trk{background:var(--switch-track-off-hover)}
+.swr input:checked+.trk{background:var(--switch-track-on)}.swr:hover input:checked+.trk{background:var(--switch-track-on-hover)}
+.swr input:checked+.trk i{transform:translateX(calc(var(--switch-w) - var(--switch-thumb) - var(--switch-pad) * 2))}
+.swr input:focus-visible+.trk{outline:2px solid var(--focus-ring);outline-offset:2px}
+.dlg{position:fixed;inset:0;z-index:65;display:grid;place-items:center;padding:var(--dialog-margin-mobile);background:var(--dialog-scrim)}
+.dg{width:min(var(--dialog-w),100%);max-height:calc(100dvh - 32px);overflow:auto;padding:var(--dialog-pad);border-radius:var(--dialog-radius);background:var(--dialog-bg);box-shadow:var(--dialog-shadow)}
+.dg.md{width:min(520px,100%)}
+.dg-t{font:var(--dialog-title);color:var(--ink);margin:0}
+.dg-d{font:var(--dialog-body);color:var(--dialog-body-fg);margin:var(--space-2) 0 0}
+.dg-a{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:var(--dialog-gap);margin-top:var(--dialog-actions-top)}
+.dg-a .btn{--h:var(--dialog-btn-h)}
+.dg .fld{margin:var(--space-4) 0 0}
+.ed-toast{position:fixed;left:50%;bottom:calc(var(--toast-offset) + 68px);z-index:80;transform:translate(-50%,16px);display:flex;align-items:center;gap:var(--toast-gap);min-height:var(--toast-h);max-width:min(var(--toast-max-w),calc(100vw - 32px));padding:var(--toast-pad);border-radius:var(--toast-radius);background:var(--toast-bg);color:var(--toast-fg);font:var(--toast-font);box-shadow:var(--toast-shadow);opacity:0;visibility:hidden;transition:opacity 160ms,transform 240ms var(--ease-emphasized),visibility 0s 240ms}
+.ed-toast.on{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity 160ms,transform 240ms var(--ease-emphasized)}
+.ed-toast .act{white-space:nowrap;flex:none;border:0;background:none;color:var(--toast-action);font:var(--btn-font);padding:var(--space-3) var(--space-3);border-radius:var(--radius-full);cursor:pointer}
+.ed-toast .act:hover{background:color-mix(in srgb,var(--toast-fg) 10%,transparent)}.ed-toast .act:focus-visible{outline:2px solid var(--toast-action)}
+.ed-toast:not(:has(.act)){padding-right:var(--space-4)}
+.fld.err .in,.fld.err .in:focus{background:var(--input-bg-error);outline:none;box-shadow:inset 0 0 0 1px var(--input-border-error)}
+.err-msg{display:flex;gap:var(--space-1);align-items:flex-start;font:var(--body-sm);color:var(--danger-tint-foreground);margin:var(--space-1) 0 0}
+.err-msg .ms{font-size:16px;margin-top:2px}
+.err-msg.soft{color:var(--text-2)}
+.ac-tab{position:relative;display:flex;align-items:center;gap:var(--sidenav-item-gap);width:100%;min-height:var(--sidenav-item-h);padding:var(--sidenav-item-pad);border:0;border-radius:var(--sidenav-item-radius);background:none;font:var(--sidenav-item-font);color:var(--sidenav-item-fg);text-align:left;cursor:pointer;white-space:nowrap}
+.ac-tab .ms{font-size:20px;flex:none;overflow:hidden}
+.ac-tab .tl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}.ac-tab .ts{display:none}
+.ac-tab:hover{background:var(--sidenav-item-bg-hover);color:var(--sidenav-item-fg-hover)}
+.ac-tab[aria-current=page]{background:var(--sidenav-item-bg-selected);color:var(--sidenav-item-fg-selected);font-weight:var(--sidenav-item-weight-selected)}
+.ac-tab[aria-current=page] .ms{font-variation-settings:'FILL' 1,'wght' 400,'opsz' 20}
+.ac-tab:focus-visible{outline:2px solid var(--focus-ring);outline-offset:-2px}
+@keyframes mFade{from{opacity:0}to{opacity:1}}
+@keyframes mDlg{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+.dlg{animation:mFade 240ms var(--ease-enter) both}.dlg>.dg{animation:mDlg 360ms var(--ease-enter) both}
+
+/* ---------- หน้าบัญชี (ต้นแบบ) · ใช้ component และ token ชุดเดียวกับหลังบ้าน ---------- */
+body{background:var(--background);min-height:100%;height:auto}
+a{color:var(--link)}
+.tbd-tag{font-style:normal;font:var(--label-md);padding:1px 6px;border-radius:var(--radius-xs);border:1px dashed var(--border-control);color:var(--text-2);white-space:nowrap}
+.ac-top{position:sticky;top:0;z-index:20;height:56px;display:flex;align-items:center;gap:var(--space-3);padding:0 var(--space-4);background:var(--surface);border-bottom:1px solid var(--border)}
+.ac-brand{display:flex;align-items:center;gap:var(--space-3);font:var(--title-md);color:var(--ink);text-decoration:none;margin-right:auto;min-width:0}
+.ac-brand span.n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-brand{overflow:hidden}.ac-brand .dots,.ac-brand .tbd-tag{flex:none}
+.ac-coin{display:inline-flex;align-items:center;gap:var(--space-1);height:var(--btn-h-sm);padding:0 var(--space-3);border-radius:var(--radius-full);border:1px solid var(--border-control);font:var(--label-lg);color:var(--ink);text-decoration:none;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ac-coin:hover{background:var(--muted)}.ac-coin:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}.ac-coin .ms{font-size:16px;color:var(--text-2)}
+.ac{display:grid;grid-template-columns:var(--sidenav-w) minmax(0,1fr);min-height:calc(100dvh - 56px)}
+.ac-nav{display:flex;flex-direction:column;gap:var(--sidenav-gap);padding:var(--sidenav-pad);background:var(--sidenav-bg);border-right:1px solid var(--sidenav-border)}
+.ac-tab{text-decoration:none}
+.ac-nav .sp{flex:1}
+.ac-main{padding:var(--space-10) var(--space-8) var(--space-16)}
+.ac-pg{max-width:720px;margin:0 auto}
+.ac-pg[hidden]{display:none}
+.ac-h{font:var(--headline-lg);margin:0;color:var(--ink)}.ac-h:focus,.lg-c h1:focus{outline:none}
+.ac-sub{font:var(--body-md);color:var(--text-2);margin:var(--space-1) 0 var(--space-8)}
+.sec{padding:var(--space-6) 0;border-top:1px solid var(--border)}
+.sec:last-child{padding-bottom:0}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3);margin:0 0 var(--space-1)}
+.sec-h h2{font:var(--title-lg);margin:0;color:var(--ink)}
+.sec-d{font:var(--body-sm);color:var(--text-2);margin:0 0 var(--space-4)}
+/* แถวสรุป: หัวข้อซ้าย · ค่า · ปุ่มขวา (ไม่ใช้การ์ดตัวเลข) */
+.row{display:grid;grid-template-columns:140px minmax(0,1fr) auto;gap:var(--space-2) var(--space-4);align-items:center;padding:var(--space-4) 0;border-top:1px solid var(--border)}
+.row:first-of-type{border-top:0;padding-top:0}
+.row dt{font:var(--body-sm);color:var(--text-2);margin:0}
+.row dd{margin:0;min-width:0}
+.row dd b{display:block;font:var(--title-md);color:var(--ink);overflow-wrap:anywhere}
+.row dd span{display:block;font:var(--body-sm);color:var(--text-2)}
+.row .act{display:flex;gap:var(--space-2);flex-wrap:wrap;justify-content:flex-end}
+dl{margin:0}
+.bal{display:flex;align-items:baseline;gap:var(--space-2);margin:0 0 var(--space-1)}
+.bal b{font:var(--display-md);color:var(--ink);font-variant-numeric:tabular-nums}
+.bal span{font:var(--body-md);color:var(--text-2)}
+/* แพ็กเครดิต: แถวเลือกได้อันเดียว */
+.pk-l{list-style:none;margin:0 0 var(--space-4);padding:0;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.pk-l li+li{border-top:1px solid var(--border)}
+.pk-l label{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:var(--space-3);padding:var(--space-4);cursor:pointer;min-height:56px}
+.pk-l label:hover{background:var(--muted)}
+.pk-l input{appearance:none;width:var(--radio-size);height:var(--radio-size);margin:0;border-radius:50%;border:var(--sel-border-width) solid var(--sel-border);background:var(--sel-bg);display:grid;place-items:center;flex:none;cursor:pointer}
+.pk-l input::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--sel-on);transform:scale(0);transition:transform var(--duration-instant) var(--ease-standard)}
+.pk-l input:hover{border-color:var(--sel-border-hover)}
+.pk-l input:checked{border-color:var(--sel-on)}.pk-l input:checked::after{transform:scale(1)}
+.pk-l input:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.pk-l li:has(input:checked){background:var(--primary-tint)}
+.pk-l .n b{display:block;font:var(--title-md);color:var(--ink)}.pk-l .n span{font:var(--body-sm);color:var(--text-2)}
+.pk-l .p{font:var(--title-md);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* ตาราง: ดู table.tb2 ด้านล่าง (table.md) */
+.tb-w{overflow-x:auto}
+.empty{font:var(--body-sm);color:var(--text-2);padding:var(--space-4) 0}
+/* แท่งสัดส่วนการใช้ */
+.use{list-style:none;margin:0;padding:0;display:grid;gap:var(--space-3)}
+.use li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--space-1) var(--space-3);font:var(--body-sm);color:var(--ink)}
+.use .v{font-variant-numeric:tabular-nums;color:var(--text-2)}
+.use .bar{grid-column:1/-1;height:6px;border-radius:var(--radius-full);background:var(--muted);overflow:hidden}
+.use .bar i{display:block;height:100%;border-radius:inherit;background:var(--primary);transform-origin:left;transition:width var(--duration-slow) var(--ease-standard)}
+/* ตัวอย่างปุ่ม AI ในตัวแก้ไข */
+.demo{display:flex;flex-wrap:wrap;gap:var(--space-2);padding:var(--space-4);border:1px dashed var(--border-control);border-radius:var(--radius-md)}
+.btn .cost{display:inline-flex;align-items:center;height:20px;padding:0 var(--space-2);margin-left:var(--space-1);border-radius:var(--radius-full);background:var(--surface);color:var(--primary-tint-foreground);font:var(--label-md);font-variant-numeric:tabular-nums}
+.btn[disabled] .cost{background:transparent;color:inherit}
+/* แพ็กเกจ */
+.pl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.pl>div{padding:var(--space-5) var(--space-4);min-width:0}
+.pl>div+div{border-left:1px solid var(--border)}
+.pl>div.cur{background:var(--primary-tint)}
+.pl h3{font:var(--title-md);margin:0;color:var(--ink);display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
+.pl .pr{font:var(--headline-md);color:var(--ink);margin:var(--space-2) 0 0;font-variant-numeric:tabular-nums}.pl .pr small{font:var(--body-sm);color:var(--text-2)}
+.pl ul{margin:var(--space-3) 0 var(--space-4);padding:0 0 0 var(--space-4);font:var(--body-sm);color:var(--text-2)}.pl li+li{margin-top:var(--space-1)}
+.pl .cur-t{font:var(--label-md);color:var(--primary-tint-foreground)}
+.sel{appearance:none;cursor:pointer}
+.lg-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap}.lg-row .lab{font:var(--body-md);color:var(--ink)}
+.seg button .ms{font-size:18px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 var(--space-4);margin-top:var(--space-3)}
+@media (max-width:519px){.row2{grid-template-columns:minmax(0,1fr)}}
+.fr{display:flex;gap:var(--space-2);align-items:center}.fr .in{flex:1}.fr .sfx{font:var(--body-md);color:var(--text-2);white-space:nowrap}
+.danger-z .btn{margin-top:var(--space-1)}
+/* เข้าสู่ระบบ */
+.sgn{min-height:100dvh;display:grid;place-items:center;padding:var(--space-6) var(--space-4)}
+.sgn[hidden],.app[hidden]{display:none}
+.lg-c{width:min(380px,100%)}
+.lg-c .dots{margin:0 0 var(--space-8)}
+.lg-c h1{font:var(--headline-lg);margin:0;color:var(--ink)}
+.lg-c>p{font:var(--body-md);color:var(--text-2);margin:var(--space-2) 0 var(--space-6)}
+.lg-c .btn{width:100%}
+.g-ic{flex:none}
+.lg-code{font:var(--headline-md);letter-spacing:.4em;text-align:center;font-variant-numeric:tabular-nums;height:var(--input-h-lg,48px)}
+.lg-code::placeholder{letter-spacing:.4em}
+#lgC .btn,#lgN .btn{margin-top:0}
+.lg-or{display:flex;align-items:center;gap:var(--space-3);margin:var(--space-4) 0;font:var(--body-sm);color:var(--text-2)}
+.lg-or::before,.lg-or::after{content:"";flex:1;height:1px;background:var(--border)}
+.lg-f{font:var(--body-sm);color:var(--text-2);margin:var(--space-6) 0 0}
+.lg-acts{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-4)}.lg-acts .btn{width:auto}
+.proto{display:flex;align-items:center;gap:var(--space-2);margin-top:var(--space-8);padding-top:var(--space-4);border-top:1px dashed var(--border-control);font:var(--body-sm);color:var(--text-2);flex-wrap:wrap}
+.proto .btn{width:auto}.proto[hidden]{display:none}
+.note{display:flex;gap:var(--space-2);align-items:flex-start;padding:var(--space-3);border-radius:var(--radius-sm);background:var(--muted);font:var(--body-sm);color:var(--text-2);margin:0 0 var(--space-8)}
+.note .ms{font-size:18px;flex:none}
+.ed-toast{bottom:var(--toast-offset)}
+.emb .ac-top{display:none}
+.emb .ac{grid-template-columns:minmax(0,1fr);min-height:100dvh;align-content:start}
+.emb .ac-nav{flex-direction:row;overflow-x:auto;scrollbar-width:none;border-right:0;border-bottom:1px solid var(--sidenav-border);padding:var(--space-2) var(--space-6);position:sticky;top:0;z-index:10}
+.emb .ac-nav::-webkit-scrollbar{display:none}
+.emb .ac-tab{width:auto;white-space:nowrap;flex:none}
+.emb .ac-nav .sp,.emb #acOut,.emb .ac-nav a[href="#settings"]{display:none}
+.emb.pg-settings .ac-nav{display:none}
+.emb .ac-main{padding-top:var(--space-8)}
+@media (max-width:719px){
+  .emb .ac-nav{padding:var(--space-2) var(--space-3)}
+  .ac{grid-template-columns:minmax(0,1fr)}
+  .ac-nav{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--sidenav-border);padding:var(--space-2) var(--space-3);position:sticky;top:56px;z-index:10}
+  .ac-tab{width:auto;white-space:nowrap;flex:none}.ac-nav .sp{display:none}
+  .ac-main{padding:var(--space-6) var(--space-4) var(--space-12)}
+  .row{grid-template-columns:minmax(0,1fr)}.row .act{justify-content:flex-start}
+  .pl{grid-template-columns:minmax(0,1fr)}.pl>div+div{border-left:0;border-top:1px solid var(--border)}
+  .ac-brand span.n{display:none}
+  .ac-ed{width:var(--h);padding:0}.ac-ed .tx{display:none}
+}
+
+/* ===== ปรับให้ตรง spec ของระบบ (core/components/*.md) · 2026-10-12 =====
+   input.md: ปุ่มล้าง + ตัวนับตัวอักษร · select.md: ไม่ใช้ <select> ของเบราว์เซอร์ (≤3 ตัวเลือกใช้ segmented) · tabs.md: แท็บตัวหนังสือ + เส้นใต้สีหมึก
+   table.md: หัวตาราง 40 ตัว 13/500 แถว compact 40 hover muted มือถือเป็นรายการ · selection.md: radio เลือกแล้วขอบหนา 6 · card.md: การ์ด selectable · avatar.md: ตัวอักษรแรกบนพื้น tonal */
+.lb .cnt{font:var(--caption);color:var(--text-2);font-variant-numeric:tabular-nums}.lb .cnt.over{color:var(--danger)}
+.clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:none;place-items:center;width:28px;height:28px;border:0;border-radius:50%;background:none;color:var(--text-2);cursor:pointer}
+.clr::before{content:"";position:absolute;inset:-8px}
+.clr:hover{background:var(--chip-remove-hover);color:var(--ink)}.clr:active{background:var(--chip-remove-pressed)}.clr:focus-visible{outline:2px solid var(--focus-ring)}
+.clr .ms{font-size:18px}
+.inw.has .clr{display:grid}
+.cnt-end{margin-left:auto}
+.es{max-width:var(--empty-max-w);margin:0 auto;padding:var(--empty-pad);display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--empty-gap)}
+.es-t{font:var(--empty-title);color:var(--ink);margin:0;text-wrap:balance}.es-d{font:var(--empty-body);color:var(--empty-body-fg);margin:0;text-wrap:pretty}
+.es.sm{padding:var(--empty-pad-sm)}.es.sm .es-t{font:var(--empty-title-sm)}.es.sm .es-d{font:var(--empty-body-sm)}.es.sm .es-a{margin-top:var(--space-1)}
+.inw.cbx .in{padding-right:76px}.inw.cbx .clr{right:40px}
+.cbx-b{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:50%;background:none;color:var(--text-2);cursor:pointer}
+.cbx-b:hover{background:var(--chip-remove-hover);color:var(--ink)}.cbx-b:disabled{color:var(--text-disabled);cursor:not-allowed;background:none}.cbx-b .ms{font-size:20px}
+.mn{position:fixed;z-index:60;overflow:auto;max-height:280px;padding:var(--menu-pad);background:var(--menu-bg);border-radius:var(--menu-radius);box-shadow:var(--menu-shadow);animation:mFade var(--duration-fast) var(--ease-enter) both}
+.mn .mi{display:flex;align-items:center;justify-content:space-between;gap:var(--menu-item-gap);width:100%;min-height:var(--menu-item-h);padding:var(--menu-item-pad);border:0;border-radius:var(--menu-item-radius);background:none;font:var(--menu-item-font);color:var(--menu-item-fg);text-align:left;cursor:pointer;font-variant-numeric:tabular-nums}
+.mn .mi:hover,.mn .mi:focus{background:var(--menu-item-hover);outline:none}.mn .mi:focus-visible{box-shadow:inset 0 0 0 2px var(--focus-ring)}
+.mn .mi .ms{font-size:18px;color:var(--link)}
+.inw.sfx{display:flex;align-items:center;gap:var(--space-2)}.inw.sfx .sfx-in{position:relative;flex:1;min-width:0;display:block}.inw.sfx .sx{flex:none;font:var(--body-sm);color:var(--text-2);white-space:nowrap}
+/* Tabs (tabs.md · แบบ static) */
+.tbl{display:flex;gap:var(--tabs-gap);overflow-x:auto;scrollbar-width:none;padding:var(--space-1) var(--space-8) 0;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.tbl::-webkit-scrollbar{display:none}
+.tbl[hidden]{display:none}
+.tb{position:relative;flex:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;height:var(--tabs-h);border:0;background:none;padding:0;font:var(--tabs-font);color:var(--tabs-fg);cursor:pointer;border-radius:var(--radius-xs);transition:color var(--duration-instant) var(--ease-standard);white-space:nowrap}
+.tb::after{content:attr(data-label);font-weight:var(--tabs-weight-selected);height:0;visibility:hidden;overflow:hidden}
+.tb:hover,.tb:active{color:var(--tabs-fg-hover)}
+.tb[aria-selected=true]{color:var(--tabs-fg-selected);font-weight:var(--tabs-weight-selected)}
+.tb[aria-selected=true]::before{content:"";position:absolute;left:0;right:0;bottom:var(--tabs-indicator-offset);height:var(--tabs-indicator-h);border-radius:2px;background:var(--tabs-indicator)}
+.tb:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.emb .ac-nav{display:none}
+html:not(.emb) .tbl{display:none}
+/* Table (table.md · compact) */
+table.tb2{width:100%;border-collapse:collapse;font:var(--table-font);color:var(--table-fg)}
+.tb2 th{height:var(--table-head-h);padding:0 var(--space-3) 0 0;text-align:left;border-bottom:1px solid var(--table-head-border);font:var(--table-head-font);color:var(--table-head-fg);white-space:nowrap}
+.tb2 td{height:var(--table-row-h-compact);padding:var(--space-2) var(--space-3) var(--space-2) 0;border-bottom:1px solid var(--table-divider);vertical-align:middle;transition:background-color var(--duration-instant)}
+.tb2 tbody tr:hover td{background:var(--table-row-hover)}
+.tb2 td small{display:block;font:var(--caption);color:var(--table-fg-2)}
+.tb2 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;padding-right:0}
+.tb2 td.sub{color:var(--table-fg-2)}
+.tb2 td.act{white-space:nowrap}.tb2 td.act .btn{color:var(--text-2)}.tb2 td.act .btn:hover{color:var(--ink)}
+@media (max-width:719px){
+  .tb2 thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .tb2,.tb2 tbody{display:block}
+  .tb2 tr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:0 var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--table-divider);min-height:64px;align-content:center}
+  .tb2 td{height:auto;padding:0;border:0}
+  .tb2 tbody tr:hover td{background:none}
+  .tb2 td.main{grid-column:1;font:var(--title-md)}
+  .tb2 td.sub{grid-column:1;font:var(--body-sm)}
+  .tb2 td.num{grid-column:2;grid-row:1}
+  .tb2 td.num+td.num{grid-row:2;color:var(--table-fg-2);font:var(--body-sm)}
+  .tb2 td.hide-m{display:none}
+  .tb2 td.num+td.num.act{grid-column:1/-1;grid-row:auto;text-align:left;margin:var(--space-1) 0 0 calc(var(--space-2) * -1)}
+  .tbl{padding:var(--space-1) var(--space-4) 0}
+}
+/* Radio (selection.md) + การ์ด selectable (card.md) */
+.pk-l{border:0;border-radius:0;overflow:visible;display:grid;gap:var(--space-2)}
+.pk-l li+li{border-top:0}
+.pk-l label{border:1.5px solid var(--border);border-radius:var(--radius-md);transition:border-color var(--duration-instant),background-color var(--duration-instant)}
+.pk-l label:hover{background:none;border-color:var(--border-strong)}
+.pk-l li:has(input:checked){background:none}
+.pk-l li:has(input:checked) label{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 5%,transparent)}
+.pk-l li:has(input:focus-visible) label{outline:2px solid var(--focus-ring);outline-offset:2px}
+.pk-l input{border:var(--sel-border-width) solid var(--sel-border);transition:border-width var(--duration-instant) var(--ease-standard)}
+.pk-l input::after{display:none}
+.pk-l input:checked{border:var(--radio-on-ring) solid var(--sel-on)}
+.pk-l input:focus-visible{outline:none}
+/* Avatar (avatar.md) */
+.avt{width:var(--s,var(--avatar-40));height:var(--s,var(--avatar-40));border-radius:50%;background:var(--avatar-bg);color:var(--avatar-fg);display:inline-flex;align-items:center;justify-content:center;flex:none;font:500 var(--fs,15px)/1 var(--font-sans);user-select:none}
+.avt .ms{font-size:calc(var(--s,40px)*.6);font-variation-settings:'FILL' 1,'wght' 400,'opsz' 24}
+.av-row{display:flex;align-items:center;gap:var(--space-4);margin:var(--space-3) 0 var(--space-5)}
+.av-row div{min-width:0}.av-row b{display:block;font:var(--title-md);color:var(--ink)}.av-row div span{font:var(--body-sm);color:var(--text-2)}
+.sec .fld:last-child{margin-bottom:0}
+.sec-h{min-height:28px;align-items:center}
+html.fs-lg{--body-lg:400 18px/1.7 var(--font-sans);--body-md:400 17px/1.7 var(--font-sans);--body-sm:400 16px/1.6 var(--font-sans);--caption:400 16px/1.5 var(--font-sans);--label-lg:500 16px/1.4 var(--font-sans);--label-md:500 16px/1.4 var(--font-sans);--title-md:500 17px/1.5 var(--font-sans);--title-lg:500 19px/1.45 var(--font-sans);--btn-font:500 16px/1 var(--font-sans);--btn-font-sm:500 15px/1 var(--font-sans);--sidenav-item-font:500 16px/1.3 var(--font-sans);--seg-font:400 15px/1 var(--font-sans);--tabs-font:400 17px/1 var(--font-sans);--table-font:400 16px/1.4 var(--font-sans);--table-head-font:500 15px/1.3 var(--font-sans)}
+html.fs-lg .btn.sm{font-size:16px}html.fs-lg .hint,html.fs-lg .err-msg,html.fs-lg .cnt,html.fs-lg .opt,html.fs-lg small{font-size:16px}
+@media (max-width:719px){:root{--caption:400 14px/1.5 var(--font-sans);--label-md:500 13px/1.4 var(--font-sans);--body-sm:400 14px/1.6 var(--font-sans)}}
+/* มิเตอร์เครดิต (อิงหน้า Usage ของ Claude: ตัวเลขคงเหลือ + แท่งเดียวบอกว่าใช้ไปกี่เปอร์เซ็นต์) */
+.mt{max-width:420px}
+.mt-n{display:flex;align-items:baseline;gap:var(--space-2);margin:0 0 var(--space-3)}
+.mt-n .ms{font-size:22px;color:var(--primary);align-self:center}
+.mt-n b{font:var(--headline-lg);color:var(--ink);font-variant-numeric:tabular-nums}.mt.big .mt-n b{font:var(--display-md)}
+.mt-n span:last-child{font:var(--body-md);color:var(--text-2)}
+.cr-bar{height:8px;border-radius:var(--radius-full);background:var(--muted);overflow:hidden}
+.cr-bar i{display:block;height:100%;border-radius:inherit;background:var(--primary);transition:width var(--duration-slow) var(--ease-standard)}
+.cr-bar[data-lv=warn] i{background:var(--warning)}.cr-bar[data-lv=crit] i,.cr-bar[data-lv=out] i{background:var(--danger)}
+.cr-s{display:flex;justify-content:space-between;gap:var(--space-2);margin:var(--space-2) 0 0;font:var(--body-sm);color:var(--text-2);font-variant-numeric:tabular-nums}
+.cr-w{display:flex;gap:var(--space-2);margin:var(--space-3) 0 0;padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);font:var(--body-sm)}.cr-w .ms{font-size:16px;flex:none;margin-top:2px}
+.cr-w[data-lv=warn]{background:var(--warning-tint);color:var(--warning-tint-foreground)}.cr-w[data-lv=crit],.cr-w[data-lv=out]{background:var(--danger-tint);color:var(--danger-tint-foreground)}
+.ac-coin .ms{color:var(--primary)}
+/* ===== สถิติ ===== */
+.an-top{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;margin:0 0 var(--space-6)}
+.an-top .upd{font:var(--body-sm);color:var(--text-2);display:inline-flex;align-items:center;gap:var(--space-1)}
+.kp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-6);margin:0 0 var(--space-8)}
+.kp dt{font:var(--body-sm);color:var(--text-2);margin:0 0 var(--space-1)}
+.kp dd{margin:0}
+.kp b{display:block;font:var(--display-md);color:var(--ink);font-variant-numeric:tabular-nums}
+.kp .dl{display:inline-flex;align-items:center;gap:var(--space-1);font:var(--body-sm);color:var(--text-2);margin-top:var(--space-1)}.kp .dl .ms{font-size:16px}
+.ch{margin:0}
+.ch svg{display:block;width:100%;height:auto;overflow:visible}
+.ch .bar{fill:var(--primary)}.ch .bar:hover{fill:var(--primary-hover)}
+.ch .gl{stroke:var(--border);stroke-width:1}
+.ch text{font:var(--label-md);fill:var(--text-2);font-variant-numeric:tabular-nums}
+.ch figcaption{font:var(--body-sm);color:var(--text-2);margin-top:var(--space-2)}
+.sec-h .seg{flex:none}
+@media (max-width:719px){.kp{grid-template-columns:minmax(0,1fr);gap:var(--space-4)}.kp b{font:var(--headline-lg)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+</style>
+<script>(function(){var r=document.documentElement,t;if(window.PF_EMBED||/[?&]embed=1/.test(location.search))r.className+=' emb';if(window.PF_EMBED)return;try{t=localStorage.getItem('theme')}catch(e){}r.setAttribute('data-theme',t==='dark'?'dark':'light')})()</script>
+</head>
+<body>
+<!-- ============ เข้าสู่ระบบ ============ -->
+<main class="sgn" id="lg" hidden>
+  <div class="lg-c">
+    <span class="dots" aria-hidden="true"><svg viewBox="0 0 34 24" focusable="false"><path d="M3 21V11a5.5 5.5 0 0 1 11 0v10M14 11a5.5 5.5 0 0 1 11 0v10" fill="none" stroke="var(--logo-dot)" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30.6" cy="19.6" r="2.6" fill="var(--logo-dot-accent)"/></svg></span>
+    <div id="lgForm">
+      <h1>เข้าสู่ระบบ</h1>
+      <p>ใช้บัญชี Google หรืออีเมล ไม่ต้องตั้งรหัสผ่าน ยังไม่มีบัญชีก็ใช้วิธีเดียวกัน</p>
+      <button type="button" class="btn outlined lg" id="lgG"><svg class="g-ic" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 0 1 0-3.44V4.95H.96a9 9 0 0 0 0 8.1l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.59A8.65 8.65 0 0 0 9 0 9 9 0 0 0 .96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>เข้าด้วย Google</button>
+      <div class="lg-or">หรือ</div>
+      <form id="lgF" novalidate>
+        <div class="fld" id="lgFld"><span class="lb"><label for="lgE">อีเมล</label></span><span class="inw"><input class="in" id="lgE" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="name@company.com"><button type="button" class="clr" data-clr tabindex="-1" aria-label="ล้างอีเมล"><span class="ms" aria-hidden="true">close</span></button></span></div>
+        <button type="submit" class="btn filled lg" id="lgSend">ส่งรหัสไปที่อีเมล</button>
+      </form>
+    </div>
+    <div id="lgSent" hidden>
+      <h1 id="lgSentH" tabindex="-1">ใส่รหัส 6 หลัก</h1>
+      <p>ส่งรหัสไปที่ <b id="lgTo"></b> แล้ว รหัสใช้ได้ 10 นาที ถ้าไม่เจอ ดูในกล่องจดหมายขยะ</p>
+      <form id="lgC" novalidate>
+        <div class="fld" id="lgCFld"><span class="lb"><label for="lgCode">รหัสจากอีเมล</label></span><input class="in lg-code" id="lgCode" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" placeholder="000000"></div>
+        <button type="submit" class="btn filled lg" id="lgOk">ยืนยันรหัส</button>
+      </form>
+      <div class="lg-acts"><button type="button" class="btn outlined" id="lgAgain">ส่งรหัสอีกครั้ง</button><button type="button" class="btn ghost" id="lgOther">ใช้อีเมลอื่น</button></div>
+    </div>
+    <div id="lgName" hidden>
+      <h1 id="lgNameH" tabindex="-1">ให้เรียกคุณว่าอะไรดี</h1>
+      <p>ใช้ในหลังบ้านและใบเสร็จ เปลี่ยนทีหลังได้ในตั้งค่า</p>
+      <form id="lgN" novalidate>
+        <div class="fld" id="lgNFld"><span class="lb"><label for="lgNm">ชื่อ</label><span class="cnt cnt-end" data-cnt="60">0 / 60</span></span><span class="inw"><input class="in" id="lgNm" maxlength="60" autocomplete="name" aria-describedby="lgNmH"><button type="button" class="clr" data-clr tabindex="-1" aria-label="ล้างชื่อ"><span class="ms" aria-hidden="true">close</span></button></span><span class="hint" id="lgNmH">ชื่อเล่นหรือชื่อจริงก็ได้ ใช้ตัวอักษรและตัวเลข</span></div>
+        <button type="submit" class="btn filled lg">เริ่มใช้งาน</button>
+      </form>
+    </div>
+    <div class="proto" id="lgProto" hidden><i class="tbd-tag">dev</i><span id="lgPT">โหมด dev</span><button type="button" class="btn text sm" id="lgFill" hidden>ใส่รหัสให้</button><button type="button" class="btn text sm" id="lgSkip">เข้าได้เลย</button></div>
+  </div>
+</main>
+
+<!-- ============ หลังบ้านของผู้ใช้ ============ -->
+<div class="app" id="app" hidden>
+<header class="ac-top">
+  <a class="ac-brand" href="editor.html"><span class="dots" aria-hidden="true"><svg viewBox="0 0 34 24" focusable="false"><path d="M3 21V11a5.5 5.5 0 0 1 11 0v10M14 11a5.5 5.5 0 0 1 11 0v10" fill="none" stroke="var(--logo-dot)" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30.6" cy="19.6" r="2.6" fill="var(--logo-dot-accent)"/></svg></span><span class="n">Migma</span></a>
+  <a class="ac-coin" href="#credits" id="acCoin" aria-label="เครดิต AI คงเหลือ"><span class="ms" aria-hidden="true">generating_tokens</span><span id="acCoinN">0</span></a>
+  <a class="btn outlined sm ac-ed" href="editor.html" aria-label="แก้ Portfolio"><span class="ms" aria-hidden="true">edit</span><span class="tx">แก้ Portfolio</span></a>
+  <button type="button" class="btn ghost sm icon" id="acTheme" aria-label="สลับโหมดมืด"><span class="ms" aria-hidden="true">dark_mode</span></button>
+</header>
+<div class="ac">
+  <nav class="ac-nav" aria-label="บัญชีของฉัน" id="acNav">
+    <a class="ac-tab" href="#overview"><span class="ms" aria-hidden="true">home</span><span class="tl">ภาพรวม</span></a>
+    <a class="ac-tab" href="#stats"><span class="ms" aria-hidden="true">bar_chart</span><span class="tl">สถิติ</span></a>
+    <a class="ac-tab" href="#credits"><span class="ms" aria-hidden="true">generating_tokens</span><span class="tl">เครดิต AI</span></a>
+    <a class="ac-tab" href="#usage"><span class="ms" aria-hidden="true">auto_awesome</span><span class="tl">การใช้ AI</span></a>
+    <a class="ac-tab" href="#plan"><span class="ms" aria-hidden="true">receipt_long</span><span class="tl">แพ็กเกจและใบเสร็จ</span></a>
+    <a class="ac-tab" href="#settings"><span class="ms" aria-hidden="true">settings</span><span class="tl">ตั้งค่า</span></a>
+    <span class="sp"></span>
+    <button type="button" class="ac-tab" id="acOut"><span class="ms" aria-hidden="true">logout</span><span class="tl">ออกจากระบบ</span></button>
+  </nav>
+  <div><div class="tbl" id="acTabs" role="tablist" aria-label="บัญชีของฉัน" hidden></div><main class="ac-main" id="acMain"></main></div>
+</div>
+</div>
+<div class="ed-toast" id="edToast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)},esc=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+var LS={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+/* ---------- ราคา AI แต่ละจุด (ตัวเลขตั้งต้นจากรายงานวิเคราะห์ตลาดและราคา ปรับได้ที่นี่ที่เดียว) ---------- */
+var COST=[
+ {k:'case',n:'ร่าง Case study จากโน้ต',w:'ผลงาน › Case study',c:5,u:'ต่อ 1 ตอน'},
+ {k:'resume',n:'อ่าน Resume แล้วเติมโปรไฟล์',w:'ให้ AI ช่วยกรอก',c:10,u:'ต่อ 1 ไฟล์'},
+ {k:'tr',n:'แปลไทยเป็นอังกฤษ',w:'หน้าตา › ภาษาของเว็บ',c:2,u:'ต่อ 10 ช่อง'},
+ {k:'polish',n:'เกลาข้อความ',w:'ช่องข้อความที่มีปุ่ม AI',c:1,u:'ต่อ 1 ช่อง'},
+ {k:'steps',n:'เสนอขั้นตอนวิธีทำงาน',w:'วิธีทำงาน',c:2,u:'ต่อ 1 ครั้ง'}];
+var PACKS=[{k:'s',coin:100,thb:99},{k:'m',coin:300,thb:249},{k:'l',coin:700,thb:499}];
+var MON=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+var fd=function(s,time){var d=new Date(s);return d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear()+(time?' · '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2):'')};
+/* ---------- บัญชี (เก็บในเครื่องจนกว่าจะต่อระบบจริง) ----------
+   โหมด dev: เปิด ?dev=1 หนึ่งครั้ง (ปิดด้วย ?dev=0) จะโชว์รหัสเข้าสู่ระบบใต้ฟอร์ม มีปุ่มข้าม และหน้าสถิติมีตัวเลขจำลองไว้ดูหน้าตา · ปกติไม่มีของพวกนี้ */
+(function(){var m=/[?&]dev=([01])/.exec(location.search);if(m){if(m[1]==='1')LS.set('pf-dev','1');else try{localStorage.removeItem('pf-dev')}catch(e){}}})();
+var DEV=LS.get('pf-dev')==='1';
+function seed(){var nm='';try{var p=JSON.parse(LS.get('pf-saved')||LS.get('pf-published')||'null');nm=p&&p.profile&&(p.profile.name||p.profile.fullName)||''}catch(e){}
+  return{v:1,signed:false,email:'',name:nm,slug:(nm||'yourname').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'yourname',plan:'free',passEnd:'',coins:20,base:20,ask:true,low:20,lowAt:'09:00',mail:{low:true,exp:true,news:false},
+   log:[],tops:[{t:new Date().toISOString().slice(0,16),d:'เครดิตต้อนรับ',coin:20,thb:0}],bills:[],links:[]}}
+var A;try{A=JSON.parse(LS.get('pf-acct-demo')||'null')}catch(e){}if(!A||A.v!==1)A=seed();if(!A.base)A.base=Math.max(A.coins,1);if(!A.lowAt)A.lowAt='09:00';A.bills.forEach(function(b,i){if(!b.no)b.no='MG-2610-'+('000'+(A.bills.length-i)).slice(-4)});
+var EMB=/(^| )emb( |$)/.test(document.documentElement.className),up=function(m){if(EMB)try{parent.postMessage(m,'*')}catch(e){}};
+function save(){LS.set('pf-acct-demo',JSON.stringify(A));up({type:'pf:acct',coins:A.coins,signed:A.signed,data:JSON.stringify(A)})}
+var costOf=function(k){return COST.filter(function(x){return x.k===k})[0]};
+var tT=0;function toast(t,act){var el=$('edToast');el.innerHTML='<span>'+esc(t)+'</span>'+(act?'<button type="button" class="act">'+esc(act.label)+'</button>':'');el.classList.add('on');if(act)el.querySelector('.act').onclick=function(){el.classList.remove('on');act.fn()};clearTimeout(tT);tT=setTimeout(function(){el.classList.remove('on')},act?6000:4000)}
+function modal(html){var d=document.createElement('div');d.className='dlg';d.innerHTML='<div class="dg md" role="dialog" aria-modal="true" aria-labelledby="dgT">'+html+'</div>';var back=document.activeElement;document.body.appendChild(d);
+  var close=function(){d.remove();document.removeEventListener('keydown',key,true);back&&back.focus&&back.focus()},key=function(e){if(e.key==='Escape'){e.stopPropagation();close()}if(e.key==='Tab'){var f=d.querySelectorAll('button,input,select,textarea,a[href]'),a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}};
+  document.addEventListener('keydown',key,true);d.addEventListener('mousedown',function(e){if(e.target===d)close()});return{box:d,close:close}}
+var fld=function(id,label,val,o){o=o||{};var v=val==null?'':String(val);return '<div class="fld"><span class="lb"><label for="'+id+'">'+esc(label)+'</label>'+(o.opt?'<span class="opt">ไม่บังคับ</span>':'')+(o.max&&!o.dis?'<span class="cnt cnt-end" data-cnt="'+o.max+'">'+v.length+' / '+o.max+'</span>':'')+'</span><span class="inw'+(v&&!o.dis?' has':'')+(o.sfx?' sfx':'')+(o.cbx?' cbx':'')+'">'+(o.sfx?'<span class="sfx-in">':'')+'<input class="in" id="'+id+'" type="'+(o.type||'text')+'"'+(o.set?' data-set="'+o.set+'"':'')+' value="'+esc(v)+'"'+(o.max?' maxlength="'+o.max+'"':'')+(o.ph?' placeholder="'+esc(o.ph)+'"':'')+(o.dis?' disabled':'')+(o.attr||'')+' autocomplete="'+(o.ac||'off')+'">'+(o.cbx?'<button type="button" class="cbx-b" data-cbx tabindex="-1" aria-label="เลือก'+esc(label)+'จากรายการ"'+(o.dis?' disabled':'')+'><span class="ms" aria-hidden="true">expand_more</span></button>':'')+(o.dis?'':'<button type="button" class="clr" data-clr tabindex="-1" aria-label="ล้าง'+esc(label)+'"><span class="ms" aria-hidden="true">close</span></button>')+(o.sfx?'</span><span class="sx">'+esc(o.sfx)+'</span>':'')+'</span>'+(o.hint?'<span class="hint">'+o.hint+'</span>':'')+'</div>'};
+var seg=function(attr,cur,opts,labId){return '<div class="seg" role="radiogroup" aria-labelledby="'+labId+'">'+opts.map(function(o){return '<button type="button" role="radio" data-'+attr+'="'+o[0]+'" aria-checked="'+(String(cur)===String(o[0]))+'">'+(o[2]?'<span class="ms" aria-hidden="true">'+o[2]+'</span>':'')+esc(o[1])+'</button>'}).join('')+'</div>'};
+var initial=function(n){n=String(n||'').replace(/^(นาย|นางสาว|นาง|Mr\.?|Ms\.?|Mrs\.?)\s*/i,'').trim();if(!n)return '<span class="ms" aria-hidden="true">person</span>';if(/[\u0E00-\u0E7F]/.test(n.charAt(0)))return esc(n.replace(/^[เแโใไ]/,'').charAt(0)||n.charAt(0));var w=n.split(/\s+/);return esc((w[0].charAt(0)+(w[1]?w[1].charAt(0):'')).toUpperCase())};
+var sw=function(label,key,on,sub){return '<label class="swr"><span class="lab">'+esc(label)+(sub?'<small>'+esc(sub)+'</small>':'')+'</span><input type="checkbox" role="switch" data-sw="'+key+'"'+(on?' checked':'')+'><span class="trk" aria-hidden="true"><i></i></span></label>'};
+var daysLeft=function(){return Math.max(0,Math.ceil((new Date(A.passEnd)-new Date())/864e5))};
+var monthUse=function(){var n=new Date(),o={},tot=0;A.log.forEach(function(l){var d=new Date(l.t);if(d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear()){o[l.k]=(o[l.k]||0)+l.c;tot+=l.c}});return{by:o,tot:tot}};
+var SUP='support@migma.site',help=function(what){return '<section class="sec"><div class="sec-h"><h2>ติดต่อทีมงาน</h2></div><p class="sec-d">'+what+' เขียนมาที่อีเมลนี้ได้เลย แนบเลขที่ใบเสร็จมาด้วยจะตรวจให้ได้เร็วขึ้น</p><div class="lg-acts" style="margin-top:0"><a class="btn outlined" href="mailto:'+SUP+'"><span class="ms" aria-hidden="true">mail</span>'+SUP+'</a><button type="button" class="btn ghost" data-copy="'+SUP+'"><span class="ms" aria-hidden="true">content_copy</span>คัดลอกอีเมล</button></div></section>'};
+var PLAN={free:'Free',pass:'Job Hunt Pass',pro:'Pro รายปี'};
+var crPct=function(){var b=Math.max(A.base||A.coins,1);return Math.min(100,Math.max(0,Math.round((b-A.coins)/b*100)))},crLv=function(){var p=crPct();return A.coins<=0?'out':p>=90?'crit':p>=75?'warn':''};
+function meter(big){var p=crPct(),lv=crLv(),b=Math.max(A.base||A.coins,1),W={warn:['warning','ใช้ไปเกิน 75% แล้ว เติมไว้ก่อนได้ เครดิตไม่มีวันหมดอายุ'],crit:['warning','เหลือไม่ถึง 10% ใช้ AI ได้อีกไม่กี่ครั้ง'],out:['error','เครดิตหมดแล้ว ปุ่ม AI ใช้ไม่ได้จนกว่าจะเติม ส่วนอื่นของเว็บใช้ได้ปกติ']}[lv];
+  return '<div class="mt'+(big?' big':'')+'"><p class="mt-n"><span class="ms" aria-hidden="true">generating_tokens</span><b id="balN">'+A.coins+'</b><span>เครดิตคงเหลือ</span></p><div class="cr-bar"'+(lv?' data-lv="'+lv+'"':'')+' role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+p+'" aria-label="ใช้ไปแล้ว '+p+' เปอร์เซ็นต์"><i style="width:'+p+'%"></i></div><p class="cr-s"><span>ใช้ไป '+(b-A.coins)+' จาก '+b+' เครดิต</span><span>'+p+'%</span></p>'+(W?'<p class="cr-w" data-lv="'+lv+'"><span class="ms" aria-hidden="true">'+W[0]+'</span><span>'+W[1]+'</span></p>':'')+'</div>'}
+var logRows=function(a){return a.length?'<div class="tb-w"><table class="tb2"><thead><tr><th scope="col">ใช้ทำอะไร</th><th scope="col">เมื่อ</th><th scope="col" class="num">เครดิต</th></tr></thead><tbody>'+a.map(function(l){var c=costOf(l.k)||{n:l.k};return '<tr><td class="main">'+esc(c.n)+'<small>'+esc(l.d)+'</small></td><td class="sub">'+fd(l.t,1)+'</td><td class="num">−'+l.c+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="es sm"><p class="es-t">ยังไม่ได้ใช้ AI</p><p class="es-d">กดปุ่ม AI ในตัวแก้ Portfolio แล้วรายการจะขึ้นที่นี่</p></div>'};
+/* ---------- สถิติ (ยังไม่มีแหล่งข้อมูลจริง: ปกติทุกตัวเป็น 0 · โหมด dev ใช้ตัวเลขจำลองจากสูตรคงที่ไว้ดูหน้าตา) ----------
+   คำถามที่หน้านี้ตอบ: มีคนเปิดดูไหม · มาจากไหน · ดูงานชิ้นไหน · บริษัทที่ส่งลิงก์ไปเปิดดูหรือยัง */
+var RNG=30,SEGK='src';
+var dayV=function(i){if(!DEV)return 0;var x=Math.sin((i+3)*12.9898)*43758.5453;x=x-Math.floor(x);var wd=new Date(Date.now()-i*864e5).getDay();return Math.round((wd===0||wd===6?2:6)+x*9+(i<10?4:0))};
+function series(n,off){var a=[];for(var i=n-1;i>=0;i--)a.push({d:new Date(Date.now()-(i+(off||0))*864e5),v:dayV(i+(off||0))});return a}
+var sum=function(a){return a.reduce(function(x,y){return x+y.v},0)};
+function delta(now,prev,unit){var d=now-prev;return '<span class="dl"><span class="ms" aria-hidden="true">'+(d>0?'trending_up':d<0?'trending_down':'trending_flat')+'</span>'+(d===0?'เท่ากับช่วงก่อนหน้า':(d>0?'มากกว่า':'น้อยกว่า')+'ช่วงก่อนหน้า '+Math.abs(d)+(unit||''))+'</span>'}
+function chart(a){var wk=a.length>31,pts=[];if(wk){for(var i=0;i<a.length;i+=7){var c=a.slice(i,i+7);pts.push({d:c[0].d,v:sum(c)})}}else pts=a;
+  var W=720,H=180,L=28,B=22,mx=Math.max.apply(null,pts.map(function(p){return p.v}).concat([1])),top=mx>10?Math.ceil(mx/10)*10:Math.max(2,Math.ceil(mx/2)*2),bw=(W-L)/pts.length,x=function(i){return L+i*bw},y=function(v){return (H-B)*(1-v/top)};
+  var lab=function(d){return d.getDate()+' '+MON[d.getMonth()]},ti=[0,Math.floor((pts.length-1)/2),pts.length-1];
+  return '<figure class="ch"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="คนเข้าดู'+(wk?'รายสัปดาห์':'รายวัน')+' สูงสุด '+mx+' คน"><line class="gl" x1="'+L+'" x2="'+W+'" y1="'+y(top)+'" y2="'+y(top)+'"/><line class="gl" x1="'+L+'" x2="'+W+'" y1="'+y(top/2)+'" y2="'+y(top/2)+'"/><line class="gl" x1="'+L+'" x2="'+W+'" y1="'+(H-B)+'" y2="'+(H-B)+'"/>'+
+   '<text x="'+(L-6)+'" y="'+(y(top)+4)+'" text-anchor="end">'+top+'</text><text x="'+(L-6)+'" y="'+(y(top/2)+4)+'" text-anchor="end">'+(top/2)+'</text><text x="'+(L-6)+'" y="'+(H-B+4)+'" text-anchor="end">0</text>'+
+   pts.map(function(p,i){var h=Math.max(1,(H-B)-y(p.v));return '<rect class="bar" x="'+(x(i)+bw*.18).toFixed(1)+'" y="'+(H-B-h).toFixed(1)+'" width="'+(bw*.64).toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2"><title>'+lab(p.d)+(wk?' (สัปดาห์)':'')+' · '+p.v+' คน</title></rect>'}).join('')+
+   ti.map(function(i,k){return '<text x="'+(k===0?x(i):k===2?W:x(i)+bw/2)+'" y="'+(H-4)+'" text-anchor="'+(k===0?'start':k===2?'end':'middle')+'">'+lab(pts[i].d)+'</text>'}).join('')+'</svg><figcaption>'+(wk?'รวมเป็นรายสัปดาห์':'รายวัน')+' ชี้ที่แท่งเพื่อดูตัวเลข</figcaption></figure>'}
+function bars(rows){var mx=Math.max.apply(null,rows.map(function(r){return r[1]}).concat([1]));return '<ul class="use">'+rows.map(function(r){return '<li><span>'+esc(r[0])+'</span><span class="v">'+r[1]+'</span><span class="bar" aria-hidden="true"><i style="width:'+Math.round(r[1]/mx*100)+'%"></i></span></li>'}).join('')+'</ul>'}
+function workNames(){try{var p=JSON.parse(LS.get('pf-saved')||LS.get('pf-published')||'null'),w=(p&&p.works||[]).map(function(x){return x.title}).filter(Boolean);if(w.length)return w.slice(0,5)}catch(e){}return ['Banking app redesign','Clinic queue','Onboarding study','Kit for teams']}
+/* ---------- หน้าต่างๆ ---------- */
+var V={
+overview:function(){var mu=monthUse();return '<h1 class="ac-h" tabindex="-1">ภาพรวม</h1><p class="ac-sub">'+(A.name?esc(A.name)+' · ':'')+esc(A.email||'')+'</p>'+
+ '<dl><div class="row"><dt>เว็บของคุณ</dt><dd><b>'+esc(A.slug)+'.migma.site</b><span>ที่อยู่เว็บเปลี่ยนได้ในตั้งค่า</span></dd><div class="act"><a class="btn outlined sm" href="landing-preview.html">เปิดเว็บ</a><a class="btn filled sm" href="editor.html">แก้ Portfolio</a></div></div>'+
+ '<div class="row"><dt>แพ็กเกจ</dt><dd><b>'+PLAN[A.plan]+'</b><span>'+(A.plan==='pass'?'ใช้ได้ถึง '+fd(A.passEnd)+' เหลือ '+daysLeft()+' วัน หมดแล้วเว็บยังอยู่ กลับเป็นแพ็ก Free':A.plan==='free'?'เว็บออนไลน์ตลอด มีป้าย Made with Migma':'ต่ออายุปีละครั้ง')+'</span></dd><div class="act"><a class="btn outlined sm" href="#plan">ดูแพ็กเกจ</a></div></div>'+
+ '<div class="row"><dt>เครดิต AI</dt><dd><b>'+A.coins+' เครดิต</b><span>ใช้ไปแล้ว '+crPct()+'% ของที่เติมล่าสุด เดือนนี้ใช้ '+mu.tot+' เครดิต</span></dd><div class="act"><a class="btn '+(crLv()?'filled':'outlined')+' sm" href="#credits">เติมเครดิต</a></div></div></dl>'+
+ '<section class="sec" style="margin-top:var(--space-6)"><div class="sec-h"><h2>ใช้ AI ล่าสุด</h2><a class="btn text sm" href="#usage">ดูทั้งหมด</a></div>'+logRows(A.log.slice(0,3))+'</section>'},
+stats:function(){var cur=series(RNG),prev=series(RNG,RNG),v=sum(cur),pv=sum(prev),cs=Math.round(v*.46),pcs=Math.round(pv*.41),ct=Math.round(v*.045),pct=Math.round(pv*.05),f=RNG/30,W=workNames();
+ var SEG={src:[['LinkedIn',Math.round(v*.38)],['เปิดลิงก์ตรง',Math.round(v*.27)],['Google',Math.round(v*.14)],['JobsDB',Math.round(v*.12)],['อื่นๆ',Math.round(v*.09)]],dev:[['คอมพิวเตอร์',Math.round(v*.61)],['มือถือ',Math.round(v*.35)],['แท็บเล็ต',Math.round(v*.04)]],geo:[['ไทย',Math.round(v*.72)],['สิงคโปร์',Math.round(v*.11)],['สหรัฐอเมริกา',Math.round(v*.08)],['ญี่ปุ่น',Math.round(v*.05)],['อื่นๆ',Math.round(v*.04)]]};
+ if(!A.links){A.links=[];save()}var LK=A.links,MAXL=20;
+ return '<h1 class="ac-h" tabindex="-1">สถิติ</h1><p class="ac-sub">ดูว่ามีคนเปิด portfolio ไหม มาจากไหน และดูงานชิ้นไหน</p>'+
+ '<div class="an-top">'+seg('rng',RNG,[[7,'7 วัน'],[30,'30 วัน'],[90,'90 วัน']],'rngL')+'<span class="vh" id="rngL">ช่วงเวลา</span><span class="upd">อัปเดตล่าสุด '+fd(new Date().toISOString(),1)+'<button type="button" class="btn ghost sm icon" data-refresh aria-label="โหลดตัวเลขใหม่"><span class="ms" aria-hidden="true">refresh</span></button></span></div>'+
+ '<dl class="kp"><div><dt>คนเข้าดู</dt><dd><b>'+v+'</b>'+delta(v,pv,' คน')+'</dd></div><div><dt>เปิดอ่าน Case study</dt><dd><b>'+cs+'</b>'+delta(cs,pcs,' ครั้ง')+'</dd></div><div><dt>กดติดต่อหรือคัดลอกอีเมล</dt><dd><b>'+ct+'</b>'+delta(ct,pct,' ครั้ง')+'</dd></div></dl>'+
+ '<section class="sec" style="border-top:0;padding-top:0"><div class="sec-h"><h2>คนเข้าดู</h2></div>'+chart(cur)+'</section>'+
+ '<section class="sec"><div class="sec-h"><h2>ลิงก์ที่ส่งให้แต่ละบริษัท</h2><button type="button" class="btn outlined sm" data-lknew'+(LK.length>=MAXL?' disabled':'')+'><span class="ms" aria-hidden="true">add_link</span>สร้างลิงก์</button></div><p class="sec-d">สร้างลิงก์แยกให้แต่ละที่ที่สมัคร แล้วดูว่าเปิดหรือยัง คัดลอกลิงก์เดิมไปส่งซ้ำได้เรื่อยๆ ไม่เก็บชื่อหรืออีเมลของคนเปิด</p>'+
+ (LK.length?'<div class="tb-w"><table class="tb2"><thead><tr><th scope="col">ส่งให้</th><th scope="col">เปิดล่าสุด</th><th scope="col">งานที่ดูนานสุด</th><th scope="col" class="num">เปิด</th><th scope="col" class="num"><span class="vh">คัดลอกหรือลบ</span></th></tr></thead><tbody>'+LK.map(function(l){var u=A.slug+'.migma.site/?to='+l.slug;return '<tr><td class="main">'+esc(l.name)+'<small>'+esc(u)+'</small></td><td class="sub">'+(l.last?fd(l.last,1):'ยังไม่เปิด')+'</td><td class="sub hide-m">'+(l.top?esc(l.top)+' · '+esc(l.dur):'')+'</td><td class="num">'+(l.opens?Math.max(1,Math.round(l.opens*f))+' ครั้ง':'0')+'</td><td class="num act"><button type="button" class="btn ghost icon sm" data-lkcopy="'+esc(u)+'" aria-label="คัดลอกลิงก์ของ '+esc(l.name)+'" title="คัดลอกลิงก์"><span class="ms" aria-hidden="true">content_copy</span></button><button type="button" class="btn ghost icon sm" data-lkrm="'+l.id+'" aria-label="ลบลิงก์ของ '+esc(l.name)+'" title="ลบลิงก์"><span class="ms" aria-hidden="true">delete</span></button></td></tr>'}).join('')+'</tbody></table></div>':'<div class="es sm"><p class="es-t">ยังไม่มีลิงก์แยก</p><p class="es-d">สร้างลิงก์แรกให้บริษัทที่กำลังจะสมัคร แล้วกลับมาดูว่าเขาเปิดหรือยัง</p></div>')+'</section>'+
+ '<section class="sec"><div class="sec-h"><h2>งานที่คนดู</h2></div><div class="tb-w"><table class="tb2"><thead><tr><th scope="col">งาน</th><th scope="col">อ่านถึงท้ายหน้า</th><th scope="col" class="num">คนดู</th><th scope="col" class="num">เวลาเฉลี่ย</th></tr></thead><tbody>'+W.map(function(w,i){var n=Math.round(cs*[.42,.27,.18,.09,.04][i]||1),r=[64,51,47,38,30][i];return '<tr><td class="main">'+esc(w)+'</td><td class="sub">'+r+'% ของคนที่เปิด</td><td class="num">'+n+'</td><td class="num">'+['3:40','2:15','2:50','1:20','0:55'][i]+' นาที</td></tr>'}).join('')+'</tbody></table></div></section>'+
+ '<section class="sec"><div class="sec-h"><h2 id="segL">คนดูมาจากไหน</h2>'+seg('seg',SEGK,[['src','ช่องทาง'],['dev','อุปกรณ์'],['geo','ประเทศ']],'segL')+'</div>'+bars(SEG[SEGK])+'</section>'+
+ '<p class="note" style="margin:var(--space-8) 0 0"><span class="ms" aria-hidden="true">shield</span><span>นับแบบไม่ใช้คุกกี้ ไม่เก็บ IP และไม่รู้ว่าคนดูเป็นใคร คนเดิมที่กลับมาอีกวันนับเป็นคนใหม่ ตัวเลขจึงเป็นค่าประมาณ</span></p>'},
+credits:function(){return '<h1 class="ac-h" tabindex="-1">เครดิต AI</h1><p class="ac-sub">ใช้เฉพาะตอนกดให้ AI ช่วย ฟีเจอร์อื่นของเว็บไม่ใช้เครดิต</p>'+
+ meter(1)+'<p class="hint">แท่งนี้นับจากการเติมครั้งล่าสุด เครดิตไม่มีวันหมดอายุ</p>'+
+ '<section class="sec" style="margin-top:var(--space-6)"><div class="sec-h"><h2>เติมเครดิต</h2></div><p class="sec-d">จ่ายครั้งเดียว ไม่ตัดเงินอัตโนมัติ</p>'+
+ '<ul class="pk-l" role="radiogroup" aria-label="เลือกแพ็กเครดิต">'+PACKS.map(function(p,i){return '<li><label><input type="radio" name="pk" value="'+p.k+'"'+(i===1?' checked':'')+'><span class="n"><b>'+p.coin+' เครดิต</b><span>เครดิตละ '+(p.thb/p.coin).toFixed(2)+' บาท</span></span><span class="p">฿'+p.thb+'</span></label></li>'}).join('')+'</ul>'+
+ '<button type="button" class="btn filled" id="buy">จ่ายเงิน</button><p class="hint">กดแล้วไปหน้าจ่ายเงินของ Stripe จ่ายด้วยบัตรหรือ PromptPay ได้ จ่ายเสร็จกลับมาหน้านี้ เครดิตเข้าทันที</p></section>'+
+ '<section class="sec"><div class="sec-h"><h2>เครดิตที่ได้รับ</h2><a class="btn text sm" href="#plan">ดูใบเสร็จทั้งหมด</a></div>'+
+ '<div class="tb-w"><table class="tb2"><thead><tr><th scope="col">รายการ</th><th scope="col">เมื่อ</th><th scope="col">จ่ายผ่าน</th><th scope="col" class="num">เครดิต</th><th scope="col" class="num">จ่าย</th><th scope="col" class="num"><span class="vh">ใบเสร็จ</span></th></tr></thead><tbody>'+A.tops.map(function(t){var paid=t.thb>0,no=t.no||'';return '<tr><td class="main">'+esc(t.d)+(paid&&no?'<small>เลขที่ '+esc(no)+'</small>':'')+'</td><td class="sub">'+fd(t.t)+'</td><td class="sub hide-m">'+(paid?esc(t.m||'Stripe'):'ไม่มีการจ่าย')+'</td><td class="num">+'+t.coin+'</td><td class="num">'+(paid?'฿'+t.thb.toLocaleString():'ฟรี')+'</td><td class="num hide-m">'+(paid&&no?'<button type="button" class="btn text sm" data-rc aria-label="เปิดใบเสร็จเลขที่ '+esc(no)+'">เปิดใบเสร็จ</button>':'')+'</td></tr>'}).join('')+'</tbody></table></div></section>'},
+usage:function(){var mu=monthUse(),mx=Math.max.apply(null,COST.map(function(c){return mu.by[c.k]||0}).concat([1]));return '<h1 class="ac-h" tabindex="-1">การใช้ AI</h1><p class="ac-sub">ดูว่าใช้เครดิตไปเท่าไร และใช้กับงานไหนบ้าง</p>'+meter()+
+ '<p style="margin:var(--space-3) 0 var(--space-8)"><a class="btn outlined sm" href="#credits">เติมเครดิต</a></p>'+
+ '<section class="sec" style="border-top:0;padding-top:0"><div class="sec-h"><h2>เดือนนี้ใช้ไป '+mu.tot+' เครดิต</h2></div><p class="sec-d">เครดิตเป็นกองเดียว ใช้ร่วมกันทุกงานของ AI งานยาวใช้มากกว่างานสั้น</p>'+(mu.tot?'<ul class="use">'+COST.map(function(c){var v=mu.by[c.k]||0;return '<li><span>'+esc(c.n)+'</span><span class="v">'+v+'</span><span class="bar" aria-hidden="true"><i style="width:'+Math.round(v/mx*100)+'%"></i></span></li>'}).join('')+'</ul>':'<p class="empty">เดือนนี้ยังไม่ได้ใช้ AI</p>')+'</section>'+
+ '<section class="sec"><div class="sec-h"><h2>ประวัติการใช้</h2></div>'+logRows(A.log)+'</section>'},
+plan:function(){var P=[['free','Free','฿0','',['ที่อยู่ ชื่อ.migma.site','ผลงาน 3 ชิ้น','มีป้าย Made with Migma','20 เครดิต AI ครั้งเดียว']],['pass','Job Hunt Pass','฿390','3 เดือน',['ใช้โดเมนของตัวเอง ไม่มีป้าย','ผลงานไม่จำกัด','ตั้งรหัสผ่าน Case study','สถิติคนเปิดดู และ export CV','100 เครดิต AI']],['pro','Pro รายปี','฿1,290','ต่อปี',['ทุกอย่างใน Pass ตลอดปี','50 เครดิต AI ทุกเดือน สะสมได้']]];
+ return '<h1 class="ac-h" tabindex="-1">แพ็กเกจและใบเสร็จ</h1><p class="ac-sub">ไม่มีการตัดเงินอัตโนมัติ แพ็กหมดอายุแล้วเว็บยังออนไลน์อยู่ในแพ็ก Free</p>'+
+ '<p class="note"><span class="ms" aria-hidden="true">info</span><span>ราคาในหน้านี้เป็นราคาตั้งต้นจากรายงานวิเคราะห์ตลาด ยังไม่ได้ทดสอบกับผู้ซื้อ</span></p>'+
+ '<div class="pl">'+P.map(function(p){var cur=A.plan===p[0];return '<div'+(cur?' class="cur"':'')+'><h3>'+p[1]+(cur?'<span class="cur-t">แพ็กตอนนี้</span>':'')+'</h3><p class="pr">'+p[2]+(p[3]?' <small>'+p[3]+'</small>':'')+'</p><ul>'+p[4].map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>'+(cur?(p[0]==='pass'?'<button type="button" class="btn outlined sm" data-plan="pass">ต่ออีก 3 เดือน</button>':''):p[0]==='free'?'':'<button type="button" class="btn '+(p[0]==='pass'?'filled':'outlined')+' sm" data-plan="'+p[0]+'">เลือกแพ็กนี้</button>')+'</div>'}).join('')+'</div>'+
+ '<section class="sec" style="margin-top:var(--space-8)"><div class="sec-h"><h2>ใบเสร็จ</h2></div>'+(A.bills.length?'<div class="tb-w"><table class="tb2"><thead><tr><th scope="col">รายการ</th><th scope="col">วันที่</th><th scope="col">จ่ายผ่าน</th><th scope="col" class="num">ยอด</th><th scope="col" class="num"><span class="vh">ใบเสร็จ</span></th></tr></thead><tbody>'+A.bills.map(function(b){return '<tr><td class="main">'+esc(b.d)+'<small>เลขที่ '+esc(b.no)+'</small></td><td class="sub">'+fd(b.t)+'</td><td class="sub hide-m">'+esc(b.m)+'</td><td class="num">฿'+b.thb.toLocaleString()+'</td><td class="num hide-m"><button type="button" class="btn text sm" data-rc aria-label="เปิดใบเสร็จเลขที่ '+esc(b.no)+'">เปิดใบเสร็จ</button></td></tr>'}).join('')+'</tbody></table></div>':'<p class="empty">ยังไม่มีใบเสร็จ</p>')+'<p class="hint">ใบเสร็จส่งไปที่ '+esc(A.email)+' ทุกครั้งที่จ่าย</p></section>'+help('จ่ายเงินแล้วเครดิตหรือแพ็กไม่เข้า ขอใบกำกับภาษี หรือขอเงินคืน')},
+settings:function(){return '<h1 class="ac-h" tabindex="-1">ตั้งค่า</h1><p class="ac-sub">บัญชี ที่อยู่เว็บ การแจ้งเตือน และข้อมูลของคุณ</p>'+
+ '<section class="sec" style="border-top:0;padding-top:0"><div class="sec-h"><h2>บัญชี</h2></div>'+
+ '<div class="av-row"><span class="avt" style="--s:var(--avatar-56);--fs:20px" aria-hidden="true">'+initial(A.name)+'</span><div><b>'+esc(A.name||'ยังไม่ได้ตั้งชื่อ')+'</b><span>ใช้ตัวอักษรแรกของชื่อแทนรูป</span></div></div>'+
+ fld('stN','ชื่อ',A.name,{max:60,set:'name',ac:'name',hint:'ชื่อนี้ใช้ในหลังบ้านและใบเสร็จ ชื่อบนหน้าเว็บแก้ที่แท็บโปรไฟล์'})+
+ fld('stE','อีเมลที่ใช้เข้าสู่ระบบ',A.email,{type:'email',dis:1,hint:'เปลี่ยนอีเมลต้องยืนยันจากอีเมลใหม่ก่อน <button type="button" class="btn text sm" data-soon>เปลี่ยนอีเมล</button>'})+'</section>'+
+ '<section class="sec"><div class="sec-h"><h2>การแสดงผล</h2></div><div class="lg-row"><span class="lab" id="thL">โหมดสีของหลังบ้าน</span>'+seg('thm',document.documentElement.getAttribute('data-theme'),[['light','สว่าง','light_mode'],['dark','มืด','dark_mode']],'thL')+'</div><div class="lg-row" style="margin-top:var(--space-3)"><span class="lab" id="fsL">ขนาดตัวหนังสือในหลังบ้าน</span>'+seg('fs',LS.get('pf-fs')==='lg'?'lg':'md',[['md','ปกติ'],['lg','ใหญ่']],'fsL')+'</div></section>'+
+ '<section class="sec"><div class="sec-h"><h2>ที่อยู่เว็บ</h2></div>'+
+ fld('stS','ที่อยู่ที่ได้มากับบัญชี',A.slug,{max:30,set:'slug',sfx:'.migma.site',attr:' autocapitalize="off" spellcheck="false"',hint:'ใช้ตัวอังกฤษ ตัวเลข และขีดกลาง 3–30 ตัว เปลี่ยนแล้วลิงก์เก่าพาไปที่ใหม่ให้ 30 วัน'})+
+ ''+'</section>'+
+ ''+
+'</section>'+
+ '<section class="sec"><div class="sec-h"><h2>เตือนเมื่อเครดิตเหลือน้อย</h2></div><p class="sec-d">ส่งอีเมลหาคุณ 1 ครั้งเมื่อเครดิตลดต่ำกว่าจำนวนที่ตั้ง และมีป้ายเตือนในตัวแก้ Portfolio</p>'+
+ sw('ส่งอีเมลเตือนเมื่อเครดิตเหลือน้อย','mail.low',A.mail.low)+
+ '<div class="row2">'+fld('stL','เตือนเมื่อเหลือน้อยกว่า',A.low,{set:'low',cbx:1,sfx:'เครดิต',dis:!A.mail.low,attr:' inputmode="numeric" pattern="[0-9]*" maxlength="4" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="tmMn"',hint:'พิมพ์ตัวเลขเอง หรือเลือกจากรายการ ค่าเริ่มต้น 20 เครดิต'})+fld('stT','ส่งอีเมลเวลา',A.lowAt,{set:'lowAt',cbx:1,ph:'09:00',dis:!A.mail.low,attr:' inputmode="numeric" maxlength="5" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="tmMn"',hint:'พิมพ์เวลาเอง เช่น 9 หรือ 0930 หรือเลือกจากรายการทุก 15 นาที ค่าเริ่มต้น 09:00 น.'})+'</div></section>'+
+ '<section class="sec"><div class="sec-h"><h2>อีเมลแจ้งเตือน</h2></div>'+sw('แพ็กเกจใกล้หมดอายุ','mail.exp',A.mail.exp,'เตือนล่วงหน้า 7 วัน')+sw('ฟีเจอร์ใหม่ของ Migma','mail.news',A.mail.news)+'</section>'+
+ '<section class="sec danger-z"><div class="sec-h"><h2>ข้อมูลของคุณ</h2></div><p class="sec-d">ข้อมูล portfolio เป็นของคุณ ดาวน์โหลดเก็บไว้หรือย้ายออกได้ทุกเมื่อ</p>'+
+ '<div class="lg-acts" style="margin-top:0"><button type="button" class="btn outlined" data-soon><span class="ms" aria-hidden="true">download</span>ดาวน์โหลดข้อมูลทั้งหมด</button></div><p class="hint">ไฟล์ที่ได้เป็น CSV เปิดด้วย Excel หรือ Google Sheets ได้ รูปภาพมาเป็นลิงก์</p></section>'+
+ '<section class="sec"><div class="sec-h"><h2>เริ่มใหม่หรือลบ</h2></div><p class="sec-d">สองปุ่มนี้ทำให้ข้อมูลหาย ดาวน์โหลดเก็บไว้ก่อนได้จากด้านบน</p>'+
+ '<dl><div class="row"><dt>เริ่มทำพอร์ตใหม่</dt><dd><span>ตอบคำถามตั้งต้นอีกครั้ง ทุกช่องในพอร์ตกลับเป็นว่าง บัญชี เครดิต และเว็บที่เผยแพร่ไปแล้วยังอยู่</span></dd><div class="act"><button type="button" class="btn outlined sm" data-restart>เริ่มทำพอร์ตใหม่</button></div></div>'+
+ '<div class="row"><dt>ลบบัญชี</dt><dd><span>เว็บ ข้อมูลทั้งหมด และเครดิตที่เหลือหายถาวร กู้คืนไม่ได้</span></dd><div class="act"><button type="button" class="btn danger ghost sm" id="delAcc">ลบบัญชี</button></div></div></dl></section>'+help('มีปัญหาการใช้งานหรืออยากเสนอฟีเจอร์')}
+};
+/* ---------- นำทาง ---------- */
+var HASH=((window.PF_QS||location.search).match(/[?&]h=([a-z]+)/)||[])[1];HASH=HASH?'#'+HASH:null;
+var ALONE=/[?&]alone=1/.test(location.search),toApp=function(h){h=(h||'').replace('#','');location.replace('editor.html'+(h&&h!=='overview'?'?acct='+h:''))};
+function route(){var h=((EMB&&HASH)||location.hash||'').slice(1);up({type:'pf:acct',coins:A.coins,signed:A.signed});if(!A.signed){$('app').hidden=true;$('lg').hidden=false;document.title='เข้าสู่ระบบ · Migma';return}
+  if(!V[h])h='overview';$('lg').hidden=true;$('app').hidden=false;$('acMain').innerHTML='<div class="ac-pg">'+V[h]()+'</div>';$('acCoinN').textContent=A.coins;
+  [].forEach.call(document.querySelectorAll('#acNav a'),function(a){if(a.getAttribute('href')==='#'+h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  document.documentElement.classList.toggle('pg-settings',h==='settings');
+  var TB=[['overview','ภาพรวม'],['stats','สถิติ'],['credits','เครดิต AI'],['usage','การใช้ AI'],['plan','แพ็กเกจและใบเสร็จ']],tl=$('acTabs');tl.hidden=!EMB||h==='settings';tl.innerHTML=TB.map(function(t){return '<button type="button" class="tb" role="tab" data-h="'+t[0]+'" data-label="'+t[1]+'" aria-selected="'+(h===t[0])+'" tabindex="'+(h===t[0]?0:-1)+'">'+t[1]+'</button>'}).join('');
+  document.title=document.querySelector('.ac-h').textContent+' · บัญชีของฉัน';return h}
+function go(focus){var h=route();if(focus&&h){var hd=document.querySelector('.ac-h');hd&&hd.focus({preventScroll:true});scrollTo(0,0)}}
+addEventListener('hashchange',function(){go(true)});
+/* ฝังในหลังบ้าน: ลิงก์กลับไปแก้ Portfolio = ปิดหน้านี้ · เปิดเว็บ = ใช้ปุ่มดูหน้าเว็บของหลังบ้าน · เปลี่ยนหน้าเองเพราะ srcdoc ไม่มี hash ให้ตาม */
+if(EMB){document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href');if(h==='editor.html'){e.preventDefault();up({type:'pf:acct-close'})}else if(h==='landing-preview.html'){e.preventDefault();up({type:'pf:acct-site'})}else if(h.charAt(0)==='#'){e.preventDefault();HASH=h;go(true)}},true);
+  addEventListener('message',function(e){var m=e.data||{};if(m.type==='pf:mode'&&(m.theme==='dark'||m.theme==='light')&&document.documentElement.getAttribute('data-theme')!==m.theme)setThm(m.theme);if(m.type==='pf:acct-go'&&m.hash){HASH=m.hash;go(true)}})}
+/* ---------- เข้าสู่ระบบ ---------- */
+var okMail=function(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)};
+function lgErr0(t){var f=$('lgFld'),o=f.querySelector('.err-msg');o&&o.remove();f.classList.toggle('err',!!t);$('lgE').setAttribute('aria-invalid',t?'true':'false');if(t){f.insertAdjacentHTML('beforeend','<span class="err-msg" id="lgEe"><span class="ms" aria-hidden="true">error</span><span>'+t+'</span></span>');$('lgE').setAttribute('aria-describedby','lgEe')}}
+var showLg=function(id){['lgForm','lgSent','lgName'].forEach(function(x){$(x).hidden=x!==id});if(typeof protoTxt==='function')protoTxt()};
+function fErr(fid,inp,t){var f=$(fid),o=f.querySelector('.err-msg');o&&o.remove();f.classList.toggle('err',!!t);inp.setAttribute('aria-invalid',t?'true':'false');if(t){f.insertAdjacentHTML('beforeend','<span class="err-msg" id="'+fid+'e"><span class="ms" aria-hidden="true">error</span><span>'+t+'</span></span>');inp.setAttribute('aria-describedby',fid+'e');inp.focus()}}
+function lgErr(t){fErr('lgFld',$('lgE'),t)}
+$('lgF').addEventListener('submit',function(e){e.preventDefault();var v=$('lgE').value.trim();if(!v){lgErr('ใส่อีเมลก่อน');return}if(!okMail(v)){lgErr('กรอกอีเมลให้ครบ เช่น name@company.com');return}
+  lgErr('');var b=$('lgSend');b.disabled=true;b.textContent='กำลังส่ง';setTimeout(function(){b.disabled=false;b.textContent='ส่งรหัสไปที่อีเมล';PEND=v;$('lgTo').textContent=v;newCode();showLg('lgSent');$('lgCode').value='';$('lgCode').focus()},700)});
+$('lgE').addEventListener('input',function(){if($('lgFld').classList.contains('err'))lgErr('')});
+var PEND='',CODE='',TRY=0;
+/* รหัสเหมือนของจริง: สุ่มใหม่ทุกครั้งที่ส่ง รหัสเก่าใช้ไม่ได้ ผิดได้ 5 ครั้ง · ต้นแบบยังไม่ส่งอีเมล จึงโชว์รหัสไว้ที่แถบต้นแบบ */
+function newCode(){CODE=String(Math.floor(100000+Math.random()*900000));TRY=0;$('lgCode').disabled=false;$('lgOk').disabled=false;protoTxt()}
+function protoTxt(){$('lgProto').hidden=!DEV;var on=!$('lgSent').hidden;$('lgPT').innerHTML=on&&CODE?'รหัสรอบนี้ <b>'+CODE+'</b>':'โหมด dev';$('lgFill').hidden=!(on&&CODE)}
+function checkCode(){var c=$('lgCode'),b=$('lgOk');if(!/^\d{6}$/.test(c.value)){fErr('lgCFld',c,c.value?'รหัสมี 6 หลัก ตอนนี้ใส่มา '+c.value.length+' หลัก':'ใส่รหัส 6 หลักจากอีเมล');return}
+  if(b.disabled)return;b.disabled=true;b.textContent='กำลังตรวจ';setTimeout(function(){b.textContent='ยืนยันรหัส';
+    if(c.value===CODE){b.disabled=false;CODE='';afterAuth(PEND);return}
+    TRY++;if(TRY>=5){c.disabled=true;CODE='';protoTxt();fErr('lgCFld',c,'ใส่ผิดครบ 5 ครั้ง รหัสนี้ใช้ไม่ได้แล้ว กดส่งรหัสอีกครั้ง');$('lgAgain').focus();return}
+    b.disabled=false;fErr('lgCFld',c,'รหัสไม่ตรง ดูในอีเมลอีกครั้ง เหลืออีก '+(5-TRY)+' ครั้ง');c.select()},500)}
+$('lgCode').addEventListener('input',function(){var d=this.value.replace(/\D/g,'').slice(0,6);if(d!==this.value)this.value=d;if($('lgCFld').classList.contains('err'))fErr('lgCFld',this,'');if(d.length===6)checkCode()});
+$('lgC').addEventListener('submit',function(e){e.preventDefault();checkCode()});
+$('lgFill').onclick=function(){var c=$('lgCode');if(c.disabled||!CODE)return;c.value=CODE;c.dispatchEvent(new Event('input',{bubbles:true}))};
+$('lgNm').addEventListener('input',function(e){if(e.isComposing)return;var v=this.value.replace(/[^\p{L}\p{M}\p{N} ]/gu,'').replace(/ {2,}/g,' ').replace(/^ /,'');if(v!==this.value){var p=this.selectionStart-(this.value.length-v.length);this.value=v;try{this.setSelectionRange(p,p)}catch(x){}}});
+$('lgN').addEventListener('submit',function(e){e.preventDefault();var n=$('lgNm'),v=n.value.trim();if(!v){fErr('lgNFld',n,'ใส่ชื่อก่อน ใช้ชื่อเล่นก็ได้');return}A.name=v;signIn(PEND)});
+/* ยืนยันตัวแล้ว: บัญชีใหม่ (ยังไม่มีชื่อ หรืออีเมลไม่เคยเข้า) ถามชื่อ 1 ช่อง · บัญชีเดิมเข้าได้เลย */
+function afterAuth(mail){PEND=mail||PEND||'you@example.com';if(A.name&&A.email===PEND){signIn(PEND);return}showLg('lgName');$('lgNm').value=A.email===PEND?A.name:'';$('lgNm').dispatchEvent(new Event('input',{bubbles:true}));$('lgNameH').focus()}
+$('lgOther').onclick=function(){showLg('lgForm');$('lgE').focus()};
+$('lgAgain').onclick=function(){var b=this,n=30;b.disabled=true;var tk=function(){b.textContent='ส่งอีกครั้งได้ใน '+n+' วินาที';if(n--<=0){b.disabled=false;b.textContent='ส่งรหัสอีกครั้ง';return}setTimeout(tk,1000)};tk();newCode();fErr('lgCFld',$('lgCode'),'');$('lgCode').value='';$('lgCode').focus();toast('ส่งรหัสใหม่แล้ว รหัสเก่าใช้ไม่ได้')};
+function signIn(mail){A.signed=true;if(mail)A.email=mail;if(!A.email)A.email='you@example.com';save();showLg('lgForm');if(!EMB&&!ALONE){toApp('');return}if(EMB){HASH=HASH||'#overview'}else if(!location.hash)history.replaceState(null,'','#overview');go(true)}
+$('lgSkip').onclick=function(){var nm=$('lgNm').value.trim();if(!$('lgName').hidden&&nm)A.name=nm;if(!A.name)A.name='Dev';signIn($('lgE').value.trim()&&okMail($('lgE').value.trim())?$('lgE').value.trim():'')};
+$('lgG').onclick=function(){afterAuth(A.email||'you@gmail.com')};
+protoTxt();
+$('acOut').onclick=function(){A.signed=false;save();showLg('lgForm');route();$('lgE').focus();toast('ออกจากระบบแล้ว')};
+$('acTheme').onclick=function(){setThm(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')};
+/* ---------- ช่องเวลา: รายการเลือกใต้ช่อง (ทุกชั่วโมง) · พิมพ์เองได้เหมือนเดิม ---------- */
+var TM=null,TMDEF='09:00';
+function tmClose(){if(!TM)return;TM.el.remove();TM.inp.setAttribute('aria-expanded','false');TM=null}
+function tmOpen(inp){tmClose();var el=document.createElement('div'),cur=inp.value.trim();var num=inp.dataset.set==='low',opts=[];el.className='mn';el.id='tmMn';el.setAttribute('role','listbox');el.setAttribute('aria-label',num?'เลือกจำนวนเครดิต':'เลือกเวลา');
+  if(num)opts=[10,20,30,50,100,200].map(function(n){return [String(n),n+' เครดิต']});else for(var h=0;h<96;h++){var hv=('0'+Math.floor(h/4)).slice(-2)+':'+('0'+(h%4)*15).slice(-2);opts.push([hv,hv+' น.'])}
+  var html=opts.map(function(o){return '<button type="button" class="mi" role="option" data-tm="'+o[0]+'" aria-selected="'+(o[0]===cur)+'" tabindex="-1"><span>'+o[1]+'</span>'+(o[0]===cur?'<span class="ms" aria-hidden="true">check</span>':'')+'</button>'}).join('');TMDEF=num?'20':'09:00';
+  el.innerHTML=html;document.body.appendChild(el);var r=inp.getBoundingClientRect(),below=innerHeight-r.bottom-12,up=below<200&&r.top>below;el.style.left=r.left+'px';el.style.width=r.width+'px';el.style.maxHeight=Math.max(160,Math.min(280,(up?r.top:below)-8))+'px';el.style.top=(up?r.top-el.offsetHeight-6:r.bottom+6)+'px';
+  TM={el:el,inp:inp,at:Date.now()};inp.setAttribute('aria-expanded','true');var s0=el.querySelector('[aria-selected=true]')||el.querySelector('[data-tm="'+TMDEF+'"]');s0&&s0.scrollIntoView({block:'center'})}
+function tmPick(v){var inp=TM.inp;tmClose();inp.value=v;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));var n=document.getElementById(inp.id);n&&n.focus()}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-cbx]'),o=e.target.closest&&e.target.closest('[data-tm]');if(o){tmPick(o.dataset.tm);return}if(b){var inp=b.parentNode.querySelector('.in');if(TM&&TM.inp===inp)tmClose();else{inp.scrollIntoView({block:'nearest'});inp.focus({preventScroll:true});tmOpen(inp)}}});
+document.addEventListener('mousedown',function(e){if(TM&&!TM.el.contains(e.target)&&!(e.target.closest&&e.target.closest('.inw.cbx')))tmClose()});
+document.addEventListener('keydown',function(e){var t=e.target,isIn=t.matches&&t.matches('.inw.cbx .in');if(!TM){if(isIn&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();tmOpen(t);var f=TM.el.querySelector('[aria-selected=true]')||TM.el.querySelector('[data-tm="'+TMDEF+'"]');f&&f.focus()}return}
+  var it=[].slice.call(TM.el.querySelectorAll('.mi')),i=it.indexOf(document.activeElement);
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();var b=TM.inp;tmClose();b.focus();return}
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();var n=i<0?it.indexOf(TM.el.querySelector('[aria-selected=true]')):i+(e.key==='ArrowDown'?1:-1);if(n<0)n=e.key==='ArrowDown'?0:it.length-1;it[Math.max(0,Math.min(it.length-1,n))].focus();return}
+  if(e.key==='Enter'&&i>=0){e.preventDefault();tmPick(it[i].dataset.tm);return}
+  if(e.key==='Tab')tmClose()},true);
+document.addEventListener('input',function(e){if(TM&&e.target===TM.inp)tmClose()});
+addEventListener('resize',tmClose);document.addEventListener('scroll',function(e){if(TM&&!TM.el.contains(e.target)&&Date.now()-TM.at>250)tmClose()},true);
+/* ---------- ลิงก์แยกต่อบริษัท: สร้าง (ตั้งชื่อ) · คัดลอกซ้ำได้ · ลบแล้วเลิกทำได้ ---------- */
+function lkSlug(name){var b=String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24);if(b.length<2)b='to-'+Math.random().toString(36).slice(2,6);var s2=b,n=2;while(A.links.some(function(l){return l.slug===s2}))s2=b+'-'+(n++);return s2}
+function copyText(t,okMsg){var ok=function(){toast(okMsg)},no=function(){toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,no);else no()}
+function lkNew(){var m=modal('<h2 class="dg-t" id="dgT">สร้างลิงก์แยก</h2><p class="dg-d">ตั้งชื่อให้รู้ว่าส่งให้ใคร ชื่อนี้เห็นแค่คุณ คนเปิดลิงก์ไม่เห็น</p><div class="fld" id="lkFld"><span class="lb"><label for="lkNm">ส่งให้</label><span class="cnt cnt-end" data-cnt="40">0 / 40</span></span><span class="inw"><input class="in" id="lkNm" maxlength="40" placeholder="เช่น ชื่อบริษัท หรือชื่อคนที่ส่งให้" autocomplete="off"><button type="button" class="clr" data-clr tabindex="-1" aria-label="ล้างชื่อ"><span class="ms" aria-hidden="true">close</span></button></span><span class="hint" id="lkPv">ลิงก์จะเป็น '+esc(A.slug)+'.migma.site/?to=…</span></div><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" data-ok>สร้างและคัดลอกลิงก์</button></div>');
+  var inp=m.box.querySelector('#lkNm'),pv=m.box.querySelector('#lkPv'),make=function(){var v=inp.value.trim(),f=m.box.querySelector('#lkFld'),o=f.querySelector('.err-msg');o&&o.remove();f.classList.remove('err');if(!v){f.classList.add('err');f.insertAdjacentHTML('beforeend','<span class="err-msg"><span class="ms" aria-hidden="true">error</span><span>ใส่ชื่อก่อน จะได้รู้ว่าลิงก์นี้ส่งให้ใคร</span></span>');inp.focus();return}
+    var l={id:'k'+Date.now().toString(36),name:v,slug:lkSlug(v),last:'',opens:0,top:'',dur:''};A.links.unshift(l);save();m.close();route();copyText('https://'+A.slug+'.migma.site/?to='+l.slug,'สร้างลิงก์ของ '+v+' และคัดลอกแล้ว')};
+  inp.addEventListener('input',function(){var v=inp.value.trim();var lat=v.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').length>=2;pv.textContent=!v?'ลิงก์จะเป็น '+A.slug+'.migma.site/?to=…':lat?'ลิงก์จะเป็น '+A.slug+'.migma.site/?to='+lkSlug(v):'ชื่อเป็นภาษาไทย ลิงก์จะใช้รหัสสั้นแทน เช่น ?to=to-k7f2'});inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.isComposing){e.preventDefault();make()}});
+  m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('[data-ok]').onclick=make;inp.focus()}
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-lknew],[data-lkcopy],[data-lkrm]');if(!t)return;
+  if(t.dataset.lknew!==undefined){lkNew();return}
+  if(t.dataset.lkcopy){copyText('https://'+t.dataset.lkcopy,'คัดลอกลิงก์แล้ว');return}
+  var i=-1;A.links.forEach(function(l,n){if(l.id===t.dataset.lkrm)i=n});if(i<0)return;var l=A.links[i],u=A.slug+'.migma.site/?to='+l.slug,m=modal('<h2 class="dg-t" id="dgT">ลบลิงก์ของ “'+esc(l.name)+'”?</h2><p class="dg-d">คนที่ได้ลิงก์ <b>'+esc(u)+'</b> ไปแล้วจะเปิดไม่ได้อีก'+(l.opens?' และสถิติการเปิด '+l.opens+' ครั้งของลิงก์นี้จะหายไป':'')+' กู้คืนไม่ได้</p><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled danger" data-ok>ลบลิงก์</button></div>');
+  m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('[data-ok]').onclick=function(){var k=-1;A.links.forEach(function(x,n){if(x.id===l.id)k=n});if(k>=0)A.links.splice(k,1);save();m.close();route();toast('ลบลิงก์ของ '+l.name+' แล้ว')};m.box.querySelector('[data-x]').focus()});
+/* ---------- การกระทำในหน้า ---------- */
+/* จ่ายเงิน: ระบบจริงพาไปหน้า Checkout ของ Stripe แล้วกลับมาพร้อมผล · ต้นแบบจำลองผลสำเร็จและออกเลขใบเสร็จ */
+function pay(item,thb,done){var m=modal('<h2 class="dg-t" id="dgT">จ่าย ฿'+thb.toLocaleString()+'</h2><p class="dg-d">'+esc(item)+' ระบบจริงจะพาไปหน้าจ่ายเงินของ Stripe เลือกจ่ายด้วยบัตรหรือ PromptPay แล้วกลับมาหน้านี้</p><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" data-ok>จำลองว่าจ่ายสำเร็จ</button></div>');m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('[data-ok]').onclick=function(){m.close();A.bills.unshift({no:'MG-'+String(new Date().getFullYear()).slice(2)+('0'+(new Date().getMonth()+1)).slice(-2)+'-'+('000'+(A.bills.length+1)).slice(-4),t:new Date().toISOString(),d:item,thb:thb,m:'Stripe'});done(A.bills[0])};m.box.querySelector('[data-ok]').focus()}
+function spend(k){var c=costOf(k);if(A.coins<c.c){toast('เครดิตไม่พอ',{label:'ซื้อเพิ่ม',fn:function(){if(EMB){HASH='#credits';go(true)}else location.hash='#credits'}});return}A.coins-=c.c;A.log.unshift({t:new Date().toISOString(),k:k,d:'ลองกดจากหน้าบัญชี',c:c.c});save();route();toast('ใช้ '+c.c+' เครดิต เหลือ '+A.coins)}
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-use],[data-plan],[data-soon],[data-refresh],[data-rc],[data-restart],#buy,#delAcc');if(!t)return;
+  if(t.dataset.restart!==undefined){var rm=modal('<h2 class="dg-t" id="dgT">เริ่มทำพอร์ตใหม่?</h2><p class="dg-d">ทุกช่องในพอร์ตที่กรอกไว้จะกลับเป็นว่าง แล้วระบบถามคำถามตั้งต้นอีกครั้ง บัญชี เครดิต และเว็บที่เผยแพร่ไปแล้วยังอยู่ ถ้าอยากเก็บข้อมูลเดิมไว้ กดยกเลิกแล้วดาวน์โหลดจาก “ข้อมูลของคุณ” ก่อน</p><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled danger" data-ok>เริ่มใหม่</button></div>');
+   rm.box.querySelector('[data-x]').onclick=rm.close;rm.box.querySelector('[data-ok]').onclick=function(){rm.close();if(EMB)up({type:'pf:acct-restart'});else location.href='editor.html'};rm.box.querySelector('[data-x]').focus();return}
+  if(t.dataset.use){var c=costOf(t.dataset.use);if(!A.ask){spend(c.k);return}var m=modal('<h2 class="dg-t" id="dgT">ใช้ '+c.c+' เครดิต?</h2><p class="dg-d">'+esc(c.n)+' ใช้ '+c.c+' เครดิต '+esc(c.u)+' หลังใช้จะเหลือ '+(A.coins-c.c)+' เครดิต</p><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" data-ok>ใช้ '+c.c+' เครดิต</button></div>');m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('[data-ok]').onclick=function(){m.close();spend(c.k)};m.box.querySelector('[data-ok]').focus();return}
+  if(t.id==='buy'){var k=(document.querySelector('input[name=pk]:checked')||{}).value,p=PACKS.filter(function(x){return x.k===k})[0];if(!p)return;pay('เครดิต AI '+p.coin+' เครดิต',p.thb,function(bl){A.coins+=p.coin;A.base=A.coins;A.tops.unshift({t:new Date().toISOString(),d:'เติม '+p.coin+' เครดิต',coin:p.coin,thb:p.thb,no:bl.no,m:bl.m});save();route();toast('ได้รับ '+p.coin+' เครดิตแล้ว ตอนนี้มี '+A.coins)});return}
+  if(t.dataset.plan){var pl=t.dataset.plan==='pro'?['Pro รายปี',1290]:['Job Hunt Pass 3 เดือน',390];pay(pl[0],pl[1],function(){A.plan=t.dataset.plan;if(t.dataset.plan==='pass'){var e=new Date(Math.max(Date.now(),+new Date(A.passEnd))+90*864e5);A.passEnd=e.toISOString().slice(0,10)}save();route();toast('เปิดใช้ '+pl[0]+' แล้ว')});return}
+  if(t.dataset.rc!==undefined){toast('ยังเปิดไฟล์ใบเสร็จไม่ได้ตอนนี้');return}
+  if(t.dataset.soon!==undefined){toast('ส่วนนี้ยังไม่เปิดใช้');return}
+  if(t.dataset.refresh!==undefined){route();toast('โหลดตัวเลขล่าสุดแล้ว');return}
+  if(t.id==='delAcc'){var m3=modal('<h2 class="dg-t" id="dgT">ลบบัญชีนี้?</h2><p class="dg-d">เว็บ portfolio ข้อมูลทั้งหมด และเครดิตที่เหลือ '+A.coins+' เครดิตจะหายถาวร กู้คืนไม่ได้ พิมพ์อีเมลของคุณเพื่อยืนยัน</p><div class="fld"><label class="vh" for="delE">อีเมล</label><input class="in" id="delE" placeholder="'+esc(A.email)+'" autocomplete="off"></div><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn danger filled" data-ok disabled>ลบบัญชีถาวร</button></div>');var ok=m3.box.querySelector('[data-ok]'),inp=m3.box.querySelector('#delE');m3.box.querySelector('[data-x]').onclick=m3.close;inp.oninput=function(){ok.disabled=inp.value.trim()!==A.email};ok.onclick=function(){m3.close();LS.set('pf-acct-demo','');A=seed();route();toast('ลบข้อมูลบัญชีตัวอย่างแล้ว')};inp.focus()}});
+function setThm(n){var r=document.documentElement;r.setAttribute('data-theme',n);LS.set('theme',n);[].forEach.call(document.querySelectorAll('[data-thm]'),function(b){b.setAttribute('aria-checked',b.dataset.thm===n)});var tb=$('acTheme');if(tb){tb.setAttribute('aria-label',n==='dark'?'สลับโหมดสว่าง':'สลับโหมดมืด');tb.firstChild.textContent=n==='dark'?'light_mode':'dark_mode'}}
+function fsApply(){document.documentElement.classList.toggle('fs-lg',LS.get('pf-fs')==='lg')}fsApply();
+document.addEventListener('click',function(e){var f=e.target.closest&&e.target.closest('[data-fs]');if(!f)return;LS.set('pf-fs',f.dataset.fs);fsApply();up({type:'pf:fs'});[].forEach.call(f.parentNode.children,function(x){x.setAttribute('aria-checked',x===f)})});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-thm]');if(!b)return;setThm(b.dataset.thm);up({type:'pf:mode',theme:b.dataset.thm});b.focus()});
+document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('[data-copy]');if(!c)return;var v=c.dataset.copy,ok=function(){toast('คัดลอก '+v+' แล้ว')};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(ok,function(){toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')});else toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')});
+document.addEventListener('input',function(e){var t=e.target,w=t.closest&&t.closest('.inw');if(!w)return;w.classList.toggle('has',t.value!=='');var c=t.closest('.fld').querySelector('[data-cnt]');if(c){c.textContent=t.value.length+' / '+c.dataset.cnt;c.classList.toggle('over',t.value.length>+c.dataset.cnt)}});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-clr]');if(b){var inp=b.parentNode.querySelector('.in');inp.value='';inp.dispatchEvent(new Event('input',{bubbles:true}));var cid=inp.id;inp.dispatchEvent(new Event('change',{bubbles:true}));(document.getElementById(cid)||inp).focus();return}
+  var l=e.target.closest&&e.target.closest('[data-low]');if(l){A.low=+l.dataset.low;save();[].forEach.call(l.parentNode.children,function(x){x.setAttribute('aria-checked',x===l)});return}
+  var r=e.target.closest&&e.target.closest('[data-rng]');if(r){RNG=+r.dataset.rng;route();var nr=document.querySelector('[data-rng="'+RNG+'"]');nr&&nr.focus();return}
+  var g=e.target.closest&&e.target.closest('[data-seg]');if(g){SEGK=g.dataset.seg;route();var ng=document.querySelector('[data-seg="'+SEGK+'"]');ng&&ng.focus();return}
+  var tb=e.target.closest&&e.target.closest('.tb[data-h]');if(tb){if(EMB){HASH='#'+tb.dataset.h;go(true)}else location.hash='#'+tb.dataset.h}});
+document.addEventListener('keydown',function(e){var t=e.target;if(!t.matches||!t.matches('.tb[data-h]')||(e.key!=='ArrowRight'&&e.key!=='ArrowLeft'))return;var a=[].slice.call(t.parentNode.children),n=a[(a.indexOf(t)+(e.key==='ArrowRight'?1:a.length-1))%a.length];e.preventDefault();n.click();setTimeout(function(){var x=document.querySelector('.tb[data-h="'+n.dataset.h+'"]');x&&x.focus()},0)});
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset.sw){var k=t.dataset.sw.split('.');if(k.length>1)A[k[0]][k[1]]=t.checked;else A[k[0]]=t.checked;save();if(t.dataset.sw!=='mail.low')return}
+  if(t.dataset.sw==='mail.low'){route();return}
+  if(t.dataset.set==='low'||t.dataset.set==='lowAt'){var f=t.closest('.fld'),o=f.querySelector('.err-msg'),bad=function(msg){f.classList.add('err');f.insertAdjacentHTML('beforeend','<span class="err-msg"><span class="ms" aria-hidden="true">error</span><span>'+msg+'</span></span>')};o&&o.remove();f.classList.remove('err');
+   if(t.dataset.set==='low'){var n=+t.value;if(!/^\d+$/.test(t.value.trim())||n<1||n>9999){bad('ใส่ตัวเลข 1 ถึง 9999');return}A.low=n;save();toast('เตือนเมื่อเหลือน้อยกว่า '+n+' เครดิต')}
+   else{var tv=t.value.trim(),m=tv.match(/^(\d{1,2})[:.](\d{2})$/)||tv.match(/^(\d{1,2})(\d{2})$/)||(tv.match(/^(\d{1,2})$/)?[0,tv,'00']:null);if(!m||+m[1]>23||+m[2]>59){bad('ใส่เวลาเป็น ชั่วโมง:นาที เช่น 09:00');return}A.lowAt=('0'+m[1]).slice(-2)+':'+m[2];t.value=A.lowAt;save();toast('ส่งอีเมลเตือนเวลา '+A.lowAt+' น.')}return}
+  if(t.dataset.set==='name'){A.name=t.value.trim();save();route();toast('บันทึกชื่อแล้ว');return}
+  if(t.dataset.set==='slug'){var v=t.value.trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,''),f=t.closest('.fld'),o=f.querySelector('.err-msg');o&&o.remove();f.classList.remove('err');if(v.length<3){f.classList.add('err');f.insertAdjacentHTML('beforeend','<span class="err-msg"><span class="ms" aria-hidden="true">error</span><span>ใช้อย่างน้อย 3 ตัว เป็นตัวอังกฤษ ตัวเลข หรือขีดกลาง</span></span>');return}t.value=v;A.slug=v;save();toast('เปลี่ยนที่อยู่เว็บเป็น '+v+'.migma.site แล้ว')}});
+if(/[?&]login=1/.test(location.search)){A.signed=false}
+if(!EMB&&!ALONE&&A.signed){toApp(location.hash);return}
+route();
+})();
+</script>
+</body>
+</html>
