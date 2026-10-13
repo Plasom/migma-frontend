@@ -192,6 +192,7 @@ dl{margin:0}
 .lg-or::before,.lg-or::after{content:"";flex:1;height:1px;background:var(--border)}
 .lg-f{font:var(--body-sm);color:var(--text-2);margin:var(--space-6) 0 0}
 .lg-acts{display:flex;flex-wrap:wrap;gap:var(--space-2);margin-top:var(--space-4)}.lg-acts .btn{width:auto}
+.lg-ui{margin-top:var(--space-6);display:flex;justify-content:center}.lg-ui .btn{color:var(--text-2)}.lg-ui+.proto{margin-top:var(--space-4)}
 .proto{display:flex;align-items:center;gap:var(--space-2);margin-top:var(--space-8);padding-top:var(--space-4);border-top:1px dashed var(--border-control);font:var(--body-sm);color:var(--text-2);flex-wrap:wrap}
 .proto .btn{width:auto}.proto[hidden]{display:none}
 .note{display:flex;gap:var(--space-2);align-items:flex-start;padding:var(--space-3);border-radius:var(--radius-sm);background:var(--muted);font:var(--body-sm);color:var(--text-2);margin:0 0 var(--space-8)}
@@ -328,6 +329,7 @@ html.fs-lg .btn.sm{font-size:16px}html.fs-lg .hint,html.fs-lg .err-msg,html.fs-l
 
 </style>
 <script>(function(){var r=document.documentElement,t;if(window.PF_EMBED||/[?&]embed=1/.test(location.search))r.className+=' emb';if(window.PF_EMBED)return;try{t=localStorage.getItem('theme')}catch(e){}r.setAttribute('data-theme',t==='dark'?'dark':'light')})()</script>
+<script src="js/ui-i18n.js"></script>
 </head>
 <body>
 <!-- ============ เข้าสู่ระบบ ============ -->
@@ -361,6 +363,7 @@ html.fs-lg .btn.sm{font-size:16px}html.fs-lg .hint,html.fs-lg .err-msg,html.fs-l
         <button type="submit" class="btn filled lg">เริ่มใช้งาน</button>
       </form>
     </div>
+    <div class="lg-ui"><button type="button" class="btn text sm" id="lgUi" data-ui-keep><span class="ms" aria-hidden="true">language</span><span id="lgUiT"></span></button></div>
     <div class="proto" id="lgProto" hidden><i class="tbd-tag">dev</i><span id="lgPT">โหมด dev</span><button type="button" class="btn text sm" id="lgFill" hidden>ใส่รหัสให้</button><button type="button" class="btn text sm" id="lgSkip">เข้าได้เลย</button></div>
   </div>
 </main>
@@ -369,7 +372,7 @@ html.fs-lg .btn.sm{font-size:16px}html.fs-lg .hint,html.fs-lg .err-msg,html.fs-l
 <div class="app" id="app" hidden>
 <header class="ac-top">
   <a class="ac-brand" href="editor.html"><span class="dots" aria-hidden="true"><svg viewBox="0 0 34 24" focusable="false"><path d="M3 21V11a5.5 5.5 0 0 1 11 0v10M14 11a5.5 5.5 0 0 1 11 0v10" fill="none" stroke="var(--logo-dot)" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30.6" cy="19.6" r="2.6" fill="var(--logo-dot-accent)"/></svg></span><span class="n">Migma</span></a>
-  <a class="ac-coin" href="#credits" id="acCoin" aria-label="เครดิต AI คงเหลือ"><span class="ms" aria-hidden="true">generating_tokens</span><span id="acCoinN">0</span></a>
+  <a class="ac-coin" href="#credits" id="acCoin" aria-label="เครดิต AI คงเหลือ"><span class="ms" aria-hidden="true">toll</span><span id="acCoinN">0</span></a>
   <a class="btn outlined sm ac-ed" href="editor.html" aria-label="แก้ Portfolio"><span class="ms" aria-hidden="true">edit</span><span class="tx">แก้ Portfolio</span></a>
   <button type="button" class="btn ghost sm icon" id="acTheme" aria-label="สลับโหมดมืด"><span class="ms" aria-hidden="true">dark_mode</span></button>
 </header>
@@ -377,7 +380,7 @@ html.fs-lg .btn.sm{font-size:16px}html.fs-lg .hint,html.fs-lg .err-msg,html.fs-l
   <nav class="ac-nav" aria-label="บัญชีของฉัน" id="acNav">
     <a class="ac-tab" href="#overview"><span class="ms" aria-hidden="true">home</span><span class="tl">ภาพรวม</span></a>
     <a class="ac-tab" href="#stats"><span class="ms" aria-hidden="true">bar_chart</span><span class="tl">สถิติ</span></a>
-    <a class="ac-tab" href="#credits"><span class="ms" aria-hidden="true">generating_tokens</span><span class="tl">เครดิต AI</span></a>
+    <a class="ac-tab" href="#credits"><span class="ms" aria-hidden="true">toll</span><span class="tl">เครดิต AI</span></a>
     <a class="ac-tab" href="#usage"><span class="ms" aria-hidden="true">auto_awesome</span><span class="tl">การใช้ AI</span></a>
     <a class="ac-tab" href="#plan"><span class="ms" aria-hidden="true">receipt_long</span><span class="tl">แพ็กเกจและใบเสร็จ</span></a>
     <a class="ac-tab" href="#settings"><span class="ms" aria-hidden="true">settings</span><span class="tl">ตั้งค่า</span></a>
@@ -428,7 +431,7 @@ var SUP='support@migma.site',help=function(what){return '<section class="sec"><d
 var PLAN={free:'Free',pass:'Job Hunt Pass',pro:'Pro รายปี'};
 var crPct=function(){var b=Math.max(A.base||A.coins,1);return Math.min(100,Math.max(0,Math.round((b-A.coins)/b*100)))},crLv=function(){var p=crPct();return A.coins<=0?'out':p>=90?'crit':p>=75?'warn':''};
 function meter(big){var p=crPct(),lv=crLv(),b=Math.max(A.base||A.coins,1),W={warn:['warning','ใช้ไปเกิน 75% แล้ว เติมไว้ก่อนได้ เครดิตไม่มีวันหมดอายุ'],crit:['warning','เหลือไม่ถึง 10% ใช้ AI ได้อีกไม่กี่ครั้ง'],out:['error','เครดิตหมดแล้ว ปุ่ม AI ใช้ไม่ได้จนกว่าจะเติม ส่วนอื่นของเว็บใช้ได้ปกติ']}[lv];
-  return '<div class="mt'+(big?' big':'')+'"><p class="mt-n"><span class="ms" aria-hidden="true">generating_tokens</span><b id="balN">'+A.coins+'</b><span>เครดิตคงเหลือ</span></p><div class="cr-bar"'+(lv?' data-lv="'+lv+'"':'')+' role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+p+'" aria-label="ใช้ไปแล้ว '+p+' เปอร์เซ็นต์"><i style="width:'+p+'%"></i></div><p class="cr-s"><span>ใช้ไป '+(b-A.coins)+' จาก '+b+' เครดิต</span><span>'+p+'%</span></p>'+(W?'<p class="cr-w" data-lv="'+lv+'"><span class="ms" aria-hidden="true">'+W[0]+'</span><span>'+W[1]+'</span></p>':'')+'</div>'}
+  return '<div class="mt'+(big?' big':'')+'"><p class="mt-n"><span class="ms" aria-hidden="true">toll</span><b id="balN">'+A.coins+'</b><span>เครดิตคงเหลือ</span></p><div class="cr-bar"'+(lv?' data-lv="'+lv+'"':'')+' role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+p+'" aria-label="ใช้ไปแล้ว '+p+' เปอร์เซ็นต์"><i style="width:'+p+'%"></i></div><p class="cr-s"><span>ใช้ไป '+(b-A.coins)+' จาก '+b+' เครดิต</span><span>'+p+'%</span></p>'+(W?'<p class="cr-w" data-lv="'+lv+'"><span class="ms" aria-hidden="true">'+W[0]+'</span><span>'+W[1]+'</span></p>':'')+'</div>'}
 var logRows=function(a){return a.length?'<div class="tb-w"><table class="tb2"><thead><tr><th scope="col">ใช้ทำอะไร</th><th scope="col">เมื่อ</th><th scope="col" class="num">เครดิต</th></tr></thead><tbody>'+a.map(function(l){var c=costOf(l.k)||{n:l.k};return '<tr><td class="main">'+esc(c.n)+'<small>'+esc(l.d)+'</small></td><td class="sub">'+fd(l.t,1)+'</td><td class="num">−'+l.c+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="es sm"><p class="es-t">ยังไม่ได้ใช้ AI</p><p class="es-d">กดปุ่ม AI ในตัวแก้ Portfolio แล้วรายการจะขึ้นที่นี่</p></div>'};
 /* ---------- สถิติ (ยังไม่มีแหล่งข้อมูลจริง: ปกติทุกตัวเป็น 0 · โหมด dev ใช้ตัวเลขจำลองจากสูตรคงที่ไว้ดูหน้าตา) ----------
    คำถามที่หน้านี้ตอบ: มีคนเปิดดูไหม · มาจากไหน · ดูงานชิ้นไหน · บริษัทที่ส่งลิงก์ไปเปิดดูหรือยัง */
@@ -486,7 +489,7 @@ settings:function(){return '<h1 class="ac-h" tabindex="-1">ตั้งค่า
  '<div class="av-row"><span class="avt" style="--s:var(--avatar-56);--fs:20px" aria-hidden="true">'+initial(A.name)+'</span><div><b>'+esc(A.name||'ยังไม่ได้ตั้งชื่อ')+'</b><span>ใช้ตัวอักษรแรกของชื่อแทนรูป</span></div></div>'+
  fld('stN','ชื่อ',A.name,{max:60,set:'name',ac:'name',hint:'ชื่อนี้ใช้ในหลังบ้านและใบเสร็จ ชื่อบนหน้าเว็บแก้ที่แท็บโปรไฟล์'})+
  fld('stE','อีเมลที่ใช้เข้าสู่ระบบ',A.email,{type:'email',dis:1,hint:'เปลี่ยนอีเมลต้องยืนยันจากอีเมลใหม่ก่อน <button type="button" class="btn text sm" data-soon>เปลี่ยนอีเมล</button>'})+'</section>'+
- '<section class="sec"><div class="sec-h"><h2>การแสดงผล</h2></div><div class="lg-row"><span class="lab" id="thL">โหมดสีของหลังบ้าน</span>'+seg('thm',document.documentElement.getAttribute('data-theme'),[['light','สว่าง','light_mode'],['dark','มืด','dark_mode']],'thL')+'</div><div class="lg-row" style="margin-top:var(--space-3)"><span class="lab" id="fsL">ขนาดตัวหนังสือในหลังบ้าน</span>'+seg('fs',LS.get('pf-fs')==='lg'?'lg':'md',[['md','ปกติ'],['lg','ใหญ่']],'fsL')+'</div></section>'+
+ '<section class="sec"><div class="sec-h"><h2>การแสดงผล</h2></div><div class="lg-row"><span class="lab" id="thL">โหมดสีของหลังบ้าน</span>'+seg('thm',document.documentElement.getAttribute('data-theme'),[['light','สว่าง','light_mode'],['dark','มืด','dark_mode']],'thL')+'</div><div class="lg-row" style="margin-top:var(--space-3)"><span class="lab" id="fsL">ขนาดตัวหนังสือในหลังบ้าน</span>'+seg('fs',LS.get('pf-fs')==='lg'?'lg':'md',[['md','ปกติ'],['lg','ใหญ่']],'fsL')+'</div><div class="lg-row" style="margin-top:var(--space-3)"><span class="lab" id="uiL">ภาษาของหลังบ้าน</span>'+seg('uil',window.UI_LANG,[['en','English'],['th','ไทย']],'uiL')+'</div></section>'+
  '<section class="sec"><div class="sec-h"><h2>ที่อยู่เว็บ</h2></div>'+
  fld('stS','ที่อยู่ที่ได้มากับบัญชี',A.slug,{max:30,set:'slug',sfx:'.migma.site',attr:' autocapitalize="off" spellcheck="false"',hint:'ใช้ตัวอังกฤษ ตัวเลข และขีดกลาง 3–30 ตัว เปลี่ยนแล้วลิงก์เก่าพาไปที่ใหม่ให้ 30 วัน'})+
  ''+'</section>'+
@@ -548,6 +551,8 @@ $('lgSkip').onclick=function(){var nm=$('lgNm').value.trim();if(!$('lgName').hid
 $('lgG').onclick=function(){afterAuth(A.email||'you@gmail.com')};
 protoTxt();
 $('acOut').onclick=function(){A.signed=false;save();showLg('lgForm');route();$('lgE').focus();toast('ออกจากระบบแล้ว')};
+/* กลุ่มตัวเลือกแบบ seg: ลูกศรซ้ายขวา (และขึ้นลง) ย้ายและเลือกตัวถัดไป Home/End ไปตัวแรกหรือตัวสุดท้าย ตามแบบ radiogroup */
+document.addEventListener('keydown',function(e){var t=e.target;if(!t.matches||!t.matches('[role=radio]')||!/^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(e.key)||e.metaKey||e.ctrlKey||e.altKey)return;var g=t.closest('[role=radiogroup]');if(!g)return;var a=[].filter.call(g.querySelectorAll('[role=radio]'),function(b){return !b.disabled&&b.offsetWidth>0}),i=a.indexOf(t);if(i<0||a.length<2)return;e.preventDefault();var n=e.key==='Home'?0:e.key==='End'?a.length-1:(i+(/Right|Down/.test(e.key)?1:a.length-1))%a.length;a[n].click();var f=document.contains(a[n])?a[n]:null;if(!f){var gl=g.getAttribute('aria-labelledby')||g.getAttribute('aria-label'),g2=gl&&[].filter.call(document.querySelectorAll('[role=radiogroup]'),function(x){return (x.getAttribute('aria-labelledby')||x.getAttribute('aria-label'))===gl})[0];f=g2&&g2.querySelector('[role=radio][aria-checked=true]')}f&&f.focus()});
 $('acTheme').onclick=function(){setThm(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')};
 /* ---------- ช่องเวลา: รายการเลือกใต้ช่อง (ทุกชั่วโมง) · พิมพ์เองได้เหมือนเดิม ---------- */
 var TM=null,TMDEF='09:00';
@@ -597,6 +602,10 @@ document.addEventListener('click',function(e){var t=e.target.closest&&e.target.c
   if(t.id==='delAcc'){var m3=modal('<h2 class="dg-t" id="dgT">ลบบัญชีนี้?</h2><p class="dg-d">เว็บ portfolio ข้อมูลทั้งหมด และเครดิตที่เหลือ '+A.coins+' เครดิตจะหายถาวร กู้คืนไม่ได้ พิมพ์อีเมลของคุณเพื่อยืนยัน</p><div class="fld"><label class="vh" for="delE">อีเมล</label><input class="in" id="delE" placeholder="'+esc(A.email)+'" autocomplete="off"></div><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn danger filled" data-ok disabled>ลบบัญชีถาวร</button></div>');var ok=m3.box.querySelector('[data-ok]'),inp=m3.box.querySelector('#delE');m3.box.querySelector('[data-x]').onclick=m3.close;inp.oninput=function(){ok.disabled=inp.value.trim()!==A.email};ok.onclick=function(){m3.close();LS.set('pf-acct-demo','');A=seed();route();toast('ลบข้อมูลบัญชีตัวอย่างแล้ว')};inp.focus()}});
 function setThm(n){var r=document.documentElement;r.setAttribute('data-theme',n);LS.set('theme',n);[].forEach.call(document.querySelectorAll('[data-thm]'),function(b){b.setAttribute('aria-checked',b.dataset.thm===n)});var tb=$('acTheme');if(tb){tb.setAttribute('aria-label',n==='dark'?'สลับโหมดสว่าง':'สลับโหมดมืด');tb.firstChild.textContent=n==='dark'?'light_mode':'dark_mode'}}
 function fsApply(){document.documentElement.classList.toggle('fs-lg',LS.get('pf-fs')==='lg')}fsApply();
+/* ภาษาของหลังบ้าน: สลับแล้วโหลดใหม่ ถ้าหน้านี้ฝังอยู่ในตัวแก้ ให้ตัวแก้เป็นคนโหลด */
+function uiSet(l){if(l===window.UI_LANG)return;try{localStorage.setItem('pf-ui',l)}catch(e){}if(EMB)up({type:'pf:ui'});else location.reload()}
+(function(){var b=$('lgUi');if(!b)return;var to=window.UI_LANG==='en'?'th':'en';$('lgUiT').textContent=to==='th'?'ภาษาไทย':'English';b.lang=to;b.onclick=function(){uiSet(to)}})();
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-uil]');if(b)uiSet(b.dataset.uil)});
 document.addEventListener('click',function(e){var f=e.target.closest&&e.target.closest('[data-fs]');if(!f)return;LS.set('pf-fs',f.dataset.fs);fsApply();up({type:'pf:fs'});[].forEach.call(f.parentNode.children,function(x){x.setAttribute('aria-checked',x===f)})});
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-thm]');if(!b)return;setThm(b.dataset.thm);up({type:'pf:mode',theme:b.dataset.thm});b.focus()});
 document.addEventListener('click',function(e){var c=e.target.closest&&e.target.closest('[data-copy]');if(!c)return;var v=c.dataset.copy,ok=function(){toast('คัดลอก '+v+' แล้ว')};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(v).then(ok,function(){toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')});else toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')});
