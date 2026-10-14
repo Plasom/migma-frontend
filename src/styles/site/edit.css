@@ -1,0 +1,79 @@
+/* es */
+.pf-edit .pf-off{opacity:.35}
+.pf-edit .pf-off::before{content:"ซ่อนอยู่ · ไม่ขึ้นบนหน้าเว็บ";display:inline-block;margin:0 0 8px;padding:2px 8px;border-radius:6px;background:var(--muted);color:var(--text-2);font:var(--label-md)}
+.pf-edit .pf-hl{outline:2px dashed var(--primary)!important;outline-offset:2px;border-radius:6px}
+.pf-edit [data-pe]{cursor:text;border-radius:var(--radius-xs);outline:0;transition:box-shadow 120ms,background-color 120ms}
+.pf-edit [data-pe]:hover{box-shadow:inset 0 -1px 0 var(--primary)}
+.pf-edit [data-pe]:focus{outline:0;box-shadow:inset 0 -2px 0 var(--primary);background:color-mix(in srgb,var(--primary) 8%,transparent)}
+.pf-edit [data-pe][data-ph]:empty::before{content:attr(data-ph)}
+.pf-edit [data-pe]:empty{display:inline-block;min-width:var(--space-18)}
+.pf-edit .cp-adds{display:flex;flex-wrap:wrap;gap:var(--space-2);margin:var(--space-3) 0 0}
+.pf-edit .cp-scope .pf-addb{min-height:var(--space-6)}
+.pf-edit .wk-it [data-pe],.pf-edit .wk-li [data-pe]{position:relative;z-index:2}
+.pf-edit [data-pe]:empty::before{content:"พิมพ์ตรงนี้";color:var(--text-2)}
+.pf-edit [data-pf]{position:relative;scroll-margin-top:calc(var(--nav-h) + 16px)}
+.pf-edit [data-pf]::after{content:"";position:absolute;inset:2px -12px;border:2px solid transparent;border-radius:16px;pointer-events:none;transition:border-color 280ms var(--ease-standard)}
+.pf-edit [data-pf]:hover::after{border-color:color-mix(in srgb,var(--primary) 14%,transparent)}
+.pf-edit [data-pf].pf-cur::after{border-color:color-mix(in srgb,var(--primary) 45%,transparent)}
+.pf-edit [data-pf].pf-flash::after{border-color:var(--primary)}
+@media (max-width:600px){.pf-edit [data-pf]::after{inset:2px -8px}
+}
+
+
+/* pkc */
+.pf-edit .pf-addb{display:inline-flex;align-items:center;min-height:var(--chip-h-sm);padding:0 var(--space-3);border:1px dashed var(--border-control);border-radius:var(--radius-full);background:none;font:var(--btn-font-sm);line-height:1.5;color:var(--text-2);cursor:pointer;white-space:nowrap;outline:0}
+.pf-edit .pf-addb:hover,.pf-edit .pf-addb:focus-visible{border-style:solid;color:var(--ink);background:var(--muted)}
+.pf-edit .pf-addb.on{border:1px solid var(--primary);color:var(--ink);background:var(--surface);cursor:text;min-width:var(--space-18)}
+.pf-edit .pf-addb.on:empty::before{content:"พิมพ์แล้วกด Enter";color:var(--text-2)}
+html[lang=en] .pf-edit .pf-addb.on:empty::before{content:"Type, then press Enter"}
+html[lang=en] .pf-edit .pf-off::before{content:"Hidden · not on the site"}
+.pf-edit li.pf-addl{border:0;padding:0;height:auto;list-style:none;background:none}
+.pf-edit .xp-pts li.pf-addl{margin:var(--space-2) 0 0 calc(var(--space-4) * -1)}
+.pf-edit .hero-sk li [data-pe],.pf-edit .xp-sk [data-pe],.pf-edit .pc-out [data-pe]{line-height:1.6}
+.pf-edit [data-pk]{cursor:pointer;border-radius:var(--radius-xs);transition:box-shadow 120ms}
+.pf-edit [data-pk]:hover,.pf-edit [data-pk].pk-on{box-shadow:inset 0 -1px 0 var(--primary)}
+.pf-edit .wk-it [data-pk],.pf-edit .wk-li [data-pk]{position:relative;z-index:2}
+@keyframes pfPop{from{opacity:0;transform:translateY(calc(var(--space-2) * -1))}
+to{opacity:1;transform:none}
+}
+@keyframes pfFade{from{opacity:0}
+to{opacity:1}
+}
+.pf-pk{animation:pfPop 240ms var(--ease-enter) both}
+@media (prefers-reduced-motion:reduce){.pf-pk{animation:pfFade 100ms linear both}
+}
+.pf-pk{position:fixed;z-index:60;width:min(var(--menu-max-w),calc(100vw - var(--space-4)));max-height:calc(100dvh - var(--space-4));overflow:auto;padding:var(--space-3);border-radius:var(--menu-radius);background:var(--menu-bg);box-shadow:var(--menu-shadow);color:var(--ink);font:var(--body-sm);text-align:left;overscroll-behavior:contain}
+.pf-pk-t{margin:0 0 var(--space-2);font:var(--title-md)}
+.pf-pk-l{display:block;margin:var(--space-3) 0 var(--space-1);font:var(--label-lg);color:var(--text-2)}
+.pf-pk-t+.pf-pk-l{margin-top:0}
+.pf-pk-o{display:flex;flex-direction:column}
+.pf-pk-o button{display:flex;align-items:center;justify-content:space-between;gap:var(--menu-item-gap);min-height:var(--menu-item-h);padding:var(--menu-item-pad);border:0;border-radius:var(--menu-item-radius);background:none;font:var(--menu-item-font);color:var(--menu-item-fg);text-align:left;cursor:pointer}
+.pf-pk-o button:hover{background:var(--menu-item-hover)}
+.pf-pk-o button[aria-checked=true]{font-weight:500}
+.pf-pk-o .ms{font-size:var(--space-5);color:var(--link)}
+.pf-pk-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-1)}
+.pf-pk-g button{height:var(--chip-h-sm);padding:0;border:0;border-radius:var(--radius-full);background:var(--muted);font:var(--btn-font-sm);color:var(--chip-fg);cursor:pointer}
+.pf-pk-g button:hover{background:var(--muted-hover)}
+.pf-pk-g button[aria-checked=true]{background:var(--chip-on-bg);color:var(--chip-on-fg)}
+.pf-pk-in{display:block;width:100%;height:var(--input-h-sm);padding:0 var(--space-3);border:0;border-radius:var(--input-radius);background:var(--input-bg);color:var(--ink);font:var(--body-md);outline:2px solid transparent;box-sizing:border-box}
+.pf-pk-in:focus{background:var(--input-bg-focus);outline-color:var(--input-ring)}
+.pf-pk-c{display:flex;align-items:center;gap:var(--space-2);min-height:var(--menu-item-h);margin-top:var(--space-2);cursor:pointer}
+.pf-pk-c input{appearance:none;-webkit-appearance:none;flex:none;margin:0;width:var(--checkbox-size);height:var(--checkbox-size);border-radius:var(--checkbox-radius);border:var(--sel-border-width) solid var(--sel-border);background:var(--sel-bg);display:inline-grid;place-items:center;cursor:pointer}
+.pf-pk-c input:hover{border-color:var(--sel-border-hover)}
+.pf-pk-c input:checked{background:var(--sel-on);border-color:var(--sel-on)}
+.pf-pk-c input:checked::after{content:"";width:5px;height:10px;border:solid var(--sel-mark);border-width:0 2px 2px 0;transform:translateY(-1px) rotate(45deg)}
+.pf-pk button:focus-visible,.pf-pk-c input:focus-visible{outline:2px solid var(--focus-ring);outline-offset:1px}
+.pf-pk [hidden]{display:none}
+
+
+/* dgc */
+.pf-edit .pc-b{cursor:grab;touch-action:none}
+.pf-edit .pc-s.pf-drag{position:relative;z-index:5;opacity:.92}
+.pf-edit .pc-s.pf-drag .pc-b{cursor:grabbing;background:var(--surface);box-shadow:var(--elevation-3)}
+.pf-edit .pc-s.pf-drop .pc-b{box-shadow:inset 2px 0 0 var(--primary)}
+.pf-edit .pc-s.pf-drop.aft .pc-b{box-shadow:inset -2px 0 0 var(--primary)}
+
+
+.pf-still *,.pf-still *::before,.pf-still *::after{transition:none!important;animation:none!important}
+/* หน้า portfolio ซ่อนไว้จนกว่า engine วาดเนื้อหาเสร็จ (กันจอวาบโครงว่าง) · สคริปต์หัวหน้าเว็บเอาออกเองถ้าเกิน 3 วินาที */
+html.pf-boot body{visibility:hidden}

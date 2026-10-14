@@ -1,0 +1,21 @@
+/* Page-only styles for .pg-work (scoped so client-side navigation between pages cannot leak rules) */
+:where(.pg-work) .wk-page{padding-top:40px;padding-bottom:0}:where(.pg-work) .wk-page .wk-head h1{font:var(--headline-lg);margin:0}
+:where(.pg-work) .wk-back{display:inline-flex;align-items:center;gap:4px;font:var(--body-sm);color:var(--text-2);text-decoration:none;margin-bottom:16px;border-radius:6px}:where(.pg-work) .wk-back .ms{font-size:16px}:where(.pg-work) .wk-back:hover{color:var(--ink)}:where(.pg-work) .wk-back:focus-visible{outline:2px solid var(--input-ring);outline-offset:2px}:where(.pg-work) .wk-head .tbd-tag{align-self:center}
+:where(.pg-work) .wk-img[data-cover],:where(.pg-work) .wk-li .th[data-cover]{background-size:cover!important;background-position:center!important;border:0!important}
+/* v4 · ชี้การ์ดแล้วเห็นรายละเอียดงานก่อนกด (ข้อ 16) · รายการมีคำอธิบายสั้น (ข้อ 17) */
+:where(.pg-work) .wk-img{overflow:hidden}
+:where(.pg-work) .wk-ov{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--space-2);padding:var(--space-4);border-radius:inherit;background:linear-gradient(to top,var(--scrim-media) 0%,var(--scrim-media) 38%,transparent 100%);color:var(--on-media);text-align:left;opacity:0;transition:opacity 200ms var(--ease-standard);pointer-events:none}
+:where(.pg-work) .wk-ovd{margin:0;font:var(--body-md);color:var(--on-media);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+:where(.pg-work) .wk-ovt{display:flex;flex-wrap:wrap;gap:var(--space-1);margin:0}:where(.pg-work) .wk-ovt span{display:inline-flex;align-items:center;height:22px;padding:0 var(--space-2);border-radius:var(--radius-full);border:1px solid var(--on-media-border);font:var(--caption);color:var(--on-media)}
+:where(.pg-work) .wk-ovm{margin:0;font:var(--caption);color:var(--on-media-muted)}
+:where(.pg-work) .wk-ovgo{display:inline-flex;align-items:center;gap:var(--space-1);font:var(--btn-font-sm);color:var(--on-media)}:where(.pg-work) .wk-ovgo .ms{font-size:16px;transition:transform 200ms var(--ease-standard)}
+:where(.pg-work) .wk-it:has(h3 a:focus-visible) .wk-ov{opacity:1}
+@media (hover:hover){:where(.pg-work) .wk-it:hover .wk-ov{opacity:1}:where(.pg-work) .wk-it:hover .wk-ovgo .ms{transform:translateX(2px)}}
+:where(.pg-work) .wk-gds{margin:var(--space-1) 0 0;font:var(--body-sm);color:var(--text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (hover:hover){:where(.pg-work) .wk-gds{display:none}}
+/* ปุ่ม × ในชิปตัวกรอง: วงกลมอยู่กึ่งกลางปลายชิปพอดี วงโฟกัสอยู่ในชิป ไม่ล้นขอบ */
+:where(.pg-work) .wk-ic{padding:0 3px 0 12px}:where(.pg-work) .wk-ic button{flex:none;margin:0;padding:0;box-sizing:border-box}:where(.pg-work) .wk-ic button .ms{display:block;width:16px;height:16px;line-height:16px}:where(.pg-work) .wk-ic button:focus-visible{outline:2px solid var(--chip-on-fg);outline-offset:-2px}
+:where(.pg-work) .wk-sk .wk-ov{display:none}
+:where(.pg-work) .wk-ds{margin:var(--space-1) 0 0;max-width:60ch;font:var(--body-sm);color:var(--text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+:where(.pg-work) .wk-li .wk-tags{margin-top:var(--space-2)}
+@media (prefers-reduced-motion:reduce){:where(.pg-work) .wk-ov,:where(.pg-work) .wk-ovgo .ms{transition:none}}
