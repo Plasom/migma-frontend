@@ -1,9 +1,17 @@
 // @ts-nocheck -- หน้าบัญชี (เข้าสู่ระบบ · ภาพรวม · เครดิต · แพ็กเกจ · สถิติ · ตั้งค่า) ย้ายมาจากสคริปต์ใน account.html ของต้นแบบแบบ 1:1
 //   ข้อมูลบัญชีเป็นตัวอย่างใน localStorage `pf-acct-demo` · ฝังในหลังบ้าน (?embed=1) = คุยกับหลังบ้านผ่าน postMessage (pf:acct*)
+//   ตั้งค่า OAuth แล้ว (auth ไม่เป็น null) = เข้าและออกจากระบบจริงผ่าน Auth.js · สถานะ signed/อีเมล/ชื่อ มาจาก session
 /* eslint-disable */
 import { uiLang } from '@/lib/i18n/ui';
 
-export function mountAccount(): void {
+type Auth = {
+  providers: string[];
+  user: { email: string; name: string; image: string } | null;
+  signIn: (provider: string, opts: { redirectTo: string }) => Promise<unknown>;
+  signOut: (opts: { redirect: false }) => Promise<unknown>;
+};
+
+export function mountAccount(AUTH: Auth | null): void {
 
 'use strict';
 var $=function(id){return document.getElementById(id)},esc=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
@@ -28,6 +36,8 @@ function seed(){var nm='';try{var p=JSON.parse(LS.get('pf-saved')||LS.get('pf-pu
 var A;try{A=JSON.parse(LS.get('pf-acct-demo')||'null')}catch(e){}if(!A||A.v!==1)A=seed();if(!A.base)A.base=Math.max(A.coins,1);if(!A.lowAt)A.lowAt='09:00';A.bills.forEach(function(b,i){if(!b.no)b.no='MG-2610-'+('000'+(A.bills.length-i)).slice(-4)});
 var EMB=/(^| )emb( |$)/.test(document.documentElement.className),up=function(m){if(EMB)try{parent.postMessage(m,'*')}catch(e){}};
 function save(){LS.set('pf-acct-demo',JSON.stringify(A));up({type:'pf:acct',coins:A.coins,signed:A.signed,data:JSON.stringify(A)})}
+/* เข้าสู่ระบบจริง: session เป็นตัวตัดสิน · บัญชีใหม่ใช้ชื่อจาก Google/GitHub ไม่ต้องถามชื่อ */
+if(AUTH){var U=AUTH.user;if(U){if(A.email!==U.email&&U.email){A.email=U.email;A.name=U.name||A.name}if(!A.name)A.name=U.name||'';A.signed=true}else A.signed=false;LS.set('pf-acct-demo',JSON.stringify(A))}
 var costOf=function(k){return COST.filter(function(x){return x.k===k})[0]};
 var tT=0;function toast(t,act){var el=$('edToast');el.innerHTML='<span>'+esc(t)+'</span>'+(act?'<button type="button" class="act">'+esc(act.label)+'</button>':'');el.classList.add('on');if(act)el.querySelector('.act').onclick=function(){el.classList.remove('on');act.fn()};clearTimeout(tT);tT=setTimeout(function(){el.classList.remove('on')},act?6000:4000)}
 function modal(html){var d=document.createElement('div');d.className='dlg';d.innerHTML='<div class="dg md" role="dialog" aria-modal="true" aria-labelledby="dgT">'+html+'</div>';var back=document.activeElement;document.body.appendChild(d);
@@ -143,7 +153,7 @@ $('lgE').addEventListener('input',function(){if($('lgFld').classList.contains('e
 var PEND='',CODE='',TRY=0;
 /* รหัสเหมือนของจริง: สุ่มใหม่ทุกครั้งที่ส่ง รหัสเก่าใช้ไม่ได้ ผิดได้ 5 ครั้ง · ต้นแบบยังไม่ส่งอีเมล จึงโชว์รหัสไว้ที่แถบต้นแบบ */
 function newCode(){CODE=String(Math.floor(100000+Math.random()*900000));TRY=0;$('lgCode').disabled=false;$('lgOk').disabled=false;protoTxt()}
-function protoTxt(){$('lgProto').hidden=!DEV;var on=!$('lgSent').hidden;$('lgPT').innerHTML=on&&CODE?'รหัสรอบนี้ <b>'+CODE+'</b>':'โหมด dev';$('lgFill').hidden=!(on&&CODE)}
+function protoTxt(){$('lgProto').hidden=!DEV||!!AUTH;var on=!$('lgSent').hidden;$('lgPT').innerHTML=on&&CODE?'รหัสรอบนี้ <b>'+CODE+'</b>':'โหมด dev';$('lgFill').hidden=!(on&&CODE)}
 function checkCode(){var c=$('lgCode'),b=$('lgOk');if(!/^\d{6}$/.test(c.value)){fErr('lgCFld',c,c.value?'รหัสมี 6 หลัก ตอนนี้ใส่มา '+c.value.length+' หลัก':'ใส่รหัส 6 หลักจากอีเมล');return}
   if(b.disabled)return;b.disabled=true;b.textContent='กำลังตรวจ';setTimeout(function(){b.textContent='ยืนยันรหัส';
     if(c.value===CODE){b.disabled=false;CODE='';afterAuth(PEND);return}
@@ -161,8 +171,20 @@ $('lgAgain').onclick=function(){var b=this,n=30;b.disabled=true;var tk=function(
 function signIn(mail){A.signed=true;if(mail)A.email=mail;if(!A.email)A.email='you@example.com';save();showLg('lgForm');if(!EMB&&!ALONE){toApp('');return}if(EMB){HASH=HASH||'#overview'}else if(!location.hash)history.replaceState(null,'','#overview');go(true)}
 $('lgSkip').onclick=function(){var nm=$('lgNm').value.trim();if(!$('lgName').hidden&&nm)A.name=nm;if(!A.name)A.name='Dev';signIn($('lgE').value.trim()&&okMail($('lgE').value.trim())?$('lgE').value.trim():'')};
 $('lgG').onclick=function(){afterAuth(A.email||'you@gmail.com')};
+if(AUTH){
+  /* ซ่อนฟอร์มอีเมลและทางลัด dev (ยังไม่มีระบบส่งรหัสจริง) · โชว์เฉพาะปุ่มของผู้ให้บริการที่ตั้งค่าไว้ */
+  var CB=(location.search.match(/[?&]callbackUrl=([^&]+)/)||[])[1];CB=CB?decodeURIComponent(CB):'/editor';if(CB.charAt(0)!=='/'||CB.charAt(1)==='/')CB='/editor';
+  var oauth=function(id){return function(){this.disabled=true;AUTH.signIn(id,{redirectTo:CB})}};
+  $('lgG').hidden=AUTH.providers.indexOf('google')<0;$('lgG').onclick=oauth('google');
+  $('lgGh').hidden=AUTH.providers.indexOf('github')<0;$('lgGh').onclick=oauth('github');
+  $('lgF').hidden=true;document.querySelector('.lg-or').hidden=true;$('lgSub').textContent='เข้าด้วยบัญชีที่มีอยู่แล้ว ไม่ต้องตั้งรหัสผ่าน ยังไม่มีบัญชีก็ใช้วิธีเดียวกัน';
+  if(/[?&]error=/.test(location.search))setTimeout(function(){toast('เข้าสู่ระบบไม่สำเร็จ ลองอีกครั้ง')},0);
+}
 protoTxt();
-$('acOut').onclick=function(){A.signed=false;save();showLg('lgForm');route();$('lgE').focus();toast('ออกจากระบบแล้ว')};
+$('acOut').onclick=function(){A.signed=false;save();
+  /* ออกจากระบบจริง: ล้างคุกกี้ session ก่อน · ฝังในหลังบ้านอยู่ = พาทั้งหน้าไปหน้าเข้าสู่ระบบ (หลังบ้านต้องเข้าก่อน) */
+  if(AUTH){AUTH.signOut({redirect:false}).then(function(){if(EMB){try{top.location.href='/account'}catch(e){}return}showLg('lgForm');route();toast('ออกจากระบบแล้ว')});return}
+  showLg('lgForm');route();$('lgE').focus();toast('ออกจากระบบแล้ว')};
 /* กลุ่มตัวเลือกแบบ seg: ลูกศรซ้ายขวา (และขึ้นลง) ย้ายและเลือกตัวถัดไป Home/End ไปตัวแรกหรือตัวสุดท้าย ตามแบบ radiogroup */
 document.addEventListener('keydown',function(e){var t=e.target;if(!t.matches||!t.matches('[role=radio]')||!/^(Arrow(Left|Right|Up|Down)|Home|End)$/.test(e.key)||e.metaKey||e.ctrlKey||e.altKey)return;var g=t.closest('[role=radiogroup]');if(!g)return;var a=[].filter.call(g.querySelectorAll('[role=radio]'),function(b){return !b.disabled&&b.offsetWidth>0}),i=a.indexOf(t);if(i<0||a.length<2)return;e.preventDefault();var n=e.key==='Home'?0:e.key==='End'?a.length-1:(i+(/Right|Down/.test(e.key)?1:a.length-1))%a.length;a[n].click();var f=document.contains(a[n])?a[n]:null;if(!f){var gl=g.getAttribute('aria-labelledby')||g.getAttribute('aria-label'),g2=gl&&[].filter.call(document.querySelectorAll('[role=radiogroup]'),function(x){return (x.getAttribute('aria-labelledby')||x.getAttribute('aria-label'))===gl})[0];f=g2&&g2.querySelector('[role=radio][aria-checked=true]')}f&&f.focus()});
 $('acTheme').onclick=function(){setThm(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')};
@@ -235,7 +257,7 @@ document.addEventListener('change',function(e){var t=e.target;if(t.dataset.sw){v
    else{var tv=t.value.trim(),m=tv.match(/^(\d{1,2})[:.](\d{2})$/)||tv.match(/^(\d{1,2})(\d{2})$/)||(tv.match(/^(\d{1,2})$/)?[0,tv,'00']:null);if(!m||+m[1]>23||+m[2]>59){bad('ใส่เวลาเป็น ชั่วโมง:นาที เช่น 09:00');return}A.lowAt=('0'+m[1]).slice(-2)+':'+m[2];t.value=A.lowAt;save();toast('ส่งอีเมลเตือนเวลา '+A.lowAt+' น.')}return}
   if(t.dataset.set==='name'){A.name=t.value.trim();save();route();toast('บันทึกชื่อแล้ว');return}
   if(t.dataset.set==='slug'){var v=t.value.trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,''),f=t.closest('.fld'),o=f.querySelector('.err-msg');o&&o.remove();f.classList.remove('err');if(v.length<3){f.classList.add('err');f.insertAdjacentHTML('beforeend','<span class="err-msg"><span class="ms" aria-hidden="true">error</span><span>ใช้อย่างน้อย 3 ตัว เป็นตัวอังกฤษ ตัวเลข หรือขีดกลาง</span></span>');return}t.value=v;A.slug=v;save();toast('เปลี่ยนที่อยู่เว็บเป็น '+v+'.migma.site แล้ว')}});
-if(/[?&]login=1/.test(location.search)){A.signed=false}
+if(!AUTH&&/[?&]login=1/.test(location.search)){A.signed=false}
 if(!EMB&&!ALONE&&A.signed){toApp(location.hash);return}
 route();
 
