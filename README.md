@@ -26,9 +26,9 @@ npm run test:e2e     # Playwright (ต้อง build ก่อน)
 
 ตั้งค่าใน `.env.local` (คัดลอกจาก `.env.example`) · ไม่ตั้งเลย = ปิดระบบเข้าสู่ระบบจริง หน้าบัญชีใช้แบบจำลองเดิม และ `/editor` เปิดได้เลย
 
-- ผู้ให้บริการ: Google และ GitHub (เปิดเฉพาะตัวที่ใส่ client id/secret) · session เป็น JWT ในคุกกี้ ยังไม่มีฐานข้อมูล
+- ผู้ให้บริการ: Google (เปิดเมื่อใส่ client id/secret) · session เป็น JWT ในคุกกี้ ยังไม่มีฐานข้อมูล
 - `/editor` ต้องเข้าสู่ระบบก่อน (`src/proxy.ts`) ยังไม่เข้า = ไป `/account?callbackUrl=...` แล้วกลับมาที่เดิม
-- Redirect URI ที่ต้องลงทะเบียน: `<origin>/api/auth/callback/google` และ `<origin>/api/auth/callback/github`
+- Redirect URI ที่ต้องลงทะเบียน: `<origin>/api/auth/callback/google`
 - ทดสอบโหมดเข้าสู่ระบบ: `AUTH_SECRET=x AUTH_GOOGLE_ID=x AUTH_GOOGLE_SECRET=x AUTH_TRUST_HOST=true npm run test:e2e -- auth`
 
 ## โครงสร้าง

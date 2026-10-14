@@ -36,7 +36,7 @@ function seed(){var nm='';try{var p=JSON.parse(LS.get('pf-saved')||LS.get('pf-pu
 var A;try{A=JSON.parse(LS.get('pf-acct-demo')||'null')}catch(e){}if(!A||A.v!==1)A=seed();if(!A.base)A.base=Math.max(A.coins,1);if(!A.lowAt)A.lowAt='09:00';A.bills.forEach(function(b,i){if(!b.no)b.no='MG-2610-'+('000'+(A.bills.length-i)).slice(-4)});
 var EMB=/(^| )emb( |$)/.test(document.documentElement.className),up=function(m){if(EMB)try{parent.postMessage(m,'*')}catch(e){}};
 function save(){LS.set('pf-acct-demo',JSON.stringify(A));up({type:'pf:acct',coins:A.coins,signed:A.signed,data:JSON.stringify(A)})}
-/* เข้าสู่ระบบจริง: session เป็นตัวตัดสิน · บัญชีใหม่ใช้ชื่อจาก Google/GitHub ไม่ต้องถามชื่อ */
+/* เข้าสู่ระบบจริง: session เป็นตัวตัดสิน · บัญชีใหม่ใช้ชื่อจาก Google ไม่ต้องถามชื่อ */
 if(AUTH){var U=AUTH.user;if(U){if(A.email!==U.email&&U.email){A.email=U.email;A.name=U.name||A.name}if(!A.name)A.name=U.name||'';A.signed=true}else A.signed=false;LS.set('pf-acct-demo',JSON.stringify(A))}
 var costOf=function(k){return COST.filter(function(x){return x.k===k})[0]};
 var tT=0;function toast(t,act){var el=$('edToast');el.innerHTML='<span>'+esc(t)+'</span>'+(act?'<button type="button" class="act">'+esc(act.label)+'</button>':'');el.classList.add('on');if(act)el.querySelector('.act').onclick=function(){el.classList.remove('on');act.fn()};clearTimeout(tT);tT=setTimeout(function(){el.classList.remove('on')},act?6000:4000)}
@@ -172,11 +172,10 @@ function signIn(mail){A.signed=true;if(mail)A.email=mail;if(!A.email)A.email='yo
 $('lgSkip').onclick=function(){var nm=$('lgNm').value.trim();if(!$('lgName').hidden&&nm)A.name=nm;if(!A.name)A.name='Dev';signIn($('lgE').value.trim()&&okMail($('lgE').value.trim())?$('lgE').value.trim():'')};
 $('lgG').onclick=function(){afterAuth(A.email||'you@gmail.com')};
 if(AUTH){
-  /* ซ่อนฟอร์มอีเมลและทางลัด dev (ยังไม่มีระบบส่งรหัสจริง) · โชว์เฉพาะปุ่มของผู้ให้บริการที่ตั้งค่าไว้ */
+  /* ซ่อนฟอร์มอีเมลและทางลัด dev (ยังไม่มีระบบส่งรหัสจริง) · เหลือปุ่ม Google ปุ่มเดียว */
   var CB=(location.search.match(/[?&]callbackUrl=([^&]+)/)||[])[1];CB=CB?decodeURIComponent(CB):'/editor';if(CB.charAt(0)!=='/'||CB.charAt(1)==='/')CB='/editor';
   var oauth=function(id){return function(){this.disabled=true;AUTH.signIn(id,{redirectTo:CB})}};
   $('lgG').hidden=AUTH.providers.indexOf('google')<0;$('lgG').onclick=oauth('google');
-  $('lgGh').hidden=AUTH.providers.indexOf('github')<0;$('lgGh').onclick=oauth('github');
   $('lgF').hidden=true;document.querySelector('.lg-or').hidden=true;$('lgSub').textContent='เข้าด้วยบัญชีที่มีอยู่แล้ว ไม่ต้องตั้งรหัสผ่าน ยังไม่มีบัญชีก็ใช้วิธีเดียวกัน';
   if(/[?&]error=/.test(location.search))setTimeout(function(){toast('เข้าสู่ระบบไม่สำเร็จ ลองอีกครั้ง')},0);
 }
