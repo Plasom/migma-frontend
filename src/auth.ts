@@ -6,7 +6,10 @@ import Google from 'next-auth/providers/google';
    ผู้ให้บริการ: Google · เปิดเมื่อตั้งค่า client id/secret ไว้ใน env (ดู .env.example)
    ยังไม่ได้ตั้ง = ปิดระบบเข้าสู่ระบบจริง หน้าบัญชีกลับไปใช้แบบจำลองเดิม และ /editor เปิดได้โดยไม่ต้องเข้า */
 const providers: Provider[] = [];
-if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) providers.push(Google);
+// prompt=select_account: ให้ Google ถามทุกครั้งว่าจะใช้บัญชีไหน (สลับบัญชีได้ ไม่เข้าบัญชีเดิมให้อัตโนมัติ)
+if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
+  providers.push(Google({ authorization: { params: { prompt: 'select_account' } } }));
+}
 
 export const authProviders = providers.map((p) => (typeof p === 'function' ? p() : p).id);
 export const authEnabled = authProviders.length > 0;

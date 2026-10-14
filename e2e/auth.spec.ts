@@ -30,3 +30,15 @@ test('เข้าสู่ระบบแล้ว: เปิด /editor ได
   await expect(page.locator('#app')).toBeVisible();
   await expect(page.locator('#acMain')).toContainText('Test User');
 });
+
+test('เปลี่ยนบัญชี Google: ปุ่มในตั้งค่าพาไปหน้าเลือกบัญชีของ Google', async ({ page, context, baseURL }) => {
+  const name = 'authjs.session-token';
+  const value = await encode({ token: { name: 'Test User', email: 'test@example.com', sub: '1' }, secret: SECRET!, salt: name });
+  await context.addCookies([{ name, value, url: baseURL! }]);
+  await page.goto('/account?alone=1#settings');
+  const [req] = await Promise.all([
+    page.waitForRequest((r) => r.url().startsWith('https://accounts.google.com/')),
+    page.locator('#acSwitch').click(),
+  ]);
+  expect(new URL(req.url()).searchParams.get('prompt')).toBe('select_account');
+});

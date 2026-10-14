@@ -7,7 +7,7 @@ import { uiLang } from '@/lib/i18n/ui';
 type Auth = {
   providers: string[];
   user: { email: string; name: string; image: string } | null;
-  signIn: (provider: string, opts: { redirectTo: string }) => Promise<unknown>;
+  signIn: (provider: string, opts: { redirectTo: string }, params?: Record<string, string>) => Promise<unknown>;
   signOut: (opts: { redirect: false }) => Promise<unknown>;
 };
 
@@ -110,7 +110,8 @@ settings:function(){return '<h1 class="ac-h" tabindex="-1">ตั้งค่า
  '<section class="sec" style="border-top:0;padding-top:0"><div class="sec-h"><h2>บัญชี</h2></div>'+
  '<div class="av-row"><span class="avt" style="--s:var(--avatar-56);--fs:20px" aria-hidden="true">'+initial(A.name)+'</span><div><b>'+esc(A.name||'ยังไม่ได้ตั้งชื่อ')+'</b><span>ใช้ตัวอักษรแรกของชื่อแทนรูป</span></div></div>'+
  fld('stN','ชื่อ',A.name,{max:60,set:'name',ac:'name',hint:'ชื่อนี้ใช้ในหลังบ้านและใบเสร็จ ชื่อบนหน้าเว็บแก้ที่แท็บโปรไฟล์'})+
- fld('stE','อีเมลที่ใช้เข้าสู่ระบบ',A.email,{type:'email',dis:1,hint:'เปลี่ยนอีเมลต้องยืนยันจากอีเมลใหม่ก่อน <button type="button" class="btn text sm" data-soon>เปลี่ยนอีเมล</button>'})+'</section>'+
+ (AUTH?fld('stE','บัญชี Google ที่ใช้เข้าสู่ระบบ',A.email,{type:'email',dis:1,hint:'ใช้บัญชี Google อื่นได้ ข้อมูลในเครื่องนี้ยังอยู่ <button type="button" class="btn text sm" id="acSwitch">เปลี่ยนบัญชี Google</button>'})
+  :fld('stE','อีเมลที่ใช้เข้าสู่ระบบ',A.email,{type:'email',dis:1,hint:'เปลี่ยนอีเมลต้องยืนยันจากอีเมลใหม่ก่อน <button type="button" class="btn text sm" data-soon>เปลี่ยนอีเมล</button>'}))+'</section>'+
  '<section class="sec"><div class="sec-h"><h2>การแสดงผล</h2></div><div class="lg-row"><span class="lab" id="thL">โหมดสีของหลังบ้าน</span>'+seg('thm',document.documentElement.getAttribute('data-theme'),[['light','สว่าง','light_mode'],['dark','มืด','dark_mode']],'thL')+'</div><div class="lg-row" style="margin-top:var(--space-3)"><span class="lab" id="fsL">ขนาดตัวหนังสือในหลังบ้าน</span>'+seg('fs',LS.get('pf-fs')==='lg'?'lg':'md',[['md','ปกติ'],['lg','ใหญ่']],'fsL')+'</div><div class="lg-row" style="margin-top:var(--space-3)"><span class="lab" id="uiL">ภาษาของหลังบ้าน</span>'+seg('uil',uiLang(),[['en','English'],['th','ไทย']],'uiL')+'</div></section>'+
  '<section class="sec"><div class="sec-h"><h2>ที่อยู่เว็บ</h2></div>'+
  fld('stS','ที่อยู่ที่ได้มากับบัญชี',A.slug,{max:30,set:'slug',sfx:'.migma.site',attr:' autocapitalize="off" spellcheck="false"',hint:'ใช้ตัวอังกฤษ ตัวเลข และขีดกลาง 3–30 ตัว เปลี่ยนแล้วลิงก์เก่าพาไปที่ใหม่ให้ 30 วัน'})+
@@ -178,6 +179,10 @@ if(AUTH){
   $('lgG').hidden=AUTH.providers.indexOf('google')<0;$('lgG').onclick=oauth('google');
   $('lgF').hidden=true;document.querySelector('.lg-or').hidden=true;$('lgSub').textContent='เข้าด้วยบัญชีที่มีอยู่แล้ว ไม่ต้องตั้งรหัสผ่าน ยังไม่มีบัญชีก็ใช้วิธีเดียวกัน';
   if(/[?&]error=/.test(location.search))setTimeout(function(){toast('เข้าสู่ระบบไม่สำเร็จ ลองอีกครั้ง')},0);
+  /* เปลี่ยนบัญชี Google: ไปหน้าเลือกบัญชีของ Google แล้วกลับมาที่ตั้งค่า · ฝังในหลังบ้าน (iframe) Google ไม่ยอมเปิดในกรอบ จึงพาทั้งหน้าไปทำที่หน้าบัญชี */
+  var switchAcct=function(){if(EMB){try{top.location.href='/account?switch=1'}catch(e){}return}AUTH.signIn('google',{redirectTo:'/account?alone=1#settings'},{prompt:'select_account'})};
+  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#acSwitch');if(b){b.disabled=true;switchAcct()}});
+  if(/[?&]switch=1/.test(location.search)&&!EMB){switchAcct();return}
 }
 protoTxt();
 $('acOut').onclick=function(){A.signed=false;save();
