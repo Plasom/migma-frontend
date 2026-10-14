@@ -17,7 +17,7 @@ export function AccountShell() {
           {" "}
           <h1>{"เข้าสู่ระบบ"}</h1>
           {" "}
-          <p>{"ใช้บัญชี Google หรืออีเมล ไม่ต้องตั้งรหัสผ่าน ยังไม่มีบัญชีก็ใช้วิธีเดียวกัน"}</p>
+          <p id="lgSub">{"ใช้บัญชี Google หรืออีเมล ไม่ต้องตั้งรหัสผ่าน ยังไม่มีบัญชีก็ใช้วิธีเดียวกัน"}</p>
           {" "}
           <button type="button" className="btn outlined lg" id="lgG">
             <svg className="g-ic" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">

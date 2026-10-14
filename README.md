@@ -22,10 +22,21 @@ npm run test:e2e     # Playwright (ต้อง build ก่อน)
 
 ลิงก์ `*.html` เดิมยังใช้ได้ (redirect ใน `next.config.ts`) · สวิตช์ `?dev=1` `?reset=new` `?reset=blank` `?example=1` `?lang=en` ใช้ได้เหมือนเดิม
 
+## เข้าสู่ระบบ (OAuth 2.0 · Auth.js v5)
+
+ตั้งค่าใน `.env.local` (คัดลอกจาก `.env.example`) · ไม่ตั้งเลย = ปิดระบบเข้าสู่ระบบจริง หน้าบัญชีใช้แบบจำลองเดิม และ `/editor` เปิดได้เลย
+
+- ผู้ให้บริการ: Google (เปิดเมื่อใส่ client id/secret) · session เป็น JWT ในคุกกี้ ยังไม่มีฐานข้อมูล
+- `/editor` ต้องเข้าสู่ระบบก่อน (`src/proxy.ts`) ยังไม่เข้า = ไป `/account?callbackUrl=...` แล้วกลับมาที่เดิม
+- Redirect URI ที่ต้องลงทะเบียน: `<origin>/api/auth/callback/google`
+- ทดสอบโหมดเข้าสู่ระบบ: `AUTH_SECRET=x AUTH_GOOGLE_ID=x AUTH_GOOGLE_SECRET=x AUTH_TRUST_HOST=true npm run test:e2e -- auth`
+
 ## โครงสร้าง
 
 ```
 src/
+  auth.ts              Auth.js (ผู้ให้บริการ · session)
+  proxy.ts             กัน /editor ให้ต้องเข้าสู่ระบบ
   app/                 เส้นทาง · แต่ละกลุ่ม (site) (editor) (account) มี root layout และ CSS ของตัวเอง
   components/          ชิ้นที่ใช้ร่วมกัน (HeadScript, IconFont)
   styles/              design system: tokens-core · theme · motion + CSS ของแต่ละหน้า (scope ด้วย .pg-*)
