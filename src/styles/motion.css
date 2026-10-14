@@ -1,0 +1,65 @@
+/* ลูกเล่นการเคลื่อนไหว — spec: core/patterns/motion.md · token: tokens-core.css § Motion
+   ทุกอย่างทำงานเมื่อ <html> มี class m-on เท่านั้น (ตั้งในหัวหน้าเว็บ เมื่อเครื่องไม่ได้ขอลดการเคลื่อนไหว)
+   ไม่มี JS / ขอลดการเคลื่อนไหว = เนื้อหาโผล่ครบทันที ไม่มีอะไรซ่อน */
+
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+main section[id] { scroll-margin-top: calc(var(--nav-h, 56px) + 8px); }
+
+/* 1 · หัวข้อ hero ยกขึ้นทีละบรรทัด ---------------------------------------- */
+.hl { display: block; overflow: hidden; padding: .18em 0; margin: -.18em 0; }   /* เผื่อที่ให้สระบน/วรรณยุกต์ไทย */
+.hl > span { display: inline-block; }
+.m-on .hl > span { animation: m-hl var(--hl-dur) var(--ease-emphasized) both; animation-delay: calc(120ms + var(--l, 0) * var(--hl-gap)); }
+@keyframes m-hl { from { transform: translateY(105%); } }
+/* ส่วนอื่นของ hero จางเข้าตามลำดับ (--s = ลำดับ) */
+.m-on [data-hs] { animation: m-fade var(--rv-dur) var(--ease-enter) both; animation-delay: calc(var(--s, 0) * 90ms); }
+@keyframes m-fade { from { opacity: 0; transform: translateY(calc(var(--rv-dist) / 2)); } }
+
+/* 2 · ลอยขึ้นตอนเลื่อนถึง (ครั้งเดียว) --------------------------------------- */
+.m-on [data-rv]:not(.is-in),
+.m-on [data-rv-stagger]:not(.is-in) > * { opacity: 0; transform: translateY(var(--rv-dist)); }
+.m-on [data-rv].is-in:not(.rv-done),
+.m-on [data-rv-stagger].is-in:not(.rv-done) > * {
+  transition: opacity var(--rv-dur) var(--ease-enter), transform var(--rv-dur) var(--ease-enter);
+  transition-delay: calc(var(--rv-base, 0ms) + var(--rv-i, 0) * var(--rv-stagger));
+}
+
+/* 3 · เส้นเวลาค่อยๆ ลาก (ส่วนวิธีทำงาน) --------------------------------------- */
+.m-on .pc-l:not(.is-in) .pc-b::before { transform: scaleX(0); }
+.m-on .pc-l:not(.is-in) .pc-dot { transform: scale(.4); opacity: 0; }
+.m-on .pc-l.is-in:not(.rv-done) .pc-b::before { transform-origin: left center; transition: transform var(--track-draw) var(--ease-emphasized) calc(200ms + var(--i) * var(--track-gap)); }
+.m-on .pc-l.is-in:not(.rv-done) .pc-dot { transition: transform 360ms var(--ease-emphasized) calc(160ms + var(--i) * var(--track-gap)), opacity 200ms linear calc(160ms + var(--i) * var(--track-gap)); }
+@media (max-width: 720px) {
+  .m-on .pc-l:not(.is-in) .pc-s::before { transform: scaleY(0); }
+  .m-on .pc-l.is-in:not(.rv-done) .pc-s::before { transform-origin: center top; transition: transform var(--track-draw) var(--ease-emphasized) calc(200ms + var(--i) * var(--track-gap)); }
+}
+
+/* 4 · ระลอกตอนกด (Material) — เฉพาะ .btn ------------------------------------- */
+.btn { position: relative; overflow: hidden; isolation: isolate; }
+.m-rip { position: absolute; border-radius: 50%; pointer-events: none; z-index: -1;
+  background: color-mix(in srgb, currentColor var(--ripple-alpha), transparent);
+  transform: scale(0); animation: m-rip var(--ripple-dur) var(--ease-standard) forwards; }
+@keyframes m-rip { 70% { opacity: 1; } to { transform: scale(1); opacity: 0; } }
+
+/* 5 · ภาพลอยตามเมาส์ในมุมมองรายการ (เฉพาะจอที่มีเมาส์) ------------------------ */
+.m-peek { position: fixed; left: 0; top: 0; z-index: 15; width: var(--peek-w); aspect-ratio: 4 / 5; border-radius: 12px;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  box-sizing: border-box; pointer-events: none; box-shadow: var(--elevation-3, 0 8px 24px rgb(0 0 0 / .14));
+  opacity: 0; scale: .92; transition: opacity 160ms var(--ease-standard), scale 240ms var(--ease-emphasized); }
+.m-peek.on { opacity: 1; scale: 1; }
+@media not ((hover: hover) and (pointer: fine)) { .m-peek { display: none; } }
+
+/* 6 · แถบอ่านถึงไหน (หน้า case) ---------------------------------------------- */
+.m-prog { position: fixed; left: 0; right: 0; top: calc(var(--nav-h, 56px) - var(--progress-h)); height: var(--progress-h); z-index: 21; pointer-events: none; }
+.m-prog i { display: block; height: 100%; background: var(--ink); transform-origin: left center; transform: scaleX(0); }
+
+/* 7 · เปลี่ยนหน้า: ออก = จาง · เข้า = จาง + ยกขึ้น · ภาพผลงานขยายต่อเป็นภาพปก ---- */
+.m-on body.m-leave main { opacity: 0; transition: opacity var(--page-out) var(--ease-exit); }
+.m-on body.m-enter main { animation: m-in var(--page-in) var(--ease-emphasized) both; }
+@keyframes m-in { from { opacity: 0; transform: translateY(var(--rv-dist)); } }
+.m-ghost { position: fixed; z-index: 40; pointer-events: none; margin: 0; box-sizing: border-box; }
+.m-on body.m-enter .m-hide { visibility: hidden; }
+
+@media print {
+  .m-on [data-rv], .m-on [data-rv-stagger] > *, .m-on main { opacity: 1 !important; transform: none !important; }
+  .m-peek, .m-prog { display: none; }
+}

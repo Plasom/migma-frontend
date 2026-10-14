@@ -1,0 +1,180 @@
+/* Page-only styles for .pg-home (scoped so client-side navigation between pages cannot leak rules) */
+/* สถานะรับงาน: open = จุดเขียว · freelance = จุดเขียว "Open to freelance" · closed = จุดเทา "Not available" · จุดนิ่ง ไม่กะพริบ */
+:where(.pg-home) .hero-st{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}:where(.pg-home) .hero-stl{white-space:nowrap}:where(.pg-home) .hero-dot{width:var(--work-status-dot);height:var(--work-status-dot);border-radius:50%;background:var(--work-status-open);flex:none}
+:where(.pg-home) .hero-st[data-status=closed]{color:var(--text-2)}:where(.pg-home) .hero-st[data-status=closed] .hero-dot{background:var(--work-status-closed)}
+:where(.pg-home) .wk-img[data-cover],:where(.pg-home) .wk-li .th[data-cover]{background-size:cover!important;background-position:center!important;border:0!important}
+
+/* วิธีทำงาน: เส้นเวลาแบบ Apple + กางรายละเอียด (decisions #71 · สมูธ #72) */
+:where(.pg-home) .pc{--pc-dur:320ms}
+:where(.pg-home) .pc .ms{display:inline-block;width:1em;height:1em;overflow:hidden;white-space:nowrap}
+:where(.pg-home) .pc-l{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:24px}
+:where(.pg-home) .pc-s{display:contents}
+:where(.pg-home) .pc-b{grid-row:1;position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:0 0 24px;border:0;background:none;text-align:left;cursor:pointer;color:var(--ink);font:inherit;border-radius:12px}
+:where(.pg-home) .pc-b:focus-visible{outline:2px solid var(--input-ring);outline-offset:4px}
+:where(.pg-home) .pc-b::before,:where(.pg-home) .pc-b::after{content:"";position:absolute;left:14px;right:-24px;top:6px;height:2px;border-radius:1px}
+:where(.pg-home) .pc-b::before{background:color-mix(in srgb,var(--border-strong) 35%,transparent)}
+:where(.pg-home) .pc-b::after{background:var(--ink);transform:scaleX(0);transform-origin:left center;transition:transform var(--pc-dur) var(--ease-standard);transition-delay:calc((3 - var(--i)) * 50ms)}
+:where(.pg-home) .pc-b.done::after{transform:scaleX(1);transition-delay:calc(var(--i) * 90ms)}
+:where(.pg-home) .pc-s:last-child .pc-b::before,:where(.pg-home) .pc-s:last-child .pc-b::after{display:none}
+:where(.pg-home) .pc-dot{width:14px;height:14px;border-radius:50%;box-sizing:border-box;border:2px solid var(--ink);background:var(--background);position:relative;z-index:1;margin-bottom:14px;transition:background-color 200ms var(--ease-standard),box-shadow 240ms var(--ease-standard)}
+:where(.pg-home) .pc-b.done .pc-dot,:where(.pg-home) .pc-b[aria-expanded=true] .pc-dot{background:var(--ink)}
+:where(.pg-home) .pc-b[aria-expanded=true] .pc-dot{box-shadow:0 0 0 5px color-mix(in srgb,var(--ink) 12%,transparent);transition-delay:calc(var(--i) * 90ms)}
+:where(.pg-home) .pc-n{font:500 12px/1 var(--font-sans);color:var(--text-2);font-variant-numeric:tabular-nums}
+:where(.pg-home) .pc-t{font:var(--title-lg);margin-top:4px;color:var(--text-2);transition:color 200ms var(--ease-standard)}
+:where(.pg-home) .pc-b[aria-expanded=true] .pc-t,:where(.pg-home) .pc-b:hover .pc-t{color:var(--ink)}
+:where(.pg-home) .pc-sm{font:var(--body-sm);color:var(--text-2);max-width:260px;text-wrap:pretty}
+:where(.pg-home) .pc-chev{display:none!important}
+/* จอคอม: ทุกแผงซ้อนในช่องเดียว (สูงเท่าอันที่ยาวสุด) แล้วจางสลับ */
+:where(.pg-home) .pc-p{grid-row:2;grid-column:1/-1;border-top:1px solid var(--border);opacity:0;visibility:hidden;transform:translateY(6px);transition:opacity 160ms var(--ease-standard),transform 200ms var(--ease-standard),visibility 0s 200ms}
+:where(.pg-home) .pc-p.open{opacity:1;visibility:visible;transform:none;transition:opacity 240ms var(--ease-standard) 80ms,transform var(--pc-dur) var(--ease-enter) 80ms,visibility 0s}
+:where(.pg-home) .pc-pi{padding:24px 0 0;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:8px 48px}
+:where(.pg-home) .pc-d{font:var(--body-md);color:var(--ink);margin:0;grid-row:1/3;max-width:560px}
+:where(.pg-home) .pc-gl{font:500 12px/1.4 var(--font-sans);color:var(--text-2);margin:0}
+:where(.pg-home) .pc-out{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+:where(.pg-home) .pc-out span{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:var(--radius-full);background:var(--muted);font:400 13px/1 var(--font-sans);color:var(--ink)}
+@media (max-width:720px){
+  :where(.pg-home) .pc-l{display:block}
+  :where(.pg-home) .pc-s{display:block;position:relative;padding-left:30px}
+  :where(.pg-home) .pc-b{width:100%;padding:0 28px 18px 0}
+  :where(.pg-home) .pc-b::before,:where(.pg-home) .pc-b::after{display:none}
+  :where(.pg-home) .pc-s:not(:last-child)::before{content:"";position:absolute;left:6px;top:16px;bottom:2px;width:2px;border-radius:1px;background:color-mix(in srgb,var(--border-strong) 35%,transparent)}
+  :where(.pg-home) .pc-s:not(:last-child)::after{content:"";position:absolute;left:6px;top:16px;bottom:2px;width:2px;border-radius:1px;background:var(--ink);transform:scaleY(0);transform-origin:center top;transition:transform var(--pc-dur) var(--ease-standard)}
+  :where(.pg-home) .pc-s.past:not(:last-child)::after{transform:scaleY(1);transition-delay:calc(var(--i) * 90ms)}
+  :where(.pg-home) .pc-dot{position:absolute;left:-30px;top:0;margin:0}
+  :where(.pg-home) .pc-chev{display:block!important;position:absolute;right:0;top:10px;font-size:20px;color:var(--text-2);transition:transform 240ms var(--ease-standard)}
+  :where(.pg-home) .pc-b[aria-expanded=true] .pc-chev{transform:rotate(180deg)}
+  :where(.pg-home) .pc-sm{max-width:none}
+  :where(.pg-home) .pc-p{display:grid;grid-template-rows:0fr;border-top:0;visibility:visible;transform:none;opacity:0;transition:grid-template-rows 280ms var(--ease-standard),opacity 160ms var(--ease-standard)}
+  :where(.pg-home) .pc-p.open{grid-template-rows:1fr;opacity:1;transition:grid-template-rows var(--pc-dur) var(--ease-standard),opacity 240ms var(--ease-standard) 60ms}
+  :where(.pg-home) .pc-pi{display:block;overflow:hidden;min-height:0;padding:0}
+  :where(.pg-home) .pc-p.open .pc-pi{padding-bottom:20px}
+  :where(.pg-home) .pc-d{font:var(--body-sm);color:var(--ink);margin:0 0 12px;padding-top:2px}
+  :where(.pg-home) .pc-b[aria-expanded=true]{padding-bottom:10px}
+  :where(.pg-home) .pc-gl{margin-bottom:8px}
+}
+@media (prefers-reduced-motion:reduce){:where(.pg-home) .pc *,:where(.pg-home) .pc *::before,:where(.pg-home) .pc *::after{transition:none!important}}
+
+/* หัวข้อในแผงรายละเอียด (decisions #73) */
+:where(.pg-home) .pc-pi{grid-template-rows:auto 1fr}
+:where(.pg-home) .pc-h{grid-column:1;grid-row:1;display:flex;align-items:baseline;gap:10px;font:var(--title-lg);color:var(--ink);margin:0 0 4px}
+:where(.pg-home) .pc-h span{font:500 12px/1 var(--font-sans);color:var(--text-2);font-variant-numeric:tabular-nums}
+:where(.pg-home) .pc-d{grid-column:1;grid-row:2!important}
+:where(.pg-home) .pc-gl{grid-column:2;grid-row:1;align-self:end;margin-bottom:4px!important}
+:where(.pg-home) .pc-out{grid-column:2;grid-row:2}
+@media (max-width:720px){:where(.pg-home) .pc-h{display:none}}
+/* Case study บนหน้าแรก: Sand Studio + Apple (decisions #74) · ภาพก่อน/หลัง */
+:where(.pg-home) .cs .ms,:where(.pg-home) .cp .ms{display:inline-block;width:1em;height:1em;overflow:hidden;white-space:nowrap;flex:none}
+:where(.pg-home) .cs-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:0}
+:where(.pg-home) .cs-head h3{font:var(--headline-sm);margin:0}
+:where(.pg-home) .cs-link{display:inline-flex;align-items:center;gap:6px;font:var(--title-md);color:var(--link);text-decoration:none;border-radius:6px}
+:where(.pg-home) .cs-link .ms{font-size:18px;transition:transform 200ms var(--ease-standard)}:where(.pg-home) .cs-link:hover .ms{transform:translateX(3px)}
+:where(.pg-home) .cs-link:hover{text-decoration:underline;text-underline-offset:4px}:where(.pg-home) .cs-link:focus-visible{outline:2px solid var(--input-ring);outline-offset:3px}
+:where(.pg-home) .cs-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 24px;margin:20px 0 24px;padding-top:14px;border-top:1px solid var(--border)}
+:where(.pg-home) .cs-meta dt{font:var(--body-sm);color:var(--text-2)}:where(.pg-home) .cs-meta dd{font:var(--body-md);color:var(--ink);margin:2px 0 0}
+:where(.pg-home) .ba{position:relative;aspect-ratio:16/8;border-radius:20px;overflow:hidden;background:var(--muted);user-select:none;touch-action:pan-y}
+:where(.pg-home) .ba-l{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}:where(.pg-home) .ba-l img{width:100%;height:100%;object-fit:cover}
+:where(.pg-home) .ba-before{background:var(--sidebar)}:where(.pg-home) .ba-before .ph-fig{width:40%;aspect-ratio:4/3;margin-right:45%}
+:where(.pg-home) .ba-after{background:var(--muted);clip-path:inset(0 0 0 var(--x))}:where(.pg-home) .ba-after .ph-fig{width:40%;aspect-ratio:4/3;margin-left:45%}
+:where(.pg-home) .ba-tag{position:absolute;top:14px;height:26px;padding:0 12px;border-radius:var(--radius-full);display:inline-flex;align-items:center;font:500 12px/1 var(--font-sans);background:color-mix(in srgb,var(--surface) 88%,transparent);color:var(--ink);box-shadow:var(--elevation-1);pointer-events:none}
+:where(.pg-home) .ba-tag.l{left:14px}:where(.pg-home) .ba-tag.r{right:14px}
+:where(.pg-home) .ba-line{position:absolute;top:0;bottom:0;left:var(--x);width:2px;margin-left:-1px;background:var(--surface);box-shadow:0 0 0 1px color-mix(in srgb,var(--ink) 10%,transparent);pointer-events:none}
+:where(.pg-home) .ba-knob{position:absolute;top:50%;left:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:var(--surface);color:var(--ink);box-shadow:var(--elevation-2);display:grid;place-items:center;transition:transform 160ms var(--ease-standard)}
+:where(.pg-home) .ba-knob .ms{font-size:20px}
+:where(.pg-home) .ba input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize}
+:where(.pg-home) .ba:hover .ba-knob,:where(.pg-home) .ba:active .ba-knob{transform:scale(1.06)}
+:where(.pg-home) .ba:has(input:focus-visible) .ba-knob{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--input-ring)}
+:where(.pg-home) .cs-story{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:28px}
+:where(.pg-home) .cs-story h4{font:var(--title-md);margin:0 0 6px;display:flex;align-items:center;gap:8px}
+:where(.pg-home) .cs-story h4 i{font-style:normal;font:500 12px/1 var(--font-sans);color:var(--text-2);font-variant-numeric:tabular-nums}
+:where(.pg-home) .cs-story p{font:var(--body-sm);color:var(--text-2);margin:0;max-width:40ch}
+@media (max-width:720px){:where(.pg-home) .cs-meta{grid-template-columns:repeat(2,minmax(0,1fr))}:where(.pg-home) .ba{aspect-ratio:4/3}:where(.pg-home) .ba-before .ph-fig,:where(.pg-home) .ba-after .ph-fig{width:70%;margin:0}:where(.pg-home) .cs-story{grid-template-columns:minmax(0,1fr);gap:18px}}
+
+/* ส่วนติดต่อแบบ C: แบ่งซ้ายขวา (decisions #80) */
+:where(.pg-home) .ct{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:40px 56px;align-items:start}
+:where(.pg-home) .ct-act{margin-top:28px}
+:where(.pg-home) .ct-side{border-left:1px solid var(--border);padding-left:32px;padding-top:8px}
+:where(.pg-home) .ct-sl{font:var(--body-sm);color:var(--text-2);margin:0 0 8px}
+:where(.pg-home) .ct-links{margin:0!important;border-top:0!important;max-width:none!important}
+:where(.pg-home) .ct-links li{border-bottom:0!important}
+:where(.pg-home) .ct-links a{height:48px!important;margin:0 -12px!important;gap:12px!important}
+:where(.pg-home) .ct-links a .ic{font-size:20px;color:var(--text-2);margin:0;transform:none!important}
+:where(.pg-home) .ct-links a .go{margin-left:auto}
+:where(.pg-home) .ct-links a:hover .ic{color:var(--ink)}
+@media (max-width:720px){:where(.pg-home) .ct{grid-template-columns:minmax(0,1fr);gap:32px}:where(.pg-home) .ct-side{border-left:0;padding-left:0;border-top:1px solid var(--border);padding-top:20px}:where(.pg-home) .ct-act .btn{flex:0 1 auto}}
+
+/* ส่วนท้ายบนพื้นสีอ่อนเต็มความกว้าง (decisions #82) */
+:where(.pg-home) .ct-band{position:relative;margin-top:var(--section-gap);background:var(--sidebar);box-shadow:0 0 0 100vmax var(--sidebar);clip-path:inset(0 -100vmax)}
+:where(.pg-home) .ct-band .ct{padding-top:var(--section-gap)}
+/* v3.6 (decisions #107): เลิกยืดส่วนติดต่อให้สูงเต็มจอ — จอสูงแล้วเหลือที่ว่างยาวเหมือนบั๊ก · ส่วนท้ายสูงเท่าเนื้อหา */
+:where(.pg-home) .ct-band .ftr{margin-top:64px;border-top-color:var(--border)}
+:where(.pg-home) .ct-band .ct-copy{background:var(--surface)}:where(.pg-home) .ct-band .ct-copy:hover{background:var(--muted)}
+:where(.pg-home) .ct-band .ct-links a:hover{background:var(--surface)}
+:where(.pg-home) .ct-band .ct-side{border-left-color:var(--border)}
+@media (max-width:600px){:where(.pg-home) .ct-band .ftr{margin-top:48px}}
+
+/* ประสบการณ์ + การศึกษา: แถวแบบ Sand Studio กางรายละเอียดได้ (decisions #84) */
+:where(.pg-home) .xp .ms{display:inline-block;width:1em;height:1em;overflow:hidden;white-space:nowrap;flex:none}
+:where(.pg-home) .xp-l{list-style:none;margin:0;padding:0;border-top:1px solid var(--border)}
+:where(.pg-home) .xp-i{border-bottom:1px solid var(--border);transition:background-color 120ms var(--ease-standard)}
+/* ชี้/โฟกัสหัวแถว = ไฮไลต์ทั้งชิ้น (หัว + รายละเอียดที่กางอยู่) ชิดเส้นคั่นเหมือนรายการผลงาน */
+:where(.pg-home) .xp-i:has(>.xp-b:hover){background:color-mix(in srgb,var(--muted) 50%,transparent)}
+:where(.pg-home) .xp-i:has(>.xp-b:focus-visible){outline:2px solid var(--input-ring);outline-offset:-2px}
+:where(.pg-home) .xp-b{width:100%;display:grid;grid-template-columns:140px minmax(0,1fr) auto 24px;align-items:baseline;gap:16px;padding:18px 8px;margin:0;border:0;background:none;border-radius:0;text-align:left;cursor:pointer;color:var(--ink);font:inherit}
+:where(.pg-home) .xp-b:focus-visible{outline:none}
+:where(.pg-home) .xp-y{font:var(--body-sm);color:var(--text-2);font-variant-numeric:tabular-nums}
+:where(.pg-home) .xp-t b{font:var(--title-md)}:where(.pg-home) .xp-c{display:block;font:var(--body-sm);color:var(--text-2);margin-top:2px}
+:where(.pg-home) .xp-k{font:var(--body-sm);color:var(--text-2);text-align:right}
+:where(.pg-home) .xp-chev{font-size:20px;color:var(--text-2);align-self:start;margin-top:calc((15px * 1.5 - 20px) / 2);/* กลางบรรทัดชื่อตำแหน่ง ไม่ใช่กลางทั้งแถว */transition:transform 240ms var(--ease-standard)}
+:where(.pg-home) .xp-b[aria-expanded=true] .xp-chev{transform:rotate(180deg)}
+:where(.pg-home) .xp-p{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows 280ms var(--ease-standard),opacity 160ms}
+:where(.pg-home) .xp-p.open{grid-template-rows:1fr;opacity:1;transition:grid-template-rows 320ms var(--ease-standard),opacity 240ms 60ms}
+:where(.pg-home) .xp-pi{overflow:hidden;min-height:0;padding:0 8px 0 164px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 32px}
+:where(.pg-home) .xp-p.open .xp-pi{padding-bottom:22px;padding-top:2px}
+:where(.pg-home) .xp-g{min-width:0}:where(.pg-home) .xp-gl{font:500 12px/1.4 var(--font-sans);color:var(--text-2);margin:0 0 6px}
+:where(.pg-home) .xp-pts{margin:0;padding-left:18px;font:var(--body-sm);color:var(--ink)}:where(.pg-home) .xp-pts li+li{margin-top:4px}
+:where(.pg-home) .xp-sk{display:flex;flex-wrap:wrap;gap:6px}:where(.pg-home) .xp-sk span{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:var(--radius-full);background:var(--muted);font:400 12px/1 var(--font-sans)}
+:where(.pg-home) .xp-rel{display:inline-flex;align-items:center;gap:4px;font:var(--title-md);color:var(--link);text-decoration:none;border-radius:6px}:where(.pg-home) .xp-rel .ms{font-size:16px}:where(.pg-home) .xp-rel:hover{text-decoration:underline;text-underline-offset:3px}:where(.pg-home) .xp-rel:focus-visible{outline:2px solid var(--input-ring);outline-offset:2px}
+:where(.pg-home) .xp-dl{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 24px;margin:0}
+:where(.pg-home) .xp-dl dt{font:500 12px/1.4 var(--font-sans);color:var(--text-2)}:where(.pg-home) .xp-dl dd{font:var(--body-md);margin:2px 0 0}
+:where(.pg-home) .xp-h2{font:var(--headline-sm);margin:48px 0 16px}
+/* ป้ายข้อมูลตัวอย่าง: ส่วนที่เนื้อหายังแต่งขึ้น ติดป้ายเดียวใต้หัวส่วน (honest copy · decisions #92) */
+:where(.pg-home) .mock-note{margin:8px 0 0}:where(.pg-home) .wk-head .tbd-tag{align-self:center}
+@media (prefers-reduced-motion:reduce){:where(.pg-home) .xp-p,:where(.pg-home) .xp-chev{transition:none}}
+@media (max-width:720px){:where(.pg-home) .xp-b{grid-template-columns:minmax(0,1fr) 24px;gap:2px 12px}:where(.pg-home) .xp-y{grid-column:1;order:-1}:where(.pg-home) .xp-t{grid-column:1}:where(.pg-home) .xp-k{grid-column:1;text-align:left}:where(.pg-home) .xp-chev{grid-column:2;grid-row:2}:where(.pg-home) .xp-pi{padding-left:8px;grid-template-columns:minmax(0,1fr)}:where(.pg-home) .xp-dl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* hero: คำเกริ่น + ทักษะเด่น + ปีประสบการณ์ (decisions #85) */
+:where(.pg-home) .hero-lede{font:var(--body-lg);color:var(--text-2);max-width:600px;margin:20px 0 0;text-wrap:pretty}
+:where(.pg-home) .hero-sk{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 0;padding:0}
+:where(.pg-home) .hero-sk li{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:var(--radius-full);border:1px solid var(--border-control);font:400 13px/1 var(--font-sans);color:var(--ink)}
+:where(.pg-home) .hero-note{font:var(--body-sm);color:var(--text-2)}
+:where(.pg-home) .hero .hero-row{margin-top:32px}
+@media (max-width:600px){:where(.pg-home) .hero-lede{font:var(--body-md);margin-top:14px}:where(.pg-home) .hero-sk li{height:26px;font-size:12px}}
+
+/* ผลงานตามหลัง hero ติดขึ้น (decisions #86) */
+:where(.pg-home) #work.wk:not(.wk-page){padding-top:32px}
+@media (max-width:600px){:where(.pg-home) #work.wk:not(.wk-page){padding-top:28px}}
+/* v4 · ชี้การ์ดแล้วเห็นรายละเอียดงานก่อนกด (ข้อ 16) · รายการมีคำอธิบายสั้น (ข้อ 17) */
+:where(.pg-home) .wk-img{overflow:hidden}
+:where(.pg-home) .wk-ov{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;gap:var(--space-2);padding:var(--space-4);border-radius:inherit;background:linear-gradient(to top,var(--scrim-media) 0%,var(--scrim-media) 38%,transparent 100%);color:var(--on-media);text-align:left;opacity:0;transition:opacity 200ms var(--ease-standard);pointer-events:none}
+:where(.pg-home) .wk-ovd{margin:0;font:var(--body-md);color:var(--on-media);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+:where(.pg-home) .wk-ovt{display:flex;flex-wrap:wrap;gap:var(--space-1);margin:0}:where(.pg-home) .wk-ovt span{display:inline-flex;align-items:center;height:22px;padding:0 var(--space-2);border-radius:var(--radius-full);border:1px solid var(--on-media-border);font:var(--caption);color:var(--on-media)}
+:where(.pg-home) .wk-ovm{margin:0;font:var(--caption);color:var(--on-media-muted)}
+:where(.pg-home) .wk-ovgo{display:inline-flex;align-items:center;gap:var(--space-1);font:var(--btn-font-sm);color:var(--on-media)}:where(.pg-home) .wk-ovgo .ms{font-size:16px;transition:transform 200ms var(--ease-standard)}
+:where(.pg-home) .wk-it:has(h3 a:focus-visible) .wk-ov{opacity:1}
+@media (hover:hover){:where(.pg-home) .wk-it:hover .wk-ov{opacity:1}:where(.pg-home) .wk-it:hover .wk-ovgo .ms{transform:translateX(2px)}}
+:where(.pg-home) .wk-gds{margin:var(--space-1) 0 0;font:var(--body-sm);color:var(--text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+@media (hover:hover){:where(.pg-home) .wk-gds{display:none}}
+/* ปุ่ม × ในชิปตัวกรอง: วงกลมอยู่กึ่งกลางปลายชิปพอดี วงโฟกัสอยู่ในชิป ไม่ล้นขอบ */
+:where(.pg-home) .wk-ic{padding:0 3px 0 12px}:where(.pg-home) .wk-ic button{flex:none;margin:0;padding:0;box-sizing:border-box}:where(.pg-home) .wk-ic button .ms{display:block;width:16px;height:16px;line-height:16px}:where(.pg-home) .wk-ic button:focus-visible{outline:2px solid var(--chip-on-fg);outline-offset:-2px}
+/* วิธีทำงาน: 1–5 ขั้นแถวเดียว · 6–10 ขั้นแบ่งสองแถวให้เท่ากัน (6 = 3+3, 8 = 4+4, 10 = 5+5 เลขคี่แถวบนมากกว่า 1) แผงรายละเอียดอยู่ใต้ทั้งสองแถว */
+@media (min-width:721px){
+  :where(.pg-home) .pc-l{grid-template-columns:repeat(var(--cols,4),minmax(0,1fr));row-gap:var(--space-2)}
+  :where(.pg-home) .pc-l[data-rows="2"] .pc-s.pc-r2 .pc-b{grid-row:2}
+  :where(.pg-home) .pc-l[data-rows="2"] .pc-p{grid-row:3}
+  :where(.pg-home) .pc-l[data-rows="2"] .pc-s.pc-end .pc-b::before,:where(.pg-home) .pc-l[data-rows="2"] .pc-s.pc-end .pc-b::after{display:none}
+  :where(.pg-home) .pc-sm{max-width:none}
+}
+:where(.pg-home) .wk-sk .wk-ov{display:none}
+:where(.pg-home) .wk-ds{margin:var(--space-1) 0 0;max-width:60ch;font:var(--body-sm);color:var(--text-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+:where(.pg-home) .wk-li .wk-tags{margin-top:var(--space-2)}
+@media (prefers-reduced-motion:reduce){:where(.pg-home) .wk-ov,:where(.pg-home) .wk-ovgo .ms{transition:none}}

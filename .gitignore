@@ -1,15 +1,9 @@
-# OS / editor
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+playwright-report/
+test-results/
+.env*.local
 .DS_Store
-.localized
-Thumbs.db
-~$*
-.claude/
-
-# build output (สร้างใหม่ได้ด้วย sh wireframe/build.sh)
-wireframe/src/preview/dist/
-
-# ไม่เก็บใน repo
-_archive/
-*.zip
-.env
-.env.*
