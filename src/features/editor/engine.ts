@@ -5,10 +5,15 @@
 /* eslint-disable */
 import { SITE_EN } from '@/lib/i18n/site';
 import { setUiLang, uiLang } from '@/lib/i18n/ui';
-import { PORTFOLIO_DEFAULT } from '@/lib/portfolio/defaults';
+import { readResume, readWorks, scanWorkFiles, writeText, ym, type WorkData } from '@/lib/ai';
+import { fetchMe, signOut } from '@/lib/api';
+
+import { blankPortfolio } from '@/lib/portfolio/defaults';
 import { localize } from '@/lib/portfolio/localize';
+import { SAMPLE_PORTFOLIO } from '@/lib/portfolio/sample';
 import { EDU_LEVELS, MONTHS_TH, derive, experienceYears, normalize, skillCategory, skillsView } from '@/lib/portfolio/model';
-import { ROUTES, pageToRoute } from '@/lib/routes';
+import { ROUTES, pageToRoute, publicBase } from '@/lib/routes';
+import { uploadMedia } from '@/lib/storage/media';
 import { portfolioStore } from '@/lib/storage/portfolio-store';
 
 /** โยนตอน ?reset=new เพื่อหยุดสคริปต์ระหว่างล้างข้อมูลแล้วโหลดหน้าใหม่ */
@@ -26,7 +31,7 @@ export function mountEditor(): void {
 document.addEventListener('pointerdown',function(){document.documentElement.classList.add('ptr')},true);document.addEventListener('keydown',function(e){if(/^(Tab|Arrow|Home|End|Escape|Enter| )/.test(e.key))document.documentElement.classList.remove('ptr')},true);
 var LS={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}}};
 var clone=function(o){return o===undefined?undefined:JSON.parse(JSON.stringify(o))},J=function(o){return JSON.stringify(o===undefined?null:o)};
-var N=normalize,DEF=PORTFOLIO_DEFAULT;
+var N=normalize,DEF=SAMPLE_PORTFOLIO;/* DEF = ข้อความแบบร่างของผู้ช่วย AI จำลอง ไม่ใช่พอร์ตของผู้ใช้ */
 /* ที่เก็บข้อมูลพอร์ต (ร่าง · ฉบับบันทึก · ฉบับเผยแพร่): หน่วยความจำ + IndexedDB + localStorage → lib/storage/portfolio-store.ts
    ตัวอย่างหน้าเว็บอ่านร่างจากหน่วยความจำของหลังบ้านตรงๆ (pfPreviewHandoff) จึงไม่ต้องรอเขียนลงเครื่อง */
 /* เปิดด้วย ?reset=new = เริ่มใหม่แบบผู้ใช้ใหม่: ล้างพอร์ต (ร่าง · ฉบับบันทึก · ฉบับเผยแพร่) บัญชีตัวอย่าง คำตอบแรกเข้า และการตั้งค่าภาษา/ขนาดตัวหนังสือ แล้วกลับไปหน้าเข้าสู่ระบบ */
@@ -34,7 +39,7 @@ if(/[?&]reset=new\b/.test(location.search)){portfolioStore.resetAll(function(){l
 var PKEYS=['pf-draft','pf-saved','pf-published'];
 function put(k,str){return portfolioStore.write(k,str)}
 function getS(k){return portfolioStore.read(k)}
-function load(keys){for(var i=0;i<keys.length;i++){var s=getS(keys[i]);if(s)try{return N(JSON.parse(s))}catch(e){}}return N(clone(DEF))}
+function load(keys){for(var i=0;i<keys.length;i++){var s=getS(keys[i]);if(s)try{return N(JSON.parse(s))}catch(e){}}return N(blankPortfolio())}
 /* เปิดด้วย ?reset=blank = ล้างข้อมูลที่กรอกทั้งหมดเป็นหน้าว่าง (ร่าง · ฉบับบันทึก · ฉบับเผยแพร่) เก็บสีแบรนด์และโหมดสว่าง/มืดไว้ แล้วเอาพารามิเตอร์ออกจากที่อยู่ กันล้างซ้ำตอนรีเฟรช */
 var RESET=/[?&]reset=blank\b/.test(location.search);
 if(RESET){var rb='#4C45D2';try{rb=(JSON.parse(getS('pf-draft')||getS('pf-saved')||'{}').theme||{}).brand||rb}catch(e){}
@@ -43,6 +48,9 @@ if(RESET){var rb='#4C45D2';try{rb=(JSON.parse(getS('pf-draft')||getS('pf-saved')
 /* IndexedDB เปิดเสร็จแล้วพบชุดที่ใหม่กว่า localStorage (เช่น รอบก่อน localStorage เต็ม) = ใช้ชุดนั้นแล้ววาดใหม่ */
 portfolioStore.hydrate(function(){S=load(['pf-saved','pf-published']);D=load(['pf-draft','pf-saved','pf-published']);tabs();render();frameTo(curPage)},RESET);
 var S=load(['pf-saved','pf-published']),D=load(['pf-draft','pf-saved','pf-published']);
+portfolioStore.onConflict(function(){S=load(['pf-saved','pf-published']);D=load(['pf-draft','pf-saved','pf-published']);tabs();render();frameTo(curPage);toast('พอร์ตถูกแก้จากที่อื่น โหลดฉบับล่าสุดมาให้แล้ว')});
+/* slug จริงมาจากหลังบ้านเสมอ: ถ้าไม่ซิงก์ ลิงก์ที่โชว์ตอนเผยแพร่จะเป็นชื่อที่เดาเอง แล้วเปิดไม่เจอ (/u/<slug> 404) */
+fetchMe().then(function(m){if(!m)return;var a=acctData()||{};a.slug=m.slug;a.siteUrl=location.origin+publicBase(m.slug);LS.set('pf-acct-demo',JSON.stringify(a));credSync()}).catch(function(){});
 if(LS.get('pf-edlang')==='en'&&D&&D.site&&D.site.i18n)LG='en';
 var $=function(id){return document.getElementById(id)};
 var esc=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
@@ -183,32 +191,37 @@ addEventListener('message',function(e){var m=e.data||{};if(m.type==='pf:mode'&&m
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-edlang]');if(b){setLang(b.dataset.edlang);var nb=document.querySelector('[data-edlang="'+LG+'"]');if(b.closest('#edBody')){nb=document.querySelector('#edBody [data-edlang="'+LG+'"]')}nb&&nb.focus();return}if(e.target.closest&&e.target.closest('[data-trdlg]')){trDlg();return}var c=e.target.closest&&e.target.closest('[data-deflang]');if(c){D.site.lang=c.dataset.deflang;persist();render();var nc=document.querySelector('[data-deflang="'+D.site.lang+'"]');nc&&nc.focus()}});
 $('edAI').onclick=function(){hub()};$('edNavAI').onclick=function(){hub()};
 /* ---------- บัญชีและตั้งค่า (หน้า account.html ฝังในหลังบ้าน) ---------- */
-var acctOn=false,GATE=false;
+var acctOn=false,GATE=false,acctPre=false;   /* acctPre = โหลดหน้าบัญชีรอไว้ในกรอบที่ซ่อนอยู่แล้ว (เปิดแล้วเนื้อหาอยู่ครบ ไม่เห็นกรอบว่างก่อน) */
 function acctMsg(m){try{$('edAcctIf').contentWindow.postMessage(m,'*')}catch(e){}}
 function acctPlace(){if(GATE)return;var n=$('edNav').getBoundingClientRect(),v=n.height>n.width,el=$('edAcct');el.style.left=(v?n.right:0)+'px';el.style.top=(v?n.top:n.bottom)+'px'}
 function acctCoin(){var c=$('edNavCoin');try{var a=JSON.parse(LS.get('pf-acct-demo')||'null');if(a&&a.signed){c.textContent=a.coins;c.hidden=false;c.setAttribute('aria-label','เครดิต AI คงเหลือ '+a.coins);return}}catch(e){}c.hidden=true}
 (function(){var m=/[?&]dev=([01])/.exec(location.search);if(m){if(m[1]==='1')LS.set('pf-dev','1');else try{localStorage.removeItem('pf-dev')}catch(e){}}})();
 function acctData(){try{return JSON.parse(LS.get('pf-acct-demo')||'null')}catch(e){return null}}
-function openAcct(hash){hash=hash||'overview';var f=$('edAcctIf'),u=ROUTES.account+'?embed=1&h='+hash,h=pageHtml(u,1);closeAip(false);if(acctOn)acctMsg({type:'pf:acct-go',hash:'#'+hash});else if(h){f.removeAttribute('src');f.srcdoc=h}else f.src=u;
+function openAcct(hash){hash=hash||'overview';var f=$('edAcctIf'),u=ROUTES.account+'?embed=1&h='+hash,h=pageHtml(u,1);closeAip(false);if(acctOn||acctPre)acctMsg({type:'pf:acct-go',hash:'#'+hash});else if(h){f.removeAttribute('src');f.srcdoc=h}else f.src=u;
   acctOn=hash;$('edAcct').hidden=false;acctPlace();$('edNav').classList.add('acct-on');$('edTop').classList.add('acct-on');$('edNavAcct').setAttribute('aria-pressed','true')}
 function closeAcct(force){crUI();if(GATE&&!force)return;if(!acctOn)return;acctOn=false;$('edAcct').hidden=true;$('edNav').classList.remove('acct-on');$('edTop').classList.remove('acct-on');$('edNavAcct').setAttribute('aria-pressed','false')}
 /* เมนูผู้ใช้ (ซ้ายล่าง): บัญชี · ตั้งค่า · ออกจากระบบ แยกเป็นสามรายการ */
 /* ประตูเข้าสู่ระบบ: ออกจากระบบหรือยังไม่เคยเข้า = เห็นแต่หน้าเข้าสู่ระบบ · เข้าได้แล้วกลับมาที่ตัวแก้ และถามคำถามแรกเข้าถ้ายังไม่เคยตอบ */
-function gate(){if(crGet()){if(GATE){GATE=false;$('edAcct').classList.remove('full');closeAcct(true);firstRun()}return}
-  if(GATE)return;   /* หน้าเข้าสู่ระบบเปิดอยู่แล้ว ไม่โหลดซ้ำ (เดิมโหลดซ้ำทุกครั้งที่หน้านั้นส่งสถานะกลับมา จอเลยกระพริบ) */
+function gate(quiet){if(crGet()){if(GATE){GATE=false;$('edAcct').classList.remove('full');closeAcct(true);firstRun()}return}
+  if(GATE){if(!quiet)$('edAcct').hidden=false;return}   /* หน้าเข้าสู่ระบบเปิดอยู่แล้ว ไม่โหลดซ้ำ (เดิมโหลดซ้ำทุกครั้งที่หน้านั้นส่งสถานะกลับมา จอเลยกระพริบ) */
   closeMenu(false);closeAip(false);closeCr();if(acctOn){acctOn=false;$('edAcct').hidden=true;$('edNav').classList.remove('acct-on');$('edTop').classList.remove('acct-on');$('edNavAcct').setAttribute('aria-pressed','false')}
-  GATE=true;$('edAcct').classList.add('full');var f=$('edAcctIf'),u=ROUTES.account+'?embed=1&h=overview',h=pageHtml(u,1);if(h){f.removeAttribute('src');f.srcdoc=h}else f.src=u;acctOn='overview';$('edAcct').hidden=false;setTimeout(function(){try{f.focus()}catch(e){}},300)}
-function firstRun(){if(!LS.get('pf-onb')&&D.sample)setTimeout(function(){if(!document.querySelector('.dlg')&&!GATE)onboard()},600)}
+  GATE=true;$('edAcct').classList.add('full');var f=$('edAcctIf'),u=ROUTES.account+'?embed=1&h=overview',h=pageHtml(u,1);if(h){f.removeAttribute('src');f.srcdoc=h}else f.src=u;acctOn='overview';$('edAcct').hidden=!!quiet;setTimeout(function(){try{f.focus()}catch(e){}},300)}
+function isNewUser(){return !getS('pf-draft')&&!getS('pf-saved')}
+function firstRun(){portfolioStore.whenReady().then(function(){if(isNewUser())setTimeout(function(){if(!document.querySelector('.dlg')&&!GATE)onboard()},600)})}
 $('edNavAcct').onclick=function(){var b=this;if(MN&&MN.trig===b){closeMenu(false);return}var a=acctData(),inn=!!(a&&a.signed);
   openMenu(b,{label:'บัญชี',w:240,value:acctOn||'',back:'#edNavAcct',items:inn?[{v:'overview',label:'บัญชีของฉัน',icon:'account_circle',sub:(a.email||'')+' · '+a.coins+' เครดิต'},{v:'settings',label:'ตั้งค่า',icon:'settings'},{v:'help',label:'ติดต่อทีมงาน',icon:'support_agent',sub:'support@migma.site'},{v:'out',label:'ออกจากระบบ',icon:'logout'}]:[{v:'overview',label:'เข้าสู่ระบบ',icon:'login'},{v:'settings',label:'ตั้งค่า',icon:'settings',sub:'ต้องเข้าสู่ระบบก่อน'}],
-   onPick:function(v){if(v==='help'){location.href='mailto:support@migma.site';return}if(v==='out'){var d=acctData();if(d){d.signed=false;LS.set('pf-acct-demo',JSON.stringify(d))}acctCoin();gate();return}openAcct(v)}})};
+   onPick:function(v){if(v==='help'){location.href='mailto:support@migma.site';return}if(v==='out'){var d=acctData();if(d){d.signed=false;LS.set('pf-acct-demo',JSON.stringify(d))}signOut().catch(function(){}).then(function(){portfolioStore.clearLocal();location.href=ROUTES.account});return}openAcct(v)}})};
 $('edBack').onclick=function(){closeAcct();$('edH')&&$('edH').focus()};
 addEventListener('resize',function(){if(acctOn)acctPlace()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&acctOn&&!GATE&&!document.querySelector('.dlg')){closeAcct();$('edNavAcct').focus()}});
 addEventListener('message',function(e){var m=e.data||{};if(e.source!==$('edAcctIf').contentWindow)return;if(m.type==='pf:acct')acctCoin();if(m.type==='pf:acct'){if(m.data){try{JSON.parse(m.data);LS.set('pf-acct-demo',m.data)}catch(x){}}crUI();if(GATE||!crGet())gate()}if(m.type==='pf:fs')fsApply();if(m.type==='pf:ui'){try{sessionStorage.setItem('pf-ui-back','1')}catch(x){}location.reload();return}if(m.type==='pf:mode'&&(m.theme==='dark'||m.theme==='light'))setTheme(m.theme);if(m.type==='pf:acct-restart'){closeAcct();onboard()}if(m.type==='pf:acct-close'){closeAcct();$('edNavAcct').focus()}if(m.type==='pf:acct-site'){var vb=document.querySelector('.ed-view');vb&&vb.click()}});
-/* ---------- เครดิต AI (ต้นแบบ: เก็บในเครื่องชุดเดียวกับหน้าบัญชี ยังไม่ตัดเงิน) ----------
+/* ---------- เครดิต AI (ตัวจริงอยู่ที่หลังบ้าน · ในเครื่องเก็บ cache ชุดเดียวกับหน้าบัญชีไว้แสดงผลทันที แล้วซิงก์กลับด้วย credSync) ----------
    base = ยอดหลังเติมครั้งล่าสุด · ใช้ไปกี่เปอร์เซ็นต์ = (base − คงเหลือ) / base · เตือนตอนข้าม 75% และ 90% · หมด = ปุ่ม AI พาไปเติม */
 var AICOST={polish:1,steps:2,resume:10,'case':5,tr:2};
+/* ราคาเครดิตต่องานที่แอดมินตั้งไว้ (/admin) · ค่าข้างบนเป็นแค่ค่าตั้งต้นระหว่างรอโหลด */
+fetchPricing().then(function(p){p.costs.forEach(function(c){AICOST[c.kind]=c.credits})}).catch(function(){});
+/* ยอดเครดิตจริงจากหลังบ้านลง cache แล้ววาดใหม่ · เรียกหลังงาน AI ทุกครั้ง (หักหรือคืนที่หลังบ้านไปแล้ว) */
+function credSync(){return fetchCredits().then(function(c){var a=acctData();if(!a||!a.signed)return;applyCredits(a,c);LS.set('pf-acct-demo',JSON.stringify(a));crUI()}).catch(function(){})}
 function crGet(){var a=acctData();return a&&a.signed?a:null}
 function crPct(a){var b=Math.max(a.base||a.coins,1);return Math.min(100,Math.max(0,Math.round((b-a.coins)/b*100)))}
 function crLv(a){var p=crPct(a);return a.coins<=0?'out':p>=90?'crit':p>=75?'warn':''}
@@ -226,8 +239,8 @@ document.addEventListener('keydown',function(e){if(CRP&&e.key==='Escape'){e.stop
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-crgo]');if(b){closeCr();openAcct(b.dataset.crgo)}});
 function crOut(need,a){var m=modal('<h2 class="dg-t" id="dgT">'+(a.coins<=0?'เครดิต AI หมดแล้ว':'เครดิต AI ไม่พอ')+'</h2><p class="dg-d">'+(a.coins<=0?'ตอนนี้ไม่มีเครดิตเหลือ':'เครดิตที่เหลือ '+a.coins+' ไม่พอสำหรับงานนี้')+' เติมเครดิตแล้วกลับมาทำต่อได้ ข้อมูลที่กรอกไว้ยังอยู่ครบ และส่วนอื่นของเว็บใช้ได้ปกติ</p><div class="dg-a"><button type="button" class="btn cancel" data-x>ไว้ทีหลัง</button><button type="button" class="btn filled" data-ok>เติมเครดิต</button></div>');m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('[data-ok]').onclick=function(){m.close();openAcct('credits')};m.box.querySelector('[data-ok]').focus()}
 /* ใช้เครดิต: คืน true เมื่อหักได้ · false = ไม่พอ (ขึ้นหน้าต่างพาไปเติม) หรือยังไม่เข้าสู่ระบบ */
-function crSpend(kind,n,desc){var a=crGet();if(!a){toast('เข้าสู่ระบบก่อนใช้ AI',{label:'เข้าสู่ระบบ',fn:function(){openAcct('overview')}});return false}var c=n||AICOST[kind]||1;if(a.coins<c){crOut(c,a);return false}
-  var b0=crPct(a);a.coins-=c;a.log=a.log||[];a.log.unshift({t:new Date().toISOString(),k:kind,d:desc||'',c:c});LS.set('pf-acct-demo',JSON.stringify(a));crUI();var p=crPct(a),go=function(){openAcct('credits')};
+function crSpend(kind,n,desc,real){var a=crGet();if(!a){toast('เข้าสู่ระบบก่อนใช้ AI',{label:'เข้าสู่ระบบ',fn:function(){openAcct('overview')}});return false}var c=n||AICOST[kind]||1;if(a.coins<c){crOut(c,a);return false}
+  var b0=crPct(a);a.coins-=c;a.log=a.log||[];a.log.unshift({t:new Date().toISOString(),k:kind,d:desc||'',c:-c});LS.set('pf-acct-demo',JSON.stringify(a));crUI();if(!real)spendCredits(kind,Math.max(1,Math.round(c/Math.max(AICOST[kind]||1,1))),desc||'').then(credSync,credSync);var p=crPct(a),go=function(){openAcct('credits')};
   setTimeout(function(){if(a.coins<=0)toast('เครดิต AI หมดแล้ว เติมเพื่อใช้ AI ต่อ',{label:'เติมเครดิต',fn:go});else if(b0<90&&p>=90)toast('ใช้เครดิตไปแล้ว 90% เหลือ '+a.coins+' เครดิต',{label:'เติมเครดิต',fn:go});else if(b0<75&&p>=75)toast('ใช้เครดิตไปแล้ว 75% เหลือ '+a.coins+' เครดิต',{label:'เติมเครดิต',fn:go})},900);return true}
 /* ---------- คำถามแรกเข้า 3 ข้อ: เลือกชุดตั้งต้นให้ตรงเป้าหมายและสายงาน แล้วเริ่มจากช่องว่าง (ไม่ใช่ข้อความของคนอื่น) ---------- */
 var ONB={goal:[['job','หางานประจำ'],['intern','หาที่ฝึกงาน'],['study','ยื่นเรียนต่อ'],['free','รับงานฟรีแลนซ์'],['other','อย่างอื่น']],
@@ -241,7 +254,7 @@ function onboard(){var fs=LS.get('pf-fs')==='lg';var m=modal('<h2 class="dg-t" i
    '<fieldset class="onb-q onb-lgq" data-q="lang"><legend>4. เว็บของคุณมีภาษาอะไรบ้าง <span class="opt">เลือกได้ทั้งสอง</span></legend><div class="onb-o"><label><input type="checkbox" name="lgth" checked>ไทย</label><label><input type="checkbox" name="lgen">English</label></div><p class="err onb-e" hidden><span class="ms" aria-hidden="true">error</span>เลือกอย่างน้อย 1 ภาษา</p>'+
    '<div id="onbDf" hidden><div class="onb-fs onb-lg2"><span class="lab" id="onbDfL">ภาษาแรก<small>ภาษาที่คุณกรอกก่อน และคนเข้าเว็บเห็นก่อน</small></span><div class="seg" role="radiogroup" aria-labelledby="onbDfL"><button type="button" role="radio" aria-checked="true" data-onbdf="th">ไทย</button><button type="button" role="radio" aria-checked="false" data-onbdf="en">English</button></div></div><p class="lg-n onb-n"><span class="ms" aria-hidden="true">info</span><span id="onbLn">คุณกรอกภาษาไทยก่อน แล้วให้ AI แปลเป็นอังกฤษให้อัตโนมัติ หรือพิมพ์คำแปลเองทีละช่องก็ได้ แก้คำแปลได้ทุกช่อง</span></p></div></fieldset>'+
    '<div class="onb-fs"><span class="lab" id="onbFsL">ขนาดตัวหนังสือ<small>เปลี่ยนแล้วเห็นผลทันที</small></span><div class="seg" role="radiogroup" aria-labelledby="onbFsL"><button type="button" role="radio" aria-checked="'+!fs+'" data-onbfs="md">ปกติ</button><button type="button" role="radio" aria-checked="'+fs+'" data-onbfs="lg">ใหญ่</button></div></div>'+
-   '</form><div class="dg-a">'+(D.sample?'':'<button type="button" class="btn cancel" data-x>ยกเลิก</button>')+'<button type="button" class="btn filled" data-ok>ถัดไป</button></div>','md');
+   '</form><div class="dg-a">'+(D.sample||isNewUser()?'':'<button type="button" class="btn cancel" data-x>ยกเลิก</button>')+'<button type="button" class="btn filled" data-ok>ถัดไป</button></div>','md');
   LS.set('pf-onb','1');if(m.box.querySelector('[data-x]'))m.box.querySelector('[data-x]').onclick=m.close;var f=m.box.querySelector('#onbF'),v=function(n){return (f.querySelector('input[name='+n+']:checked')||{}).value};
   f.addEventListener('change',function(e){var q=e.target.closest('.onb-q');if(!q)return;q.querySelector('.onb-e').hidden=true;if(q.dataset.q==='lang'){f.querySelector('#onbDf').hidden=!(f.lgth.checked&&f.lgen.checked);return}if(e.target.name==='field'){var o=e.target.value==='other';f.querySelector('#onbX').hidden=!o;if(o)f.querySelector('#onbOther').focus()}});
   f.addEventListener('click',function(e){var g=e.target.closest('[data-onbdf]');if(g){[].forEach.call(g.parentNode.children,function(x){x.setAttribute('aria-checked',x===g)});f.querySelector('#onbLn').textContent=g.dataset.onbdf==='en'?'คุณกรอกภาษาอังกฤษก่อน แล้วให้ AI แปลเป็นไทยให้อัตโนมัติ หรือพิมพ์คำแปลเองทีละช่องก็ได้ แก้คำแปลได้ทุกช่อง':'คุณกรอกภาษาไทยก่อน แล้วให้ AI แปลเป็นอังกฤษให้อัตโนมัติ หรือพิมพ์คำแปลเองทีละช่องก็ได้ แก้คำแปลได้ทุกช่อง';return}var b=e.target.closest('[data-onbfs]');if(!b)return;LS.set('pf-fs',b.dataset.onbfs);fsApply();[].forEach.call(b.parentNode.children,function(x){x.setAttribute('aria-checked',x===b)})});
@@ -274,7 +287,9 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 /* ---------- ตรวจก่อนเผยแพร่ → หน้าสำเร็จที่แชร์ลิงก์ได้ ---------- */
 function slugOf(t){return String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,30)}
 function slugGuess(){var a=acctData(),P=D.profile||{},c=[a&&a.slug!=='yourname'&&a.slug,slugOf(P.name),slugOf(P.fullName),slugOf(String((D.contact||{}).email||(a&&a.email)||'').split('@')[0])].filter(function(x){return x&&x.length>=3});return c[0]||''}
-function siteUrl(){return (slugGuess()||'yourname')+'.migma.site'}
+/* ลิงก์เว็บที่เผยแพร่ = โดเมนที่เปิดอยู่ + /u/<slug> ของบัญชี (slug จากหลังบ้าน) · ไม่ใช้ PUBLIC_ORIGIN ของหลังบ้าน: เปิดผ่านโดเมนไหนก็ได้ลิงก์ของโดเมนนั้น (http ตอน dev · https ตอนจริง) */
+function siteHref(){var a=acctData(),s=a&&a.slug&&a.slug!=='yourname'?a.slug:slugGuess();return location.origin+publicBase(s||'yourname')}
+function siteUrl(){return siteHref().replace(/^https?:\/\//,'')}
 function pubNow(){put('pf-published',J(S));status();say('เผยแพร่แล้ว');render()}
 /* QR ขนาดเล็กสำหรับลิงก์ (byte mode · EC ระดับ L · รุ่น 1–5 บล็อกเดียว · mask 0) คืนตาราง true = จุดดำ · ลิงก์ยาวเกิน 106 ไบต์คืน null */
 function qrMake(text){var bytes=[],i,j;var u=unescape(encodeURIComponent(text));for(i=0;i<u.length;i++)bytes.push(u.charCodeAt(i));
@@ -316,7 +331,7 @@ function qrSave(text,name){var svg=qrSvg(text,640),im=new Image();im.onload=func
 /* (ปิดไว้ก่อน: ยังไม่มีปุ่มเรียกในหน้าจอ รอระบบสร้างไฟล์ฝั่งเซิร์ฟเวอร์) */
 /* ---------- ส่งออก PDF: สร้างหน้าเอกสาร A4 จากข้อมูลเดียวกับเว็บ แล้วเปิดหน้าพิมพ์ของเบราว์เซอร์ (เลือก “บันทึกเป็น PDF”) · kind = resume | book ---------- */
 function pdfDoc(kind){var X=ALT()?localize(clone(D)):D,P=X.profile||{},C=X.contact||{},EN=CL()==='en',T=function(th,en){return EN?en:th},e=esc,has=function(v){return Array.isArray(v)?v.some(function(y){return String(y||'').trim()}):!!String(v==null?'':v).trim()},
-   plain=function(t){return e(String(t||'').replace(/\*\*|\+\+|==/g,'').replace(/\*(\S[^*]*)\*/g,'$1').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1'))},url='https://'+siteUrl();
+   plain=function(t){return e(String(t||'').replace(/\*\*|\+\+|==/g,'').replace(/\*(\S[^*]*)\*/g,'$1').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1'))},url=siteHref();
   var ct=[C.email].concat((C.links||[]).filter(function(l){return has(l.url)}).map(function(l){return (l.label?l.label+': ':'')+String(l.url).replace(/^https?:\/\//,'')})).filter(has);if(has(P.location))ct.push(P.location);
   var skills=(P.skillSets||[]).filter(function(g){return has(g.items)}),sk=skills.length?skills.map(function(g){return '<p class="sk"><b>'+e(g.name||'')+'</b> '+g.items.map(e).join(' · ')+'</p>'}).join(''):has(P.skills)?'<p class="sk">'+P.skills.map(e).join(' · ')+'</p>':'';
   var li=function(a){a=(a||[]).filter(has);return a.length?'<ul>'+a.map(function(x){return '<li>'+plain(x)+'</li>'}).join('')+'</ul>':''};
@@ -353,9 +368,9 @@ function resumeUI(){var P=D.profile,f=P.resumeFile;
      :'<div class="rs-a"><button type="button" class="btn outlined sm" data-rsup><span class="ms" aria-hidden="true">upload_file</span>อัปโหลดไฟล์ PDF</button></div>')+
    '</div>'+(f?'':fld('หรือวางลิงก์ไฟล์ Resume','profile.resume',{type:'url',opt:1,ph:'เช่น drive.google.com/…',hl:'.hero .cta',tip:'ลิงก์ไฟล์ PDF เช่น จาก Google Drive\nตั้งให้ทุกคนที่มีลิงก์เปิดดูได้'}))}
 document.addEventListener('click',function(e){var t=e.target;if(t.closest&&t.closest('[data-rsup]')){$('edResume').click();return}if(t.closest&&t.closest('[data-rsdel]')){snap('เอาไฟล์ Resume ออก');var old=D.profile.resumeFile;delete D.profile.resumeFile;persist();render();toast('เอาไฟล์ Resume ออกแล้ว',{label:'เลิกทำ',fn:function(){D.profile.resumeFile=old;persist();render()}})}});
-function pubDone(again){var u=siteUrl(),m=modal('<h2 class="dg-t" id="dgT">'+(again?'แชร์พอร์ตของคุณ':'เผยแพร่แล้ว')+'</h2><p class="dg-d">'+(again?'หน้าเว็บเป็นฉบับล่าสุดแล้ว ส่งลิงก์นี้ให้คนที่อยากให้ดูได้เลย':'ส่งลิงก์นี้ให้คนที่อยากให้ดูได้เลย แก้พอร์ตเมื่อไรก็กดเผยแพร่อีกครั้ง ลิงก์เดิมไม่เปลี่ยน')+'</p><button type="button" class="pub-u" data-cp aria-label="คัดลอกลิงก์ '+esc(u)+'"><span id="pubU">'+esc(u)+'</span><span class="pub-c"><span class="ms" aria-hidden="true">content_copy</span><span data-cpt>คัดลอก</span></span></button><div class="pub-a">'+(navigator.share?'<button type="button" class="btn filled" data-sh><span class="ms" aria-hidden="true">ios_share</span>แชร์ลิงก์</button>':'<a class="btn filled" target="_blank" rel="noopener" href="https://line.me/R/share?text='+encodeURIComponent('https://'+u)+'"><span class="ms" aria-hidden="true">chat</span>แชร์ทาง LINE</a>')+'<button type="button" class="btn outlined" data-vw><span class="ms" aria-hidden="true">arrow_outward</span>เปิดดูหน้าเว็บ</button></div><div class="pub-q">'+qrSvg('https://'+u,112)+'<div class="t"><b>QR ของพอร์ต</b>สแกนแล้วเปิดพอร์ตนี้ทันที ใส่ในโพสต์ นามบัตร หรือใบสมัครได้<div class="a"><button type="button" class="btn outlined sm" data-qrsave><span class="ms" aria-hidden="true">download</span>บันทึก QR</button></div></div></div><p class="pub-n">สมัครหลายที่ สร้างลิงก์แยกให้แต่ละบริษัทแล้วดูว่าใครเปิดแล้วได้ <button type="button" class="btn text sm btn-inline" data-lk>สร้างลิงก์แยก</button></p><div class="dg-a"><button type="button" class="btn cancel" data-x>ปิด</button></div>','md');
-  var q=function(x){return m.box.querySelector(x)};q('[data-x]').onclick=m.close;q('[data-qrsave]').onclick=function(){qrSave('https://'+u,'qr-'+u.split('.')[0])};q('[data-vw]').onclick=function(){pfOpenSite('landing-preview.html')};q('[data-lk]').onclick=function(){m.close();openAcct('stats')};
-  q('[data-cp]').onclick=function(){var b=this,t='https://'+u,ok=function(){b.querySelector('[data-cpt]').textContent='คัดลอกแล้ว';b.querySelector('.ms').textContent='check';b.classList.add('ok');say('คัดลอกลิงก์แล้ว');setTimeout(function(){if(!b.isConnected)return;b.querySelector('[data-cpt]').textContent='คัดลอก';b.querySelector('.ms').textContent='content_copy';b.classList.remove('ok')},2400)};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,function(){toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')});else toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')};var sh=q('[data-sh]');if(sh)sh.onclick=function(){navigator.share({title:(D.profile.name||'Portfolio'),url:'https://'+u}).catch(function(){})};q('[data-cp]').focus()}
+function pubDone(again){var u=siteUrl(),m=modal('<h2 class="dg-t" id="dgT">'+(again?'แชร์พอร์ตของคุณ':'เผยแพร่แล้ว')+'</h2><p class="dg-d">'+(again?'หน้าเว็บเป็นฉบับล่าสุดแล้ว ส่งลิงก์นี้ให้คนที่อยากให้ดูได้เลย':'ส่งลิงก์นี้ให้คนที่อยากให้ดูได้เลย แก้พอร์ตเมื่อไรก็กดเผยแพร่อีกครั้ง ลิงก์เดิมไม่เปลี่ยน')+'</p><button type="button" class="pub-u" data-cp aria-label="คัดลอกลิงก์ '+esc(u)+'"><span id="pubU">'+esc(u)+'</span><span class="pub-c"><span class="ms" aria-hidden="true">content_copy</span><span data-cpt>คัดลอก</span></span></button><div class="pub-a">'+(navigator.share?'<button type="button" class="btn filled" data-sh><span class="ms" aria-hidden="true">ios_share</span>แชร์ลิงก์</button>':'<a class="btn filled" target="_blank" rel="noopener" href="https://line.me/R/share?text='+encodeURIComponent(siteHref())+'"><span class="ms" aria-hidden="true">chat</span>แชร์ทาง LINE</a>')+'<button type="button" class="btn outlined" data-vw><span class="ms" aria-hidden="true">arrow_outward</span>เปิดดูหน้าเว็บ</button></div><div class="pub-q">'+qrSvg(siteHref(),112)+'<div class="t"><b>QR ของพอร์ต</b>สแกนแล้วเปิดพอร์ตนี้ทันที ใส่ในโพสต์ นามบัตร หรือใบสมัครได้<div class="a"><button type="button" class="btn outlined sm" data-qrsave><span class="ms" aria-hidden="true">download</span>บันทึก QR</button></div></div></div><p class="pub-n">สมัครหลายที่ สร้างลิงก์แยกให้แต่ละบริษัทแล้วดูว่าใครเปิดแล้วได้ <button type="button" class="btn text sm btn-inline" data-lk>สร้างลิงก์แยก</button></p><div class="dg-a"><button type="button" class="btn cancel" data-x>ปิด</button></div>','md');
+  var q=function(x){return m.box.querySelector(x)};q('[data-x]').onclick=m.close;q('[data-qrsave]').onclick=function(){qrSave(siteHref(),'qr-'+u.split('/').pop())};q('[data-vw]').onclick=function(){window.open(siteHref(),'_blank','noopener')};q('[data-lk]').onclick=function(){m.close();openAcct('stats')};
+  q('[data-cp]').onclick=function(){var b=this,t=siteHref(),ok=function(){b.querySelector('[data-cpt]').textContent='คัดลอกแล้ว';b.querySelector('.ms').textContent='check';b.classList.add('ok');say('คัดลอกลิงก์แล้ว');setTimeout(function(){if(!b.isConnected)return;b.querySelector('[data-cpt]').textContent='คัดลอก';b.querySelector('.ms').textContent='content_copy';b.classList.remove('ok')},2400)};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,function(){toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')});else toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')};var sh=q('[data-sh]');if(sh)sh.onclick=function(){navigator.share({title:(D.profile.name||'Portfolio'),url:siteHref()}).catch(function(){})};q('[data-cp]').focus()}
 function pubCheck(){var st=steps(),a=acctData(),free=!a||a.plan==='free',nw=(D.works||[]).filter(wFull).length,nwe=(D.works||[]).length-(D.works||[]).filter(wFull).length,rows=[];
   rows.push(D.sample?{c:'no',t:'ยังเป็นพอร์ตตัวอย่าง',s:'ข้อความของคนอื่นขึ้นเว็บในชื่อคุณไม่ได้',go:'onb',gl:'เริ่มทำของฉัน'}:{c:'',t:'เป็นข้อมูลของคุณแล้ว'});
   var hasN=!!String(D.profile.name||'').trim();rows.push(st[0].ok?{c:'',t:'มีชื่อและตำแหน่ง',s:(D.profile.name||'')}:hasN?{c:'no',t:'ยังไม่มีตำแหน่ง',s:'ใส่ตำแหน่ง หรือประโยคแนะนำตัวอย่างใดอย่างหนึ่ง คนเปิดเว็บจะได้รู้ว่าคุณทำอะไร',go:'profile',gl:'ไปใส่'}:{c:'no',t:'ยังไม่มีชื่อ',s:'คนเปิดเว็บจะไม่รู้ว่าเป็นพอร์ตของใคร',go:'profile',gl:'ไปใส่'});
@@ -364,7 +379,7 @@ function pubCheck(){var st=steps(),a=acctData(),free=!a||a.plan==='free',nw=(D.w
   rows.push(nw?{c:'',t:'มีผลงาน '+nw+' ชิ้น'}:{c:'wr',t:'ยังไม่มีผลงาน',s:'เผยแพร่ได้ แต่หน้าเว็บจะไม่มีส่วนผลงาน',go:'works',gl:'ไปเพิ่ม'});
   if(free&&nw>3)rows.push({c:'wr',t:'แพ็ก Free โชว์ได้ 3 ชิ้น',s:'ตอนนี้มี '+nw+' ชิ้น เว็บจะโชว์ 3 ชิ้นแรก',go:'plan',gl:'ดูแพ็กเกจ'});
   var bad=rows.some(function(r){return r.c==='no'});
-  var m=modal('<h2 class="dg-t" id="dgT">ตรวจก่อนเผยแพร่</h2><p class="dg-d">'+(bad?'แก้ข้อที่ขึ้นสีแดงก่อน แล้วค่อยเผยแพร่':'พร้อมแล้ว ตั้งที่อยู่เว็บด้านล่าง แล้วกดเผยแพร่')+'</p>'+(bad?'':'<div class="fld pub-s" id="pubSF"><span class="lb"><label for="pubS">ที่อยู่เว็บของคุณ</label><span class="cnt cnt-end" id="pubSC"></span></span><span class="pub-sr"><span class="inw'+(slugGuess()?' has':'')+'"><input class="in" id="pubS" value="'+esc(slugGuess())+'" maxlength="30" placeholder="เช่น somchai-design" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="pubSH">'+clrBtn('ที่อยู่เว็บ')+'</span><span class="sx">.migma.site</span></span><span class="hint" id="pubSH">ใช้ตัวอังกฤษพิมพ์เล็ก ตัวเลข และขีดกลาง 3–30 ตัว เปลี่ยนทีหลังได้ในตั้งค่า</span></div>')+'<ul class="ck">'+rows.map(function(r){return '<li class="'+r.c+'"><span class="ms" aria-hidden="true">'+(r.c==='no'?'cancel':r.c==='wr'?'error':'check_circle')+'</span><span class="t">'+esc(r.t)+(r.s?'<small>'+esc(r.s)+'</small>':'')+'</span>'+(r.go?'<button type="button" class="btn '+(r.c==='no'?'outlined':'text')+' sm" data-ckgo="'+r.go+'">'+r.gl+'</button>':'')+'</li>'}).join('')+'</ul><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" data-ok'+(bad?' disabled':'')+'>เผยแพร่</button></div>','md');
+  var m=modal('<h2 class="dg-t" id="dgT">ตรวจก่อนเผยแพร่</h2><p class="dg-d">'+(bad?'แก้ข้อที่ขึ้นสีแดงก่อน แล้วค่อยเผยแพร่':'พร้อมแล้ว กดเผยแพร่ได้เลย')+'</p>'+(bad?'':'<div class="fld pub-s" id="pubSF"><span class="lb"><span>ที่อยู่เว็บของคุณ</span></span><p class="hint"><b>'+esc(siteUrl())+'</b></p></div>')+'<ul class="ck">'+rows.map(function(r){return '<li class="'+r.c+'"><span class="ms" aria-hidden="true">'+(r.c==='no'?'cancel':r.c==='wr'?'error':'check_circle')+'</span><span class="t">'+esc(r.t)+(r.s?'<small>'+esc(r.s)+'</small>':'')+'</span>'+(r.go?'<button type="button" class="btn '+(r.c==='no'?'outlined':'text')+' sm" data-ckgo="'+r.go+'">'+r.gl+'</button>':'')+'</li>'}).join('')+'</ul><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" data-ok'+(bad?' disabled':'')+'>เผยแพร่</button></div>','md');
   m.box.querySelector('[data-x]').onclick=m.close;var si=m.box.querySelector('#pubS'),sc=function(){if(!si)return;var v=slugOf(si.value.replace(/\s+/g,'-'));if(si.value!==v&&!/-$/.test(si.value))si.value=v;m.box.querySelector('#pubSC').textContent=si.value.length+'/30';si.closest('.inw').classList.toggle('has',!!si.value);var e=m.box.querySelector('#pubSF');e.classList.remove('err');m.box.querySelector('#pubSH').textContent='ใช้ตัวอังกฤษพิมพ์เล็ก ตัวเลข และขีดกลาง 3–30 ตัว เปลี่ยนทีหลังได้ในตั้งค่า'};if(si){si.addEventListener('input',sc);sc()}
   m.box.querySelector('[data-ok]').onclick=function(){if(si){var v=slugOf(si.value);if(v.length<3){m.box.querySelector('#pubSF').classList.add('err');m.box.querySelector('#pubSH').textContent=v?'สั้นไป ใส่อย่างน้อย 3 ตัว':'ใส่ที่อยู่เว็บก่อน เช่น ชื่อของคุณเป็นตัวอังกฤษ';si.focus();return}var a=acctData();if(a){a.slug=v;LS.set('pf-acct-demo',JSON.stringify(a))}}m.close();pubNow();pubDone()};
   [].forEach.call(m.box.querySelectorAll('[data-ckgo]'),function(b){b.onclick=function(){var g=b.dataset.ckgo;m.close();if(g==='onb')onboard();else if(g==='plan')openAcct('plan');else go(g,null)}});
@@ -378,10 +393,10 @@ function helpDlg(){var mac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.
    '<h3>ตัวหนังสือเล็กไป</h3><div class="onb-fs" style="margin:0;padding:0;border:0"><span class="lab" id="hpFsL">ขนาดตัวหนังสือ</span><div class="seg" role="radiogroup" aria-labelledby="hpFsL"><button type="button" role="radio" aria-checked="'+(LS.get('pf-fs')!=='lg')+'" data-onbfs="md">ปกติ</button><button type="button" role="radio" aria-checked="'+(LS.get('pf-fs')==='lg')+'" data-onbfs="lg">ใหญ่</button></div></div>'+
    '<div class="onb-fs" style="margin:var(--space-3) 0 0;padding:0;border:0"><span class="lab" id="hpUiL">ภาษาของหลังบ้าน</span><div class="seg" role="radiogroup" aria-labelledby="hpUiL"><button type="button" role="radio" aria-checked="'+(uiLang()==='en')+'" data-uil="en">English</button><button type="button" role="radio" aria-checked="'+(uiLang()==='th')+'" data-uil="th">ไทย</button></div></div>'+
    '<h3>ติดตรงไหน</h3><p class="dg-d" style="margin:0">เขียนมาที่ <a href="mailto:support@migma.site">support@migma.site</a> หรืออยากเริ่มใหม่ ไปที่ บัญชีและตั้งค่า › ตั้งค่า › ข้อมูลของคุณ</p></div><div>'+
-   '<h3>คีย์ลัด</h3><dl><dt>บันทึกทุกจุดที่แก้</dt><dd>'+k(K,'S')+'</dd><dt>เลิกทำครั้งล่าสุด (ลบ ลาก ปักหมุด)</dt><dd>'+k(K,'Z')+'</dd><dt>ตัวหนา · ตัวเอียง · ขีดเส้นใต้ ในช่องย่อหน้า</dt><dd>'+k(K,'B')+' '+k(K,'I')+' '+k(K,'U')+'</dd><dt>ไฮไลต์ · ใส่ลิงก์ ในช่องย่อหน้า</dt><dd>'+k(K,'⇧','H')+' '+k(K,'K')+'</dd><dt>เพิ่มทักษะ แท็ก หรือข้อย่อย</dt><dd>'+k('Enter')+'</dd><dt>ปิดหน้าต่าง เมนู หรือออกจากหน้าบัญชี</dt><dd>'+k('Esc')+'</dd><dt>เลื่อนในเมนูและตัวเลือก</dt><dd>'+k('↑','↓')+'</dd><dt>เปิดหน้านี้</dt><dd>'+k('?')+'</dd></dl>'+'</div></div></div><div class="dg-a"><button type="button" class="btn ghost" data-ex><span class="ms" aria-hidden="true">open_in_new</span>ดูพอร์ตตัวอย่าง</button><button type="button" class="btn outlined" data-tr><span class="ms" aria-hidden="true">tour</span>พาดูทีละส่วน</button><button type="button" class="btn filled" data-x>เข้าใจแล้ว</button></div>','md');
-  m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('[data-tr]').onclick=function(){m.close();tourStart()};m.box.querySelector('[data-ex]').onclick=function(){pfOpenSite('landing-preview.html',null,1)};m.box.addEventListener('click',function(e){var b=e.target.closest('[data-onbfs]');if(!b)return;LS.set('pf-fs',b.dataset.onbfs);fsApply();[].forEach.call(b.parentNode.children,function(x){x.setAttribute('aria-checked',x===b)})});m.box.querySelector('[data-x]').focus()}
+   '<h3>คีย์ลัด</h3><dl><dt>บันทึกทุกจุดที่แก้</dt><dd>'+k(K,'S')+'</dd><dt>เลิกทำครั้งล่าสุด (ลบ ลาก ปักหมุด)</dt><dd>'+k(K,'Z')+'</dd><dt>ตัวหนา · ตัวเอียง · ขีดเส้นใต้ ในช่องย่อหน้า</dt><dd>'+k(K,'B')+' '+k(K,'I')+' '+k(K,'U')+'</dd><dt>ไฮไลต์ · ใส่ลิงก์ ในช่องย่อหน้า</dt><dd>'+k(K,'⇧','H')+' '+k(K,'K')+'</dd><dt>เพิ่มทักษะ แท็ก หรือข้อย่อย</dt><dd>'+k('Enter')+'</dd><dt>ปิดหน้าต่าง เมนู หรือออกจากหน้าบัญชี</dt><dd>'+k('Esc')+'</dd><dt>เลื่อนในเมนูและตัวเลือก</dt><dd>'+k('↑','↓')+'</dd><dt>เปิดหน้านี้</dt><dd>'+k('?')+'</dd></dl>'+'</div></div></div><div class="dg-a"><button type="button" class="btn outlined" data-tr><span class="ms" aria-hidden="true">tour</span>พาดูทีละส่วน</button><button type="button" class="btn filled" data-x>เข้าใจแล้ว</button></div>','md');
+  m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('[data-tr]').onclick=function(){m.close();tourStart()};m.box.addEventListener('click',function(e){var b=e.target.closest('[data-onbfs]');if(!b)return;LS.set('pf-fs',b.dataset.onbfs);fsApply();[].forEach.call(b.parentNode.children,function(x){x.setAttribute('aria-checked',x===b)})});m.box.querySelector('[data-x]').focus()}
 document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('#grpFeat'))setTimeout(function(){lastHl='#case';msg({type:'pf:hl',sel:'#case',go:1})},450)});document.addEventListener('change',function(e){if(e.target.closest&&e.target.closest('#grpFeat'))setTimeout(function(){lastHl='#case';msg({type:'pf:hl',sel:'#case',go:1})},450)});
-$('edResume').onchange=function(){var f=this.files[0];this.value='';if(!f)return;if(f.type!=='application/pdf'&&!/\.pdf$/i.test(f.name)){toast('ไฟล์นี้ไม่ใช่ PDF บันทึก Resume เป็น PDF ก่อนแล้วลองอีกครั้ง');return}if(f.size>RSMAX){toast('ไฟล์ใหญ่ '+(f.size/1048576).toFixed(1)+' MB เกิน 3 MB ลองบีบไฟล์หรือวางลิงก์แทน');return}var rd=new FileReader();rd.onload=function(){snap('อัปโหลด Resume');D.profile.resumeFile={name:f.name,size:f.size,src:rd.result};persist();render();toast('อัปโหลด '+f.name+' แล้ว อย่าลืมกดบันทึก')};rd.onerror=function(){toast('อ่านไฟล์นี้ไม่ได้ ลองไฟล์อื่น')};rd.readAsDataURL(f)};
+$('edResume').onchange=function(){var f=this.files[0];this.value='';if(!f)return;if(f.type!=='application/pdf'&&!/\.pdf$/i.test(f.name)){toast('ไฟล์นี้ไม่ใช่ PDF บันทึก Resume เป็น PDF ก่อนแล้วลองอีกครั้ง');return}if(f.size>RSMAX){toast('ไฟล์ใหญ่ '+(f.size/1048576).toFixed(1)+' MB เกิน 3 MB ลองบีบไฟล์หรือวางลิงก์แทน');return}upTo(f,f.name,function(src){snap('อัปโหลด Resume');D.profile.resumeFile={name:f.name,size:f.size,src:src};persist();render();toast('อัปโหลด '+f.name+' แล้ว อย่าลืมกดบันทึก')})};
 $('edBody').addEventListener('scroll',function(){var nx=this.querySelector(':scope>.nx');if(nx&&nx.querySelector('.nx-s'))nx.classList.toggle('mini',this.scrollTop>120)},{passive:true});
 $('edNavHelp').onclick=helpDlg;
 /* ---------- ทัวร์แนะนำ 8 จุด: เริ่มเองหลังตอบคำถามแรกเข้า · เปิดซ้ำได้จาก “วิธีใช้และคีย์ลัด” · ข้ามได้ทุกเมื่อ ---------- */
@@ -523,8 +538,10 @@ function say(t){var l=$('edLive');l.textContent='';setTimeout(function(){l.textC
 var fileCb=null;$('edFile').onchange=function(){var f=this.files[0];this.value='';if(!f||!fileCb)return;var cb=fileCb;fileCb=null;if(cb.crop)cropFile(f,cb);else readImg(f,cb)};
 /* ปรับภาพก่อนใช้: ลากเลื่อน + ซูม · กรอบตามที่ใช้จริง (วงกลม / 4:5 / 16:9) */
 var CROP={round:{ar:1,w:480,h:480,round:1},cover:{ar:4/5,w:800,h:1000},wide:{ar:16/9,w:1280,h:720},sq:{ar:1,w:320,h:320,fit:1}};
+/* อัปโหลดขึ้นหลังบ้าน (lib/storage/media.ts) แล้วส่ง URL ให้ cb · ข้อมูลพอร์ตเก็บแค่ URL ไม่เก็บตัวไฟล์ */
+function upTo(file,name,cb){say('กำลังอัปโหลด');uploadMedia(file,name).then(function(r){cb(r.url)},function(e){toast((e&&e.message)||'อัปโหลดไม่สำเร็จ ลองอีกครั้ง')})}
 function cropFile(f,cb){if(!/^image\//.test(f.type)){toast('ไฟล์นี้ไม่ใช่ภาพ ใช้ JPG, PNG, WebP หรือ SVG');return}if(f.type==='image/svg+xml')return readImg(f,cb);var rd=new FileReader();rd.onload=function(){cropSrc(rd.result,cb)};rd.readAsDataURL(f)}
-function cropSrc(src,cb){var C=CROP[cb.crop],im=new Image();im.onload=function(){
+function cropSrc(src,cb){var C=CROP[cb.crop],im=new Image();if(/^https?:/i.test(src))im.crossOrigin='anonymous';im.onload=function(){
   var m=modal('<h2 class="dg-t" id="dgT">ปรับภาพ</h2><p class="dg-d">'+(C.fit?'ซูมเข้าออกให้โลโก้พอดีกรอบ ซูมออกได้ถ้าอยากให้มีขอบว่างรอบโลโก้ ลากเพื่อเลื่อนตำแหน่ง':'ลากเพื่อเลือกส่วนของภาพที่จะโชว์ แล้วซูมด้วยแถบด้านล่าง กรอบนี้คือสิ่งที่คนเห็นบนเว็บ')+'</p><div class="crp" tabindex="0" aria-label="ภาพที่จะใช้ ลากหรือกดลูกศรเพื่อเลื่อน กด + − เพื่อซูม" style="aspect-ratio:'+C.ar+'"><img alt="" src="'+src+'"><span class="crp-m'+(C.round?' round':'')+'"></span><span class="crp-g" aria-hidden="true"></span></div><div class="crp-z"><button type="button" class="btn ghost icon sm" data-z="-1" aria-label="ซูมออก"><span class="ms" aria-hidden="true">zoom_out</span></button><input type="range" min="'+(C.fit?0.4:1)+'" max="4" step="0.01" value="1" aria-label="ซูม"><button type="button" class="btn ghost icon sm" data-z="1" aria-label="ซูมเข้า"><span class="ms" aria-hidden="true">zoom_in</span></button></div><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" data-ok>ใช้ภาพนี้</button></div>','md');
   var st=m.box.querySelector('.crp'),ig=st.querySelector('img'),rg=m.box.querySelector('input[type=range]'),W=st.clientWidth,H=W/C.ar,iw=im.naturalWidth,ih=im.naturalHeight,s0=C.fit?Math.min(W/iw,H/ih):Math.max(W/iw,H/ih),z=1,x,y,zmin=C.fit?0.4:1;
   function sc(){return s0*z}function clamp(){var s=sc(),ws=iw*s,hs=ih*s;x=ws<=W?(W-ws)/2:Math.min(0,Math.max(W-ws,x));y=hs<=H?(H-hs)/2:Math.min(0,Math.max(H-hs,y))}
@@ -537,11 +554,11 @@ function cropSrc(src,cb){var C=CROP[cb.crop],im=new Image();im.onload=function()
   st.addEventListener('keydown',function(e){var k=e.key,d=e.shiftKey?40:10;if(k==='ArrowLeft')x+=d;else if(k==='ArrowRight')x-=d;else if(k==='ArrowUp')y+=d;else if(k==='ArrowDown')y-=d;else if(k==='+'||k==='=')return zoom(z+.1);else if(k==='-')return zoom(z-.1);else return;e.preventDefault();draw()});
   rg.oninput=function(){zoom(+rg.value)};m.box.querySelectorAll('[data-z]').forEach(function(b){b.onclick=function(){zoom(z+(+b.dataset.z)*.25)}});
   m.box.querySelector('[data-x]').onclick=m.close;
-  m.box.querySelector('[data-ok]').onclick=function(){var s=sc(),c=document.createElement('canvas');c.width=C.w;c.height=C.h;c.getContext('2d').drawImage(im,-x/s,-y/s,W/s,H/s,0,0,C.w,C.h);var u=c.toDataURL(cb.png?'image/png':'image/jpeg',.88);m.close();cb(u)};
+  m.box.querySelector('[data-ok]').onclick=function(){var s=sc(),c=document.createElement('canvas');c.width=C.w;c.height=C.h;c.getContext('2d').drawImage(im,-x/s,-y/s,W/s,H/s,0,0,C.w,C.h);var u=c.toDataURL(cb.png?'image/png':'image/jpeg',.88);m.close();upTo(u,'image',cb)};
   };im.onerror=function(){toast('เปิดภาพนี้ไม่ได้ ลองไฟล์อื่น')};im.src=src}
 function readImg(f,cb){
   if(!/^image\//.test(f.type)){toast('ไฟล์นี้ไม่ใช่ภาพ ใช้ JPG, PNG, WebP หรือ SVG');return}
-  var rd=new FileReader();rd.onload=function(){if(f.type==='image/svg+xml')return cb(rd.result);var im=new Image();im.onload=function(){var max=cb.max||1600,s=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL(cb.png?'image/png':'image/jpeg',.85))};im.src=rd.result};rd.readAsDataURL(f)}
+  var rd=new FileReader();rd.onload=function(){if(f.type==='image/svg+xml')return upTo(f,f.name,cb);var im=new Image();im.onload=function(){var max=cb.max||1600,s=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);upTo(c.toDataURL(cb.png?'image/png':'image/jpeg',.85),f.name.replace(/\.[^.]+$/,''),cb)};im.src=rd.result};rd.readAsDataURL(f)}
 /* ลากไฟล์ภาพมาวางบนกรอบอัปโหลด (checklist: Uploading media) */
 document.addEventListener('dragover',function(e){var p=e.target.closest&&e.target.closest('.pv[data-up]');document.querySelectorAll('.pv.drop').forEach(function(x){if(x!==p)x.classList.remove('drop')});if(p){e.preventDefault();p.classList.add('drop')}});
 document.addEventListener('dragleave',function(e){var p=e.target.closest&&e.target.closest('.pv[data-up]');if(p&&!p.contains(e.relatedTarget))p.classList.remove('drop')});
@@ -641,14 +658,22 @@ function aiText(x){return Array.isArray(x)?x.join(' / '):x}
 function aiIn(kind,path,label){return '<button type="button" class="ai-in" data-aip="'+esc(path)+'" data-kind="'+kind+'" data-lab="'+esc(label)+'" data-tip="ให้ AI ช่วยเขียน" aria-haspopup="dialog" aria-expanded="'+(!!(AIP&&AIP.path===path))+'" aria-label="ให้ AI ช่วยเขียน'+esc(label)+'"><span class="ms" aria-hidden="true">auto_awesome</span></button>'}
 var GENP=['จากผลงานของฉัน','Design thinking','Double diamond','แบบ Agile / Sprint','สั้นๆ 3 ขั้น'],AIP=null,AIEMPTY=['เขียนให้เลย','สั้น กระชับ','เป็นกันเอง','ดูมืออาชีพ'],AIEDIT=['สั้นลง','เป็นกันเองขึ้น','ทางการขึ้น','แก้คำผิด','เขียนใหม่'],AIMORE=['สั้นลงอีก','เป็นกันเองขึ้น','ขอแบบอื่น'];
 function aiCur(p,kind){if(kind==='genProcess')return '';if(kind==='head')return (D.profile.headline||[]).filter(Boolean).join(' / ');var v=get(D,p);return Array.isArray(v)?v.join(', '):String(v||'')}
-function aiOpts(){var A=AIP,l=aiFor(A.kind),n=Math.min(3,l.length),st=(A.round*n)%Math.max(l.length,1),o=[];for(var i=0;i<n;i++)o.push(l[(st+i)%l.length]);if(/สั้น/.test(A.req))o.sort(function(a,b){return aiText(a).length-aiText(b).length});
-  var cur=aiCur(A.path,A.kind).trim();if(/แก้คำผิด/.test(A.req)&&cur&&A.kind!=='head'&&A.kind!=='outputs'&&A.kind!=='points')o=[cur.replace(/\s+/g,' ')].concat(o.slice(0,2));return o}
+function aiOpts(){return (AIP&&AIP.opts)||[]}
+/* ผลจากหลังบ้าน (แต่ละแบบเป็นรายการบรรทัด) → รูปแบบที่ช่องนั้นเก็บ */
+function aiShape(kind,lines){return kind==='head'||kind==='outputs'?lines:kind==='points'?lines.join('\n'):lines.join(' ')}
+/* ข้อมูลประกอบให้ AI: โปรไฟล์ + ชื่อเรื่อง/ที่ทำงานของรายการที่ช่องนี้อยู่ (เช่น ผลงาน · งาน) */
+function aiCtx(p){var P=D.profile||{},o=[],sk=(P.skills||[]).slice(0,12),cur=D,seg=String(p||'').split('.');
+  if(P.name||P.fullName)o.push('ชื่อ: '+(P.fullName||P.name));if(P.role)o.push('ตำแหน่ง: '+P.role);if(sk.length)o.push('ทักษะ: '+sk.join(', '));if(P.lede&&!/lede/.test(p))o.push('แนะนำตัว: '+P.lede);
+  for(var i=0;i<seg.length-1&&cur;i++){cur=cur[seg[i]];if(cur&&typeof cur==='object'&&!Array.isArray(cur)){if(cur.title)o.push('เรื่อง: '+cur.title);if(cur.org)o.push('ที่: '+cur.org)}}
+  return o.join('\n').slice(0,1800)}
+function aiMax(A){var f=document.querySelector('[data-k="'+(A.kind==='head'?'profile.headline.0':A.path)+'"]');return f&&+f.dataset.max||0}
 function aiBox(ph,lab){return '<div class="aipop-in"><label class="vh" for="aipQ">บอก AI เอง</label><textarea id="aipQ" rows="1" placeholder="'+esc(ph)+'"></textarea><button type="button" class="btn filled icon sm" data-aisend aria-label="'+esc(lab)+'"><span class="ms" aria-hidden="true">arrow_upward</span></button></div>'}
 function drawAip(){var A=AIP,cur=aiCur(A.path,A.kind).trim(),h;
-  h='<div class="aipop-h"><span class="ms" aria-hidden="true">auto_awesome</span><b id="aipT">'+(A.kind==='genProcess'?'อยากได้ขั้นตอนแบบไหน':A.step==='res'?'เลือก 1 แบบ':A.step==='load'?'กำลังเขียน'+esc(A.label):cur?'อยากปรับ'+esc(A.label)+'แบบไหน':'อยากให้เขียน'+esc(A.label)+'แบบไหน')+'</b><button type="button" class="btn ghost icon sm" data-aipx aria-label="ปิด"><span class="ms" aria-hidden="true">close</span></button></div>';
+  h='<div class="aipop-h"><span class="ms" aria-hidden="true">auto_awesome</span><b id="aipT">'+(A.step==='err'?'ใช้ AI ไม่ได้':A.kind==='genProcess'?'อยากได้ขั้นตอนแบบไหน':A.step==='res'?'เลือก 1 แบบ':A.step==='load'?'กำลังเขียน'+esc(A.label):cur?'อยากปรับ'+esc(A.label)+'แบบไหน':'อยากให้เขียน'+esc(A.label)+'แบบไหน')+'</b><button type="button" class="btn ghost icon sm" data-aipx aria-label="ปิด"><span class="ms" aria-hidden="true">close</span></button></div>';
   var ca=crGet();if(ca)h+='<p class="aip-cost"><span class="ms" aria-hidden="true">toll</span>เครดิต AI เหลือ '+ca.coins+'</p>';
   if(A.step==='ask'&&A.kind==='genProcess')h+='<p class="aipop-q">AI ร่างขั้นตอนให้ แล้วคุณติ๊กเลือกและเรียงเอง</p><div class="aipop-c" role="group" aria-label="คำขอที่ใช้บ่อย">'+GENP.map(function(x){return '<button type="button" class="fc" data-aireq="'+esc(x)+'">'+esc(x)+'</button>'}).join('')+'</div>'+aiBox('หรือพิมพ์เอง เช่น ทำงานกับทีม dev ทุกสัปดาห์','เสนอขั้นตอน');
   else if(A.step==='ask')h+='<p class="aipop-q">'+(cur?'AI ปรับจากข้อความที่คุณมีอยู่':'AI เขียนจากโปรไฟล์และผลงานของคุณ')+' เลือกคำขอ หรือพิมพ์เองก็ได้</p><div class="aipop-c" role="group" aria-label="คำขอที่ใช้บ่อย">'+(cur?AIEDIT:AIEMPTY).map(function(x){return '<button type="button" class="fc" data-aireq="'+esc(x)+'">'+esc(x)+'</button>'}).join('')+'</div>'+aiBox(cur?'หรือพิมพ์เอง เช่น ใส่คำว่า fintech':'หรือพิมพ์เอง เช่น เน้นงานแอปธนาคาร','เขียนให้');
+  if(A.step==='err')h+='<div class="ai-fail" role="alert"><span class="ms" aria-hidden="true">error</span><div><p>'+esc(A.err)+'</p><p class="d">ไม่เสียเครดิต แก้ข้อความเองในช่องได้เลย</p></div></div><div class="aipop-c">'+(A.again?'<button type="button" class="fc" data-airetry>ลองใหม่</button>':'')+'<button type="button" class="fc" data-aipx>เขียนเอง</button></div>';
   if(A.step==='load')h+='<div class="aipop-load" role="status"><span class="spin" aria-hidden="true"></span><span>กำลังเขียนตาม “'+esc(A.req)+'”…</span></div>';
   if(A.step==='res')h+='<p class="aipop-q">ตาม “'+esc(A.req)+'” กดแบบที่ชอบเพื่อใส่ลงช่อง</p><ol class="aipop-o">'+aiOpts().map(function(x,i){return '<li><button type="button" data-aipick="'+i+'">'+esc(aiText(x)).replace(/\n/g,'<br>')+'</button></li>'}).join('')+'</ol><div class="aipop-c" role="group" aria-label="ปรับต่อ">'+AIMORE.map(function(x){return '<button type="button" class="fc" data-aireq="'+esc(x)+'">'+esc(x)+'</button>'}).join('')+'</div>'+aiBox('ปรับต่อ เช่น เน้นผลลัพธ์มากขึ้น','ปรับต่อ');
   h+='<div class="aipop-f">'+(A.step==='res'?'<button type="button" class="btn text sm" data-aiback><span class="ms" aria-hidden="true">arrow_back</span>เปลี่ยนคำขอ</button>':'<span></span>')+'<p class="aip-note">อ่านทวนก่อนบันทึก</p></div>';
@@ -658,8 +683,15 @@ function placeAip(){if(!AIP)return;var b=aipTrig(),el=AIP.el,r=b.getBoundingClie
 function openAip(b){closeAip();closeMenu(false);hideTip();var el=document.createElement('div');el.className='aipop';el.setAttribute('role','dialog');document.body.appendChild(el);
   AIP={el:el,trig:b,path:b.dataset.aip,kind:b.dataset.kind,label:b.dataset.lab,step:'ask',req:'',round:0};b.setAttribute('aria-expanded','true');drawAip();placeAip();var f=el.querySelector('.aipop-c .fc');f&&f.focus()}
 function closeAip(back){if(!AIP)return;var A=AIP;AIP=null;A.el.remove();var b=document.querySelector('[data-aip="'+A.path+'"]');if(b){b.setAttribute('aria-expanded','false');if(back)b.focus()}}
-function aiRun(req){var A=AIP;if(A.kind==='genProcess'){closeAip(false);runGen('process',{text:req,ask:1});return}if(!crSpend('polish',1,A.label)){closeAip(false);return}if(A.step==='res'&&!/ขอแบบอื่น/.test(req))A.req=A.req+' · '+req;else if(A.step!=='res')A.req=req;A.step='load';drawAip();placeAip();say('กำลังเขียน');
-  setTimeout(function(){if(AIP!==A)return;A.round++;A.step='res';drawAip();placeAip();var f=A.el.querySelector('[data-aipick]');f&&f.focus();say('AI เสนอ '+A.el.querySelectorAll('[data-aipick]').length+' แบบแล้ว')},700)}
+function aiRun(req){var A=AIP;if(A.kind==='genProcess'){closeAip(false);runGen('process',{text:req,ask:1});return}
+  var other=/ขอแบบอื่น/.test(req);if(A.step==='res'&&!other)A.req=A.req+' · '+req;else if(A.step!=='res')A.req=req;
+  /* ขอแบบอื่น = บอก AI ว่าแบบไหนเสนอไปแล้ว · ปรับต่อ = ปรับจากแบบที่ได้ ไม่ต้องหลบ */
+  A.avoid=other?(A.avoid||[]).concat(aiOpts().map(aiText)).slice(-12):[];aiCall(A)}
+function aiCall(A){if(!crSpend('polish',1,A.label,true)){closeAip(false);return}A.step='load';drawAip();placeAip();say('กำลังเขียน');
+  writeText({kind:A.kind,label:A.label,current:aiCur(A.path,A.kind),request:A.req,lang:LG==='en'?'en':'th',max:aiMax(A),context:aiCtx(A.path),avoid:A.avoid||[]}).then(function(o){
+   if(AIP!==A)return;credSync();A.opts=o.map(function(l){return aiShape(A.kind,l)});A.round++;A.step='res';drawAip();placeAip();var f=A.el.querySelector('[data-aipick]');f&&f.focus();say('AI เสนอ '+A.opts.length+' แบบแล้ว')
+  },function(err){crRefund('polish');if(AIP!==A)return;A.step='err';A.err=(err&&err.message)||'ตอนนี้ AI ใช้ไม่ได้ชั่วคราว';A.again=!(err&&(err.status===429||err.status===413));drawAip();placeAip();
+   var f=A.el.querySelector('[data-airetry],[data-aipx]');f&&f.focus();say('ใช้ AI ไม่ได้ · '+A.err)})}
 function aiPick(i){var A=AIP,x=aiOpts()[i],p=A.path,kd=A.kind;LS.set('pf-ai-used','1');
   if(kd==='head')set(D,LP('profile.headline'),x.slice());else if(kd==='points')set(D,LP(p),x.split('\n'));else if(kd==='outputs'){var cur=get(D,p)||[];x.forEach(function(v){if(cur.indexOf(v)<0)cur.push(v)});set(D,p,cur)}else set(D,LP(p),x);
   closeAip(false);persist();render();var fi=document.querySelector('[data-k="'+(kd==='head'?'profile.headline.0':p)+'"]')||document.querySelector('[data-chips="'+p+'"] input');fi&&fi.focus();toast('ใส่ให้แล้ว อ่านทวนแล้วกดบันทึกได้เลย')}
@@ -668,6 +700,7 @@ document.addEventListener('click',function(e){if(!AIP||!AIP.el.contains(e.target
   if(d.aireq){aiRun(d.aireq);return}
   if(b.hasAttribute('data-aisend')){var q=$('aipQ'),v=q.value.trim();if(!v){q.focus();return}aiRun(v);return}
   if(d.aipick!=null){aiPick(+d.aipick);return}
+  if(b.hasAttribute('data-airetry')){aiCall(AIP);return}
   if(b.hasAttribute('data-aiback')){AIP.step='ask';AIP.req='';drawAip();placeAip();var f=AIP.el.querySelector('.aipop-c .fc');f&&f.focus()}});
 document.addEventListener('keydown',function(e){if(!AIP)return;var inP=AIP.el.contains(e.target);if(!inP&&e.target!==aipTrig())return;
   if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeAip(true);return}
@@ -1110,11 +1143,15 @@ document.addEventListener('input',function(e){var t=e.target,k=t.dataset&&t.data
   else v=t.tagName==='SELECT'&&t.value===''?null:t.value;
   set(D,t.type==='checkbox'||t.hasAttribute('data-num')?k:LP(k),v);if(t.dataset.val||t.dataset.max)markErr(t,true);
   var c=t.closest('.fld')&&t.closest('.fld').querySelector('[data-cnt]');if(c){var m=+c.dataset.cnt,l=t.value.length;c.textContent=l+' / '+m;c.classList.toggle('over',l>m)}
-  if(t.tagName==='SELECT'||t.hasAttribute('data-bool')||k==='profile.fullName'||k==='profile.name')render();
+  if(t.tagName==='SELECT'||t.hasAttribute('data-bool'))render();
+  else if(k==='profile.fullName'||k==='profile.name')renderIdle();
   /* พิมพ์ในฟอร์ม: ถ้าข้อความนั้นมีอยู่บนหน้าตัวอย่าง เปลี่ยนตรงนั้นสดๆ ไม่ต้องโหลดตัวอย่างใหม่ (ลื่นกว่าและไม่วูบ) · ค่าที่กระทบโครงหน้า (ว่าง · ชื่อที่แสดง · สวิตช์ · ตัวเลือก) ยังโหลดใหม่ */
   persist(livePatch(k,v,t));
   /* แถบขั้นถัดไป: อัปเดตทันทีที่ขั้นนั้นครบ โดยไม่วาดฟอร์มใหม่ (ไม่ให้เคอร์เซอร์หลุด) */
   clearTimeout(nextBar.t);nextBar.t=setTimeout(function(){var nx=document.querySelector('#edBody>.nx');if(!nx)return;var h=nextBar(),tmp=document.createElement('div');tmp.innerHTML=h;if(!tmp.firstChild){nx.remove();return}if(tmp.firstChild.textContent!==nx.textContent)nx.replaceWith(tmp.firstChild)},400)});
+/* พิมพ์ชื่อ: วาดฟอร์มใหม่เมื่อหยุดพิมพ์ ไม่ใช่ทุกตัวอักษร (ไม่งั้นฟอร์มกระพริบ และพิมพ์ภาษาไทยค้างกลางคำไม่ได้) · กำลังประกอบคำด้วย IME = รอก่อน */
+var IMEON=false;document.addEventListener('compositionstart',function(){IMEON=true});document.addEventListener('compositionend',function(){IMEON=false;renderIdle()});
+function renderIdle(){clearTimeout(renderIdle.t);renderIdle.t=setTimeout(function(){if(IMEON){renderIdle();return}render()},400)}
 function livePatch(k,v,t){if(typeof v!=='string'||!v.trim()||t.hasAttribute('data-bool')||t.tagName==='SELECT'||/^profile\.(name|fullName)$/.test(k))return false;
   if(/\*|\+\+|==|\]\(|\n/.test(v))return false;
   try{var d=IF.contentDocument,els=d&&d.querySelectorAll('[data-pe="'+k+'"]');if(!els||!els.length)return false;if([].some.call(els,function(e){return e.hasAttribute('data-ph')||!e.textContent}))return false;[].forEach.call(els,function(e){if(d.activeElement!==e)e.textContent=v});return true}catch(e){return false}}
@@ -1203,15 +1240,25 @@ document.addEventListener('pointerup',function(){if(!drag)return;var d=drag;drag
 
 /* ---------- AI: เลือกส่วนที่จะใส่ (dialog ใหญ่) ---------- */
 function tg(a){return '<span class="tg">'+a.map(function(x){return '<span>'+esc(x)+'</span>'}).join('')+'</span>'}
-function pickDlg(o){var m=modal('<div class="bg-h"><div><h2 class="dg-t" id="dgT">'+esc(o.title)+'</h2><p class="dg-d">'+esc(o.sub)+' (ข้อความตัวอย่าง)</p></div><button type="button" class="btn ghost icon" data-x aria-label="ปิด"><span class="ms" aria-hidden="true">close</span></button></div><div class="bg-b" id="pkB"><div class="bg-load" role="status"><span class="spin" aria-hidden="true"></span><span>'+esc(o.loading)+'</span></div></div><div class="bg-f"><span class="n" id="pkN"></span><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" id="pkGo" disabled>ใส่ส่วนที่เลือก</button></div>','big');
+function pickDlg(o){var m=modal('<div class="bg-h"><div><h2 class="dg-t" id="dgT">'+esc(o.title)+'</h2><p class="dg-d">'+esc(o.sub)+(o.real?'':' (ข้อความตัวอย่าง)')+'</p></div><button type="button" class="btn ghost icon" data-x aria-label="ปิด"><span class="ms" aria-hidden="true">close</span></button></div><div class="bg-b" id="pkB"><div class="bg-load" role="status"><span class="spin" aria-hidden="true"></span><span>'+esc(o.loading)+'</span></div></div><div class="bg-f"><span class="n" id="pkN"></span><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" id="pkGo" disabled>ใส่ส่วนที่เลือก</button></div>','big');
   m.box.querySelectorAll('[data-x]').forEach(function(b){b.onclick=m.close});m.box.querySelector('[data-x]').focus();
-  setTimeout(function(){if(!document.body.contains(m.el))return;var items=o.make(),B=m.box.querySelector('#pkB');
+  var live=function(){return document.body.contains(m.el)};
+  setTimeout(function(){if(!live())return;if(!o.load){show(o.make());return}
+   o.load().then(function(it){if(o.real)credSync();if(!live())return;if(!it.length){aiFail(m,o,{status:200,message:'AI ไม่พบข้อมูลที่ใช้ได้ในไฟล์นี้'});return}show(it)},function(err){if(live())aiFail(m,o,err);else if(o.refund)credSync()})},o.load?0:(o.wait||1400));
+  function show(items){var B=m.box.querySelector('#pkB');
    B.innerHTML='<p class="pk-note">'+esc(o.note||(o.order?'ติ๊กขั้นที่อยากใช้ ลาก ⠿ เรียงได้':'ติ๊กส่วนที่อยากใช้ จะยังไม่ขึ้นเว็บจนกว่าจะกดบันทึก'))+'</p><div class="pk-tools"><span>'+items.length+' ส่วน</span><button type="button" class="btn text sm" id="pkAll">ไม่เลือกเลย</button></div><ul class="pks'+(o.order?' ord':'')+'"'+(o.order?' data-local data-list="pick"':'')+'>'+items.map(function(x,i){return (x.group&&(!i||items[i-1].group!==x.group)?'<li class="pk-gh">'+esc(x.group)+'</li>':'')+'<li class="pk" data-i="'+i+'">'+(o.order?hdl(x.title)+'<span class="pk-no" aria-hidden="true">'+(i+1)+'</span>':'')+'<label for="pk'+i+'"><input type="checkbox" class="cb" id="pk'+i+'" data-pk="'+i+'" checked><span class="pk-c"><b>'+esc(x.title)+(x.mode?'<em>'+esc(x.mode)+'</em>':'')+'</b>'+x.html+'</span></label></li>'}).join('')+'</ul>';
    var go=m.box.querySelector('#pkGo'),all=m.box.querySelector('#pkAll');
    function cnt(){var n=B.querySelectorAll('[data-pk]:checked').length;go.disabled=!n;go.textContent=n?'ใส่ '+n+' ส่วนที่เลือก':'ใส่ส่วนที่เลือก';$('pkN').textContent='เลือก '+n+' จาก '+items.length+' ส่วน';all.textContent=n?'ไม่เลือกเลย':'เลือกทั้งหมด'}
    B.addEventListener('change',cnt);all.onclick=function(){var on=!B.querySelector('[data-pk]:checked');B.querySelectorAll('[data-pk]').forEach(function(c){c.checked=on});cnt()};cnt();
    go.onclick=function(){LS.set('pf-ai-used','1');var n=0;B.querySelectorAll('[data-pk]:checked').forEach(function(c){items[+c.dataset.pk].apply();n++});m.close();if(o.after)o.after();persist();render();say('ใส่ข้อมูล '+n+' ส่วนแล้ว · ตรวจแล้วกดบันทึก')};
-   var f=B.querySelector('[data-pk]');f&&f.focus()},o.wait||1400)}
+   var f=B.querySelector('[data-pk]');f&&f.focus()}}
+/* AI ใช้ไม่ได้: คืนเครดิต แล้วบอกเหตุผลในกล่องเดิม ให้ลองใหม่หรือกรอกเอง (ข้อมูลเดิมไม่ถูกแตะ) */
+function aiFail(m,o,err){var kept=err&&err.status===200;if(o.refund&&!kept)crRefund(o.refund,o.refundAmount);var B=m.box.querySelector('#pkB'),msg=(err&&err.message)||'ตอนนี้ AI ใช้ไม่ได้ชั่วคราว',again=o.retry&&!(err&&(err.status===413||err.status===415||err.status===429));
+  B.innerHTML='<div class="ai-fail" role="alert"><span class="ms" aria-hidden="true">error</span><div><b>ใช้ AI อ่านไฟล์ไม่ได้</b><p>'+esc(msg)+'</p><p class="d">'+(kept?'AI อ่านไฟล์แล้วแต่ไม่พบข้อมูล เครดิตถูกใช้ไปแล้ว':'ไม่เสียเครดิต')+' กรอกข้อมูลเองในแต่ละแท็บได้เลย</p></div></div>';
+  var go=m.box.querySelector('#pkGo');go.disabled=false;go.textContent=again?'ลองใหม่':'กรอกเอง';$('pkN').textContent='';
+  var cx=m.box.querySelector('.bg-f [data-x]');if(again)cx.textContent='กรอกเอง';
+  go.onclick=function(){m.close();if(again)o.retry()};go.focus();say('ใช้ AI อ่านไฟล์ไม่ได้ · '+msg)}
+function crRefund(kind,amount){var a=crGet();if(!a)return;var c=amount||AICOST[kind]||1;a.coins+=c;if(a.log&&a.log[0]&&a.log[0].k===kind)a.log.shift();LS.set('pf-acct-demo',JSON.stringify(a));crUI();credSync()}
 function tellDlg(mode){if(mode==='all')mode='profile',ALL=1;else ALL=0;var T={profile:['เล่าเรื่องของคุณให้ฟังหน่อย','เขียนแบบคุยกันได้เลย เช่น ตอนนี้ทำงานอะไร มากี่ปี ถนัดอะไร งานไหนที่ภูมิใจ','เช่น เป็น UX/UI designer มา 4 ปี ตอนนี้ทำแอปธนาคาร ถนัด UX research กับ Figma…'],work:['เล่าเรื่องงานนี้ให้ฟังหน่อย','เล่าเหมือนเล่าให้เพื่อนฟัง: ทำให้ใคร เจอปัญหาอะไร คุณแก้ยังไง ผลเป็นยังไง','เช่น งานนี้ทำแอปจองคิวคลินิก คนไข้โทรจองไม่ติด เลยออกแบบให้จองในแอป…'],process:['ปกติคุณทำงานยังไง','เล่าขั้นตอนตั้งแต่ได้โจทย์จนส่งงาน เดี๋ยว AI แบ่งเป็นขั้นให้','เช่น เริ่มจากคุยกับผู้ใช้ แล้ววาด flow คุยกับ dev ก่อนทำ UI…']}[mode];
   var m=modal('<h2 class="dg-t" id="dgT">'+T[0]+'</h2><p class="dg-d">'+T[1]+'</p><div class="fld"><label class="vh" for="tlT">เรื่องที่เล่า</label><span class="inw ta"><textarea class="in" id="tlT" rows="6" placeholder="'+esc(T[2])+'"></textarea>'+clrBtn('ข้อความ')+'</span></div><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" data-ok><span class="ms" aria-hidden="true">auto_awesome</span>เริ่มเลย</button></div>','md');
   var ta=m.box.querySelector('textarea'),cl=m.box.querySelector('.clr');ta.focus();m.box.querySelector('[data-x]').onclick=m.close;
@@ -1227,20 +1274,103 @@ function hub(){var m=modal('<h2 class="dg-t" id="dgT">ให้ AI ช่วย�
   '</ul><div class="dg-a"><button type="button" class="btn cancel" data-x>ปิด</button></div>','md');
   m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('.hub-o').focus();
   m.box.querySelectorAll('.hub-o').forEach(function(b){b.onclick=function(){var k=b.dataset.src;m.close();if(k==='tell')tellDlg('all');else{docMode=k==='resume'?'all':'works';openDoc()}}})}
-function openDoc(){var d=$('edDoc');d.multiple=docMode==='works';d.accept=docMode==='all'?'application/pdf,.pdf':'application/pdf,.pdf,image/*,.ppt,.pptx,.key';d.click()}
+function openDoc(){var d=$('edDoc');d.multiple=docMode==='works';d.accept=docMode==='all'?'application/pdf,.pdf':'application/pdf,.pdf,image/*';d.click()}
+function worksConfirmDlg(mode, files){var a=crGet();if(!a){toast('เข้าสู่ระบบก่อนใช้ AI',{label:'เข้าสู่ระบบ',fn:function(){openAcct('overview')}});return}
+  var isSingle=mode==='work',rate=AICOST.case||5,fnNames=files.map(function(f){return f.name}).join(', ');
+  scanWorkFiles(files).then(function(res){
+    var count=isSingle?1:Math.max(1,Math.min(10,res.count));
+    var m=modal('<h2 class="dg-t" id="dgT">'+(isSingle?'ให้ AI เติมข้อมูลงานจากไฟล์':'ให้ AI สกัดผลงานจากไฟล์')+'</h2>'+
+      '<p class="dg-d">'+(isSingle?'AI จะอ่านไฟล์ คัดเลือกข้อมูล และดึงรูปภาพมาใส่ในงานนี้':'AI จะอ่านไฟล์ แยกแต่ละโปรเจกต์ และดึงภาพหน้าจอมาสร้างเป็นการ์ดและ Case study ให้อัตโนมัติ')+'</p>'+
+      '<div class="wk-cf-box">'+
+        '<div class="wk-cf-file"><span class="ms" aria-hidden="true">'+(files.length>1?'folder_open':'description')+'</span><span class="wk-cf-fn">'+esc(fnNames)+'</span></div>'+
+        (isSingle?'':('<div class="wk-cf-stepper">'+
+          '<div class="wk-cf-st-l"><span>จำนวนผลงานที่ต้องการสร้าง</span><small>'+(res.isMultiPage?'ตรวจพบประมาณ '+res.count+' งานในไฟล์ (ปรับเพิ่ม/ลดได้)':'ปรับจำนวนผลงานที่ต้องการสร้าง (1–10 งาน)')+'</small></div>'+
+          '<div class="wk-cf-st-c"><button type="button" class="btn ghost icon wk-st-btn" id="wkStDec" aria-label="ลดจำนวนผลงาน"><span class="ms" aria-hidden="true">remove</span></button><span class="wk-st-val" id="wkStVal">'+count+'</span><button type="button" class="btn ghost icon wk-st-btn" id="wkStInc" aria-label="เพิ่มจำนวนผลงาน"><span class="ms" aria-hidden="true">add</span></button></div></div>'))+
+        '<div class="wk-cf-cr">'+
+          '<div class="wk-cr-row"><span>อัตราเครดิต AI</span><b>'+rate+' เครดิต / ผลงาน</b></div>'+
+          '<div class="wk-cr-row main"><span>เครดิตที่ต้องใช้</span><b id="wkCrCost">'+(count*rate)+' เครดิต</b></div>'+
+          '<div class="wk-cr-row"><span>เครดิตปัจจุบันของคุณ</span><b>'+a.coins+' เครดิต</b></div>'+
+          '<div class="wk-cr-row rem"><span>เครดิตคงเหลือหลังใช้</span><b id="wkCrRem">'+(a.coins-count*rate)+' เครดิต</b></div>'+
+        '</div>'+
+        '<p class="wk-cf-note"><span class="ms" aria-hidden="true">verified_user</span>หากอ่านไฟล์ไม่สำเร็จหรือไม่พบข้อมูล ระบบจะคืนเครดิตให้อัตโนมัติ</p>'+
+      '</div>'+
+      '<div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" id="wkGo"><span class="ms" aria-hidden="true">auto_awesome</span><span id="wkGoTx">เริ่มเลย</span></button></div>','md');
+    m.box.querySelector('[data-x]').onclick=m.close;
+    function sync(){var cost=count*rate,rem=a.coins-cost,vEl=m.box.querySelector('#wkStVal');
+      if(vEl)vEl.textContent=count;m.box.querySelector('#wkCrCost').textContent=cost+' เครดิต';m.box.querySelector('#wkCrRem').textContent=rem+' เครดิต';
+      var go=m.box.querySelector('#wkGo'),goTx=m.box.querySelector('#wkGoTx');
+      if(a.coins<cost){go.classList.remove('filled');go.classList.add('outlined');goTx.textContent='เครดิตไม่พอ เติมเครดิต';go.onclick=function(){m.close();openAcct('credits')}}
+      else{go.classList.remove('outlined');go.classList.add('filled');goTx.textContent=isSingle?'เริ่มเติมข้อมูล ('+cost+' เครดิต)':'เริ่มสร้าง '+count+' งาน ('+cost+' เครดิต)';
+        go.onclick=function(){m.close();executeGen(mode,files,count,isSingle)}}}
+    var dec=m.box.querySelector('#wkStDec'),inc=m.box.querySelector('#wkStInc');
+    if(dec&&inc){dec.onclick=function(){if(count>1){count--;sync()}};inc.onclick=function(){if(count<10){count++;sync()}}}
+    sync();m.box.querySelector('#wkGo').focus()})}
+function executeGen(mode,files,units,isSingle){var rate=AICOST.case||5,cost=units*rate,fileNames=files.map(function(f){return f.name}).join(', '),desc=(isSingle?'อ่านไฟล์งาน ':'สกัดผลงาน '+units+' ชิ้น ')+fileNames;
+  if(!crSpend('case',cost,desc,true))return;
+  var lab='กำลังให้ AI อ่านไฟล์ '+files.length+' ไฟล์ และสกัดภาพ…';
+  pickDlg({title:isSingle?'AI สกัดข้อมูลงานนี้ให้แล้ว':'AI สกัดผลงาน '+units+' ชิ้นให้แล้ว',sub:'จาก '+fileNames,loading:lab,real:1,refund:'case',refundAmount:cost,retry:function(){executeGen(mode,files,units,isSingle)},
+    load:function(){return readWorks(files,units,isSingle).then(function(works){return isSingle?genSingleWorkFromAI(works[0]):genWorksFromAI(works)})},
+    after:isSingle?null:function(){go('works',null)}})}
+function genWorksFromAI(works){return works.map(function(rw,i){return{group:'ผลงาน',title:rw.title||('ผลงานชิ้นที่ '+(i+1)),mode:'ผลงานใหม่',
+  html:(rw.cover?'<div class="pk-cover"><img src="'+esc(rw.cover)+'" alt="" /></div>':'')+'<p><b>'+esc(rw.cat?rw.cat+' · ':'')+esc(rw.sum||'')+'</b></p>'+(rw.tags&&rw.tags.length?tg(rw.tags):'')+
+       '<p class="pk-det">'+esc([rw.role,rw.team,rw.year?'ปี '+rw.year:''].filter(Boolean).join(' · '))+(rw.chapters&&rw.chapters.length?' · Case study '+rw.chapters.length+' บท':'')+(rw.images&&rw.images.length?' · ภาพ '+rw.images.length+' ภาพ':'')+'</p>',
+  apply:function(){var w=NEW.works(),cid=w.caseIds[0],c=D.cases[cid];
+    w.title=rw.title||'ผลงานใหม่';if(rw.cat)w.cat=rw.cat;if(rw.year)w.year=rw.year;if(rw.tags&&rw.tags.length)w.tags=rw.tags.slice();if(rw.cover)w.cover=rw.cover;if(rw.sum)w.sum=rw.sum;
+    c.title=rw.title||'ภาพรวม';c.sum=rw.sum||'';c.cat=rw.cat||'';c.tags=rw.tags?rw.tags.slice():[];c.role=rw.role||'';c.team=rw.team||'';if(rw.scope&&rw.scope.length)c.scope=rw.scope.slice();
+    c.teaser=c.teaser||{};if(rw.problem)c.teaser.problem=rw.problem;if(rw.solution)c.teaser.solution=rw.solution;if(rw.result)c.teaser.result=rw.result;
+    if(rw.chapters&&rw.chapters.length){c.chapters=rw.chapters.map(function(ch,idx){var blks=[];if(ch.text)blks.push({type:'p',text:ch.text});if(ch.items&&ch.items.length)blks.push({type:'out',title:'ประเด็นสำคัญ',items:ch.items.slice()});if(rw.images&&rw.images[idx+1])blks.push({type:'image',src:rw.images[idx+1],cap:''});if(!blks.length)blks.push(newBlk('p'));return{t:ch.title||('บทที่ '+(idx+1)),b:blks}})}
+    D.works.push(w)}}})}
+function genSingleWorkFromAI(rw){if(!rw||!view.sub||!view.sub.id)return [];var w=D.works[idx(D.works,view.sub.id)];if(!w)return [];var it=[];
+  it.push({title:'ข้อมูลการ์ดและภาพรวม',mode:'แทนของเดิม',html:(rw.cover?'<div class="pk-cover"><img src="'+esc(rw.cover)+'" alt="" /></div>':'')+'<p><b>'+esc(rw.title)+'</b>'+(rw.cat?' · '+esc(rw.cat):'')+(rw.year?' ('+rw.year+')':'')+'</p>'+(rw.sum?'<p>'+esc(rw.sum)+'</p>':'')+(rw.tags&&rw.tags.length?tg(rw.tags):''),
+    apply:function(){if(rw.title)w.title=rw.title;if(rw.cat)w.cat=rw.cat;if(rw.year)w.year=rw.year;if(rw.tags&&rw.tags.length)w.tags=rw.tags.slice();if(rw.cover)w.cover=rw.cover;if(rw.sum)mc(w).sum=rw.sum}});
+  if(rw.problem||rw.solution||rw.result){it.push({title:'โจทย์ ทางแก้ และผลลัพธ์',mode:'แทนของเดิม',html:(rw.problem?'<p><b>โจทย์:</b> '+esc(rw.problem)+'</p>':'')+(rw.solution?'<p><b>ทางแก้:</b> '+esc(rw.solution)+'</p>':'')+(rw.result?'<p><b>ผลลัพธ์:</b> '+esc(rw.result)+'</p>':''),
+    apply:function(){var c=mc(w);c.teaser=c.teaser||{};if(rw.problem)c.teaser.problem=rw.problem;if(rw.solution)c.teaser.solution=rw.solution;if(rw.result)c.teaser.result=rw.result}})}
+  if(rw.role||rw.team||(rw.scope&&rw.scope.length)){it.push({title:'บทบาทและทีม',mode:'แทนของเดิม',html:'<p>'+esc([rw.role,rw.team].filter(Boolean).join(' · '))+'</p>'+(rw.scope&&rw.scope.length?tg(rw.scope):''),
+    apply:function(){var c=mc(w);if(rw.role)c.role=rw.role;if(rw.team)c.team=rw.team;if(rw.scope&&rw.scope.length)c.scope=rw.scope.slice()}})}
+  if(rw.chapters&&rw.chapters.length){it.push({title:'เนื้อหา Case study '+rw.chapters.length+' บท',mode:'แทนบทเดิม',html:'<ul>'+rw.chapters.map(function(ch){return '<li>'+esc(ch.title)+'</li>'}).join('')+'</ul>'+(rw.images&&rw.images.length>1?'<p class="hint">พร้อมภาพประกอบ '+(rw.images.length-1)+' ภาพ</p>':''),
+    apply:function(){var c=mc(w);c.chapters=rw.chapters.map(function(ch,idx){var blks=[];if(ch.text)blks.push({type:'p',text:ch.text});if(ch.items&&ch.items.length)blks.push({type:'out',title:'ประเด็นสำคัญ',items:ch.items.slice()});if(rw.images&&rw.images[idx+1])blks.push({type:'image',src:rw.images[idx+1],cap:''});if(!blks.length)blks.push(newBlk('p'));return{t:ch.title||('บทที่ '+(idx+1)),b:blks}})}})}
+  return it}
 function workFrom(name){var B=DEF.cases.bank,t=name.replace(/\.[a-z0-9]+$/i,'').replace(/[_-]+/g,' ').trim()||'ผลงานใหม่';return{title:t,apply:function(){var w=NEW.works(),k=w.caseIds[0],c=D.cases[k];w.title=t;w.cat=B.cat;c.title=t;c.sum='';c.teaser.problem=(B.teaser||{}).problem||'';c.teaser.solution=(B.teaser||{}).solution||'';c.role=B.role;c.chapters=clone(B.chapters);D.works.push(w)}}}
 function genWorks(files){return files.map(function(n){var x=workFrom(n);return{group:'ผลงาน',title:x.title,mode:'ผลงานใหม่',html:'<p>จาก '+esc(n)+' · การ์ด + โจทย์ ทางแก้ (ร่าง) + Case study '+(DEF.cases.bank.chapters||[]).length+' บท · ภาพปกใส่เองทีหลัง</p>',apply:x.apply}})}
 function genAll(src){var it=(src.text?genProfileText(src.text):genProfileDoc()).map(function(x){x.group=/ประวัติ|การศึกษา/.test(x.title)?'ประวัติ':'โปรไฟล์';return x});
   var P=DEF.process||[];if(!D.process.length||src.text)it.push({group:'วิธีทำงาน',title:P.length+' ขั้นตอน',mode:'เพิ่มเป็นขั้นใหม่',html:'<p>'+esc(P.map(function(s){return s.title}).join(' → '))+'</p>',apply:function(){genProcess().forEach(function(x){x.apply()})}});
   if(src.text&&/งาน|โปรเจกต์|project|แอป|app/i.test(src.text))it.push({group:'ผลงาน',title:'ผลงานจากที่เล่า',mode:'ผลงานใหม่',html:'<p>ได้การ์ดผลงานกับ Case study ฉบับร่างจากเรื่องที่เล่า ตั้งชื่องานใหม่ให้ตรงอีกทีนะ</p>',apply:workFrom('ผลงานจากที่เล่า').apply});
   return it}
-function runGen(mode,src){var ck={process:'steps',all:'resume',profile:'resume',works:'case'}[mode];if(ck&&!crSpend(ck,0,src.file||(src.files&&src.files.join(', '))||(mode==='process'?'วิธีทำงาน':'เรื่องที่เล่า')))return;var lab=src.file?'กำลังอ่าน '+src.file+'…':'กำลังเรียบเรียงเรื่องที่เล่า…';
+function runGen(mode,src){var ck={process:'steps',all:'resume',profile:'resume',works:'case'}[mode];if(ck&&!crSpend(ck,0,src.file||(src.files&&src.files.join(', '))||(mode==='process'?'วิธีทำงาน':'เรื่องที่เล่า'),!!(src.blob&&(mode==='all'||mode==='profile'))))return;var lab=src.file?'กำลังอ่าน '+src.file+'…':'กำลังเรียบเรียงเรื่องที่เล่า…';
+  if(src.blob&&(mode==='all'||mode==='profile')){pickDlg({title:mode==='all'?'AI แยกใส่ให้ทุกแท็บแล้ว':'AI เติมข้อมูลให้แล้ว',sub:'จาก '+src.file,loading:lab,real:1,refund:ck,retry:function(){runGen(mode,src)},load:function(){return readResume(src.blob).then(function(r){return genResume(r,mode==='all')})}});return}
   if(mode==='all')pickDlg({title:'AI แยกใส่ให้ทุกแท็บแล้ว',sub:src.file?'จาก '+src.file:'จากเรื่องที่คุณเล่า',loading:lab,make:function(){return genAll(src)}});
   if(mode==='works')pickDlg({title:'AI เตรียมผลงาน '+src.files.length+' ชิ้นแล้ว',sub:'จาก '+src.files.join(', '),loading:'กำลังอ่าน '+src.files.length+' ไฟล์…',note:'ติ๊กชิ้นที่อยากเพิ่ม ตัวเลขผลลัพธ์ต้องใส่เองนะ',make:function(){return genWorks(src.files)},after:function(){go('works',null)}});
   if(mode==='profile')pickDlg({title:'AI เติมข้อมูลให้แล้ว',sub:src.file?'จาก '+src.file:'จากเรื่องที่คุณเล่า',loading:lab,make:function(){return src.text?genProfileText(src.text):genProfileDoc()}});
   if(mode==='work')pickDlg({title:'AI เติมเรื่องงานนี้ให้แล้ว',sub:src.file?'จาก '+src.file:'จากเรื่องที่คุณเล่า',loading:lab,note:'ติ๊กส่วนที่อยากใช้ ตัวเลขผลลัพธ์ต้องใส่เองนะ',make:genWork});
   if(mode==='process')pickDlg({title:'AI เสนอขั้นตอนให้แล้ว',sub:src.ask?'ตามคำขอ “'+src.text+'”':src.text?'จากเรื่องที่คุณเล่า':'จากโปรไฟล์และผลงานของคุณ',loading:src.ask?'กำลังร่างขั้นตอน…':src.text?lab:'กำลังดูโปรไฟล์และผลงาน…',make:function(){return genProcess(src.text)},order:1,wait:src.text?1100:900})}
+
 function addItems(p,src,same){var a=D[p]||(D[p]=[]),pre={};pre[p]=[];src.forEach(function(x){if(!a.some(function(y){return same(x,y)})){var c=clone(x);delete c.id;pre[p].push(c)}});N(pre)[p].forEach(function(x){x.id=nid(p.charAt(0));a.push(x)})}
+function genResume(r,all){var it=[],P=D.profile,has=function(x){return !!String(x||'').trim()},G=function(g){return all?g:undefined};
+  if(has(r.name)||has(r.role))it.push({group:G('โปรไฟล์'),title:'ชื่อและตำแหน่ง',mode:'แทนของเดิม',html:'<p>'+esc([r.name||r.fullName,r.role].filter(has).join(' · '))+'</p>',apply:function(){if(has(r.name)||has(r.fullName))P.name=r.name||r.fullName;if(has(r.fullName))P.fullName=r.fullName;if(has(r.role))P.role=r.role}});
+  var hd=(r.headline||[]).filter(has).slice(0,2);if(hd.length)it.push({group:G('โปรไฟล์'),title:'ประโยคแนะนำตัว',mode:'แทนของเดิม',html:'<p>'+esc(hd.join(' / '))+'</p>',apply:function(){P.headline=[hd[0]||'',hd[1]||'']}});
+  if(has(r.lede))it.push({group:G('โปรไฟล์'),title:'คำเกริ่น',mode:'แทนของเดิม',html:'<p>'+esc(r.lede)+'</p>',apply:function(){P.lede=r.lede.slice(0,140)}});
+  var sk=(r.skills||[]).filter(has);if(sk.length)it.push({group:G('โปรไฟล์'),title:'ทักษะ '+sk.length+' อัน',mode:'เพิ่มต่อจากของเดิม',html:tg(sk),apply:function(){addSkills(sk.filter(function(x){return !skGroupOf(x)}))}});
+  var ex=(r.experience||[]).filter(function(j){return has(j.title)||has(j.org)});
+  if(ex.length)it.push({group:G('ประวัติ'),title:'ประวัติงาน '+ex.length+' ที่',mode:'เพิ่มเป็นรายการใหม่',html:'<ul>'+ex.map(function(j){return '<li>'+esc([j.title,j.org,j.fromYear?(j.fromYear+' – '+(j.now?'ปัจจุบัน':j.toYear||'')):''].filter(has).join(' · '))+'</li>'}).join('')+'</ul>',
+   apply:function(){addItems('experience',ex.map(function(j){return{title:j.title,org:j.org,type:j.type||'งานประจำ',from:ym(j.fromYear,j.fromMonth)||{y:null,m:null},to:j.now?null:ym(j.toYear,j.toMonth),now:!!j.now,points:(j.points||[]).filter(has),skills:[],logo:null,related:null}}),function(a,b){return a.title===b.title&&a.org===b.org})}});
+  var ed=(r.education||[]).filter(function(j){return has(j.major)||has(j.org)});
+  if(ed.length)it.push({group:G('ประวัติ'),title:'การศึกษา '+ed.length+' ที่',mode:'เพิ่มเป็นรายการใหม่',html:'<ul>'+ed.map(function(j){return '<li>'+esc([j.level,j.major,j.org].filter(has).join(' · '))+'</li>'}).join('')+'</ul>',
+   apply:function(){addItems('education',ed.map(function(j){return{level:j.level||'ปริญญาตรี',major:j.major,faculty:j.faculty,org:j.org,gpa:j.gpa,honors:j.honors,degree:'',from:ym(j.fromYear)||{y:null,m:null},to:ym(j.toYear),now:false,logo:null,highlights:[],skills:[],activities:[],files:[]}}),function(a,b){return a.major===b.major&&a.org===b.org})}});
+  var lk=(r.links||[]).map(aiLink).filter(Boolean);
+  if(has(r.phone))lk.push({label:'เบอร์โทร',icon:'call',url:r.phone});
+  var ct=[r.email,r.location].concat(lk.map(function(l){return l.label+' '+l.url})).filter(has);
+  if(ct.length)it.push({group:G('ติดต่อ'),title:'ช่องทางติดต่อ',mode:'เติมช่องที่ยังว่าง',html:'<ul>'+ct.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul>',
+   apply:function(){var C=D.contact;if(has(r.email)&&!has(C.email))C.email=r.email;if(has(r.location)&&!has(P.location))P.location=r.location;lk.forEach(function(l){if(C.links.length>=MAXLK||C.links.some(function(x){return x.url===l.url}))return;C.links.push({id:nid('l'),label:l.label,icon:l.icon,url:l.url})})}});
+  return it}
+/* ลิงก์จาก AI: เป็นลิงก์อยู่แล้ว = ใช้ตามนั้น (รู้จักโดเมน = ตั้งช่องทางให้) · ได้แค่ชื่อผู้ใช้ + ชื่อแพลตฟอร์มที่รู้จัก = ประกอบลิงก์ตามรูปแบบในช่อง (เช่น GitHub: octocat → github.com/octocat)
+   ไม่รู้ว่าเป็นที่ไหน = ไม่ใส่ (ดีกว่าใส่ค่าที่เปิดไม่ได้) */
+var CHDOM={'twitter.com':'X','x.com':'X','youtu.be':'YouTube','fb.com':'Facebook','lin.ee':'LINE','line.me':'LINE'};
+function aiLink(l){var u=String((l&&l.url)||'').trim(),lab=String((l&&l.label)||'').trim(),low=u.toLowerCase().replace(/^https?:\/\//,'').replace(/^www\./,'');if(!u)return null;
+  var byName=function(n){n=String(n||'').toLowerCase();if(n==='twitter')n='x';return CH.filter(function(x){return x[0].toLowerCase()===n})[0]};
+  if(/^[a-z]+:/i.test(u)||/^[^\s@\/]+\.[a-z]{2,}(\/|$)/i.test(low)){var host=low.split('/')[0],c=CH.filter(function(x){return x[2].indexOf('.')>0&&host===x[2].split('/')[0]})[0]||byName(CHDOM[host]);return{label:c?c[0]:(lab||'เว็บไซต์'),icon:c?c[1]:'language',url:u}}
+  var h=u.replace(/^@/,''),c2=byName(lab);if(!c2||!/^[a-z0-9_.-]{1,60}$/i.test(h))return null;
+  if(c2[0]==='LINE')return{label:'LINE',icon:c2[1],url:h};
+  if(c2[2].indexOf('ชื่อ')<0)return null;return{label:c2[0],icon:c2[1],url:c2[2].replace('ชื่อ',h)}}
 function genProfileDoc(){var X=DEF,P=X.profile,it=[];
   it.push({title:'ชื่อและตำแหน่ง',mode:'แทนของเดิม',html:'<p>'+esc(P.name)+' · '+esc(P.role)+'</p>',apply:function(){D.profile.name=P.name;D.profile.role=P.role}});
   it.push({title:'ประโยคแนะนำตัว',mode:'แทนของเดิม',html:'<p>'+esc(P.headline.join(' / '))+'</p>',apply:function(){D.profile.headline=P.headline.slice()}});
@@ -1353,12 +1483,21 @@ var docMode='profile',ALL=0,attachTo=null,galTo=null,vidTo=null;
 /* เพดานเนื้อหา: 1 บทไม่เกิน 10 บล็อก (ยาวกว่านี้ควรแบ่งบท คนอ่านไล่ตามง่ายกว่า) · 1 กริดภาพไม่เกิน 8 ภาพ */
 var MAXBLK=10,MAXGAL=8;
 $('edGal').onchange=function(){var fs=[].slice.call(this.files),p=galTo;this.value='';if(!p)return;var bad=fs.filter(function(f){return !/^image\//.test(f.type)});if(bad.length)toast(bad.length+' ไฟล์ไม่ใช่ภาพ เลยข้ามไป (ใช้ได้ JPG, PNG, WebP)');fs=fs.filter(function(f){return /^image\//.test(f.type)});if(!fs.length)return;var room=MAXGAL-(get(D,p)||[]).length;if(fs.length>room){toast(room>0?'กริดนี้ใส่ได้ '+MAXGAL+' ภาพ เพิ่มให้ '+room+' ภาพแรก':'กริดนี้ครบ '+MAXGAL+' ภาพแล้ว');fs=fs.slice(0,Math.max(0,room));if(!fs.length)return}var gb=document.querySelector('[data-galadd="'+p+'"]');if(gb){gb.disabled=true;gb.innerHTML='<span class="spin" aria-hidden="true"></span>กำลังเพิ่ม '+fs.length+' ภาพ…'}say('กำลังเพิ่ม '+fs.length+' ภาพ');var n=0;fs.forEach(function(f){var fn=function(u){var a=get(D,p)||[];a.push({src:u});set(D,p,a);if(++n===fs.length){persist();render();say('เพิ่ม '+n+' ภาพแล้ว')}};fn.max=1400;readImg(f,fn)})};
-$('edVid').onchange=function(){var f=this.files[0],p=vidTo;this.value='';if(!f||!p)return;if(f.size>3*1024*1024){toast('ไฟล์ใหญ่เกิน 3 MB ลองอัปขึ้น YouTube หรือ Google Drive แล้ววางลิงก์แทน');return}var rd=new FileReader();rd.onload=function(){set(D,p,rd.result);persist();render();say('อัปโหลดวิดีโอแล้ว')};rd.readAsDataURL(f)};
+$('edVid').onchange=function(){var f=this.files[0],p=vidTo;this.value='';if(!f||!p)return;if(f.size>3*1024*1024){toast('ไฟล์ใหญ่เกิน 3 MB ลองอัปขึ้น YouTube หรือ Google Drive แล้ววางลิงก์แทน');return}upTo(f,f.name,function(src){set(D,p,src);persist();render();say('อัปโหลดวิดีโอแล้ว')})};
 $('edAtt').onchange=function(){var fs=[].slice.call(this.files),p=attachTo;this.value='';if(!p)return;fs.forEach(function(f){var add=function(src){var a=get(D,p)||[];a.push({name:f.name,src:src});set(D,p,a);persist();render();say('แนบ '+f.name+' แล้ว')};
   if(/^image\//.test(f.type)&&f.type!=='image/svg+xml'){var fn=function(u){add(u)};fn.max=1600;readImg(f,fn);return}
   if(f.size>2*1024*1024){toast(f.name+' ใหญ่เกิน 2 MB ลองย่อไฟล์ก่อน');return}if(!/pdf$/i.test(f.type)&&!/\.pdf$/i.test(f.name)&&!/^image\//.test(f.type)){toast('ใช้ไฟล์ PDF หรือภาพเท่านั้น');return}
-  var rd=new FileReader();rd.onload=function(){add(rd.result)};rd.readAsDataURL(f)})};
-$('edDoc').onchange=function(){var fs=[].slice.call(this.files),f=fs[0];this.value='';if(!f)return;if(docMode==='works'){runGen('works',{files:fs.map(function(x){return x.name})});return}if(docMode==='all'&&!/\.pdf$/i.test(f.name)&&f.type!=='application/pdf'){toast('ใช้ไฟล์ PDF เท่านั้น');return}if(docMode==='profile'&&!/\.pdf$/i.test(f.name)&&f.type!=='application/pdf'){toast('ใช้ไฟล์ PDF เท่านั้น');return}runGen(docMode,{file:f.name})};
+  upTo(f,f.name,add)})};
+$('edDoc').onchange=function(){var fs=[].slice.call(this.files),f=fs[0];this.value='';if(!f)return;
+  if(docMode==='works'||docMode==='work'){
+    var bad=fs.filter(function(x){return !/\.(pdf|jpe?g|png|webp)$/i.test(x.name)&&!/^(application\/pdf|image\/(jpeg|png|webp))$/.test(x.type)});
+    if(bad.length){toast('ใช้ไฟล์ PDF หรือภาพ (JPG, PNG, WebP) เท่านั้น');return}
+    worksConfirmDlg(docMode,fs);
+    return;
+  }
+  if(docMode==='all'&&!/\.pdf$/i.test(f.name)&&f.type!=='application/pdf'){toast('ใช้ไฟล์ PDF เท่านั้น');return}
+  if(docMode==='profile'&&!/\.pdf$/i.test(f.name)&&f.type!=='application/pdf'){toast('ใช้ไฟล์ PDF เท่านั้น');return}
+  runGen(docMode,{file:f.name,blob:f})};
 
 /* ---------- การกระทำ ---------- */
 function bothArr(p,fn){[D,S].forEach(function(o){var a=get(o,p);if(a)fn(a,o)})}
@@ -1479,33 +1618,34 @@ document.addEventListener('click',function(e){if(e.target.closest&&e.target.clos
 document.addEventListener('input',function(e){if(e.target.id==='edHex'){var v=e.target.value.trim();if(v&&v[0]!=='#')v='#'+v;if(/^#[0-9a-f]{6}$/i.test(v))setBrand(v,'hex');else{D.theme.brand=v;brandUI();status()}}});
 
 /* ---------- ลากปรับความกว้างแผงฟอร์ม (320–720 · จำไว้ · ดับเบิลคลิก = 400) ---------- */
-var RS=$('edRs'),SR=$('sdRs');
+/* แผงฟอร์มและแผง Case study ย่อได้ไม่ต่ำกว่าความกว้างเริ่มต้น (แคบกว่านี้ช่องกรอกเบียดกันจนอ่านยาก) · ขยายได้ถึง 720 */
+var PW=400,SW=420,RS=$('edRs'),SR=$('sdRs');
 function navW(){return innerWidth<720?0:$('edNav').offsetWidth}
 function sideW(){return side&&innerWidth>=1280?+SR.getAttribute('aria-valuenow'):0}
-function maxW(){return Math.max(320,Math.min(720,innerWidth-navW()-sideW()-360))}
-function setW(w,save){w=Math.round(Math.max(320,Math.min(maxW(),w||400)));$('ed').style.setProperty('--pw',w+'px');RS.setAttribute('aria-valuenow',w);RS.setAttribute('aria-valuemax',maxW());if(save)LS.set('pf-ed-w',String(w))}
+function maxW(){return Math.max(PW,Math.min(720,innerWidth-navW()-sideW()-360))}
+function setW(w,save){w=Math.round(Math.max(PW,Math.min(maxW(),w||PW)));$('ed').style.setProperty('--pw',w+'px');RS.setAttribute('aria-valuenow',w);RS.setAttribute('aria-valuemax',maxW());if(save)LS.set('pf-ed-w',String(w))}
 var rsx=null;
 RS.addEventListener('pointerdown',function(e){e.preventDefault();rsx={x:e.clientX,w:+RS.getAttribute('aria-valuenow')};RS.classList.add('on');document.body.classList.add('resizing');try{RS.setPointerCapture(e.pointerId)}catch(x){}});
 RS.addEventListener('pointermove',function(e){if(rsx)setW(rsx.w+e.clientX-rsx.x)});
 RS.addEventListener('pointerup',function(){if(!rsx)return;rsx=null;RS.classList.remove('on');document.body.classList.remove('resizing');setW(+RS.getAttribute('aria-valuenow'),true)});
-RS.addEventListener('dblclick',function(){setW(400,true)});
-RS.addEventListener('keydown',function(e){var w=+RS.getAttribute('aria-valuenow'),s=e.shiftKey?64:16;if(e.key==='ArrowLeft'){e.preventDefault();setW(w-s,true)}if(e.key==='ArrowRight'){e.preventDefault();setW(w+s,true)}if(e.key==='Home'){e.preventDefault();setW(320,true)}if(e.key==='End'){e.preventDefault();setW(maxW(),true)}});
-/* แผง Case study ลากปรับกว้างได้เหมือนกัน (360–720 · จำไว้ · ดับเบิลคลิก = 420) */
-function maxS(){return Math.max(360,Math.min(720,innerWidth-navW()-(+RS.getAttribute('aria-valuenow'))-(innerWidth>=1280?360:0)))}
-function setS(w,save){w=Math.round(Math.max(360,Math.min(maxS(),w||420)));$('ed').style.setProperty('--sw',w+'px');SR.setAttribute('aria-valuenow',w);SR.setAttribute('aria-valuemax',maxS());if(save)LS.set('pf-sd-w',String(w))}
+RS.addEventListener('dblclick',function(){setW(PW,true)});
+RS.addEventListener('keydown',function(e){var w=+RS.getAttribute('aria-valuenow'),s=e.shiftKey?64:16;if(e.key==='ArrowLeft'){e.preventDefault();setW(w-s,true)}if(e.key==='ArrowRight'){e.preventDefault();setW(w+s,true)}if(e.key==='Home'){e.preventDefault();setW(PW,true)}if(e.key==='End'){e.preventDefault();setW(maxW(),true)}});
+/* แผง Case study ลากปรับกว้างได้เหมือนกัน (420–720 · จำไว้ · ดับเบิลคลิก = 420) */
+function maxS(){return Math.max(SW,Math.min(720,innerWidth-navW()-(+RS.getAttribute('aria-valuenow'))-(innerWidth>=1280?360:0)))}
+function setS(w,save){w=Math.round(Math.max(SW,Math.min(maxS(),w||SW)));$('ed').style.setProperty('--sw',w+'px');SR.setAttribute('aria-valuenow',w);SR.setAttribute('aria-valuemax',maxS());if(save)LS.set('pf-sd-w',String(w))}
 var srx=null;
 SR.addEventListener('pointerdown',function(e){e.preventDefault();srx={x:e.clientX,w:+SR.getAttribute('aria-valuenow')};SR.classList.add('on');document.body.classList.add('resizing');try{SR.setPointerCapture(e.pointerId)}catch(x){}});
 SR.addEventListener('pointermove',function(e){if(srx)setS(srx.w+e.clientX-srx.x)});
 SR.addEventListener('pointerup',function(){if(!srx)return;srx=null;SR.classList.remove('on');document.body.classList.remove('resizing');setS(+SR.getAttribute('aria-valuenow'),true)});
-SR.addEventListener('dblclick',function(){setS(420,true)});
-SR.addEventListener('keydown',function(e){var w=+SR.getAttribute('aria-valuenow'),s=e.shiftKey?64:16;if(e.key==='ArrowLeft'){e.preventDefault();setS(w-s,true)}if(e.key==='ArrowRight'){e.preventDefault();setS(w+s,true)}if(e.key==='Home'){e.preventDefault();setS(360,true)}if(e.key==='End'){e.preventDefault();setS(maxS(),true)}});
+SR.addEventListener('dblclick',function(){setS(SW,true)});
+SR.addEventListener('keydown',function(e){var w=+SR.getAttribute('aria-valuenow'),s=e.shiftKey?64:16;if(e.key==='ArrowLeft'){e.preventDefault();setS(w-s,true)}if(e.key==='ArrowRight'){e.preventDefault();setS(w+s,true)}if(e.key==='Home'){e.preventDefault();setS(SW,true)}if(e.key==='End'){e.preventDefault();setS(maxS(),true)}});
 addEventListener('resize',function(){layoutNav();setW(+RS.getAttribute('aria-valuenow'));setS(+SR.getAttribute('aria-valuenow'))});
-layoutNav();setW(+(LS.get('pf-ed-w')||400));setS(+(LS.get('pf-sd-w')||420));
+layoutNav();setW(+(LS.get('pf-ed-w')||PW));setS(+(LS.get('pf-sd-w')||SW));
 
 addEventListener('beforeunload',function(e){if(allUnits().some(dirty)){e.preventDefault();e.returnValue=''}});
 /* บอกครั้งแรกครั้งเดียว: ข้อความในตัวอย่างกดแก้ได้ตรงนั้นเลย (ข้อ 2) */
 var ACQ=(location.search.match(/[?&]acct=([a-z]+)/)||[])[1];if(ACQ){try{history.replaceState(null,'',location.pathname)}catch(e){}}
-setTimeout(function(){if(crGet()){if(ACQ)openAcct(ACQ);else firstRun()}else gate()},400);
+setTimeout(function(){if(crGet()){if(ACQ)openAcct(ACQ);else{firstRun();setTimeout(function(){if(acctOn||GATE)return;var pf=$('edAcctIf');pf.addEventListener('load',function(){acctPre=!!pf.getAttribute('src')},{once:true});pf.src=ROUTES.account+'?embed=1&h=overview'},1500)}}else fetchMe().catch(function(){return null}).then(function(me){gate(!!me)})},400);
 if(false)setTimeout(function(){if(document.querySelector('.dlg'))return;LS.set('pf-tip-inline','1');toast('แก้ได้สองทาง: พิมพ์ในฟอร์มด้านซ้าย หรือกดที่ข้อความในตัวอย่างแล้วพิมพ์ตรงนั้นเลย')},1800);
 tabs();render();
 try{if(sessionStorage.getItem('pf-ui-back')){sessionStorage.removeItem('pf-ui-back');setTimeout(function(){openAcct('settings')},700)}}catch(e){}

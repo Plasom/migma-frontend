@@ -1,0 +1,51 @@
+/* หน้าแอดมิน (/admin): จัดการแพ็กเกจเครดิต · ราคาเครดิตต่องาน AI · คำสั่งซื้อ · ปรับเครดิตผู้ใช้
+   ใช้ token ชุดเดียวกับหน้าบัญชี (tokens-core + theme) · scope ด้วย .ad- */
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--background);color:var(--ink);font:var(--body-md);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.ad{max-width:1040px;margin:0 auto;padding:var(--space-6) var(--space-4) var(--space-8)}
+.ad-top{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-4)}
+.ad-top h1{margin:0;font:var(--headline-lg)}
+.ad-top p{margin:0;color:var(--text-2);font:var(--body-sm)}
+.ad-tabs{display:flex;gap:var(--space-1);border-bottom:1px solid var(--border);margin-bottom:var(--space-6);overflow-x:auto}
+.ad-tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:var(--space-2) var(--space-4);cursor:pointer;color:var(--text-2);white-space:nowrap;margin-bottom:-1px}
+.ad-tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--primary);font-weight:500}
+.ad-tabs button:focus-visible,.ad-btn:focus-visible,.ad-in:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.ad h2{margin:0 0 var(--space-2);font:var(--title-md)}
+.ad-d{margin:0 0 var(--space-4);color:var(--text-2);font:var(--body-sm)}
+.ad-btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);min-height:36px;padding:0 var(--space-4);border-radius:var(--radius-md);border:1px solid var(--border-control);background:transparent;cursor:pointer;font:var(--body-sm);font-weight:500}
+.ad-btn:hover:not(:disabled){background:var(--primary-tint)}
+.ad-btn:disabled{opacity:.5;cursor:not-allowed}
+.ad-btn.pri{background:var(--primary);color:var(--primary-foreground);border-color:var(--primary)}
+.ad-btn.pri:hover:not(:disabled){background:var(--primary-hover)}
+.ad-btn.dng{color:var(--danger);border-color:var(--danger)}
+.ad-btn.sm{min-height:30px;padding:0 var(--space-3)}
+.ad-in{height:36px;width:100%;padding:0 var(--space-3);border:1px solid var(--border-control);border-radius:var(--radius-md);background:transparent}
+.ad-in.num{text-align:right}
+.ad-f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-3);align-items:end;padding:var(--space-4);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:var(--space-6)}
+.ad-f label{display:flex;flex-direction:column;gap:var(--space-1);font:var(--body-sm);color:var(--text-2)}
+.ad-f .chk{flex-direction:row;align-items:center;gap:var(--space-2);height:36px}
+.ad-f .chk input{width:18px;height:18px}
+.ad-f .acts{display:flex;gap:var(--space-2);flex-wrap:wrap}
+.ad-tw{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-md)}
+.ad-t{width:100%;border-collapse:collapse;font:var(--body-sm)}
+.ad-t th,.ad-t td{padding:var(--space-3) var(--space-4);text-align:left;border-bottom:1px solid var(--border);vertical-align:middle}
+.ad-t tr:last-child td{border-bottom:0}
+.ad-t th{color:var(--text-2);font-weight:500;white-space:nowrap}
+.ad-t .r{text-align:right;white-space:nowrap}
+.ad-t small{display:block;color:var(--text-2)}
+.ad-t .off td{color:var(--text-2)}
+.ad-t td .ad-in{min-width:90px}
+.ad-t .acts{display:flex;gap:var(--space-2);justify-content:flex-end}
+.ad-tag{display:inline-block;padding:2px var(--space-2);border-radius:var(--radius-full);font:var(--label-md);background:var(--primary-tint);color:var(--primary-tint-foreground)}
+.ad-tag.ok{background:var(--success-tint);color:var(--success-tint-foreground)}
+.ad-tag.wait{background:var(--warning-tint);color:var(--warning-tint-foreground)}
+.ad-tag.bad{background:var(--danger-tint);color:var(--danger-tint-foreground)}
+.ad-note{padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);background:var(--warning-tint);color:var(--warning-tint-foreground);margin-bottom:var(--space-4);font:var(--body-sm)}
+.ad-empty{padding:var(--space-8) var(--space-4);text-align:center;color:var(--text-2)}
+.ad-msg{position:fixed;left:50%;bottom:var(--space-6);transform:translateX(-50%);padding:var(--space-3) var(--space-5);border-radius:var(--radius-md);background:var(--ink);color:var(--on-ink);font:var(--body-sm);max-width:90vw;z-index:10}
+.ad-msg.err{background:var(--danger);color:#fff}
+.ad-c{max-width:480px;margin:20vh auto 0;padding:0 var(--space-4);text-align:center}
+.ad-c h1{font:var(--headline-lg)}
+.ad-c p{color:var(--text-2)}

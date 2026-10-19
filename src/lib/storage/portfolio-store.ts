@@ -1,35 +1,152 @@
 /**
- * ที่เก็บข้อมูลพอร์ต (ร่าง · ฉบับบันทึก · ฉบับเผยแพร่) เก็บ 3 ที่
- * - หน่วยความจำ: ตัวอย่างในหลังบ้านอ่านจากตรงนี้ (ผ่าน preview handoff) ไม่ต้องรอเขียนลงเครื่อง
- * - IndexedDB `pf-store` / `kv`: ที่เก็บหลักในเครื่อง ไม่ติดเพดาน 5 MB ของ localStorage จึงใส่ภาพได้เยอะ
- * - localStorage: เก็บด้วยเท่าที่ใส่ได้ ให้หน้าเว็บ (/site) อ่านได้ · เต็มก็ไม่เป็นไร ข้อมูลยังอยู่ใน IndexedDB
+ * ที่เก็บข้อมูลพอร์ต (ร่าง · ฉบับบันทึก · ฉบับเผยแพร่) · ที่เก็บจริงคือหลังบ้าน (migma-backend: /api/v1/me/portfolio)
+ * - หน่วยความจำ: editor อ่าน/เขียนแบบ sync ตรงนี้ · ตัวอย่างในหลังบ้านอ่านผ่าน preview handoff
+ * - หลังบ้าน: write = ทยอยส่ง PUT (debounce) พร้อม If-Match: rev · เผยแพร่ = POST /publish (server คัดลอกฉบับบันทึกเอง)
+ * - localStorage: cache ให้เปิดหน้าแล้วเห็นทันทีก่อนโหลดจากหลังบ้านเสร็จ และให้ /site (ตัวอย่างนอกหลังบ้าน) อ่านได้
  *
- * ตอนต่อ backend จริง: แทนไฟล์นี้ไฟล์เดียว (API เดิม: read · write · hydrate · resetAll)
+ * API เดิมที่ editor ใช้: read · write · hydrate · resetAll (+ onConflict · clearLocal)
  */
+import { ApiError, api, goAccount } from '@/lib/api';
 import { KEYS, PORTFOLIO_KEYS, local, type PortfolioKey } from './local';
 
-const DB = 'pf-store';
-const OS = 'kv';
+type Version = 'draft' | 'saved' | 'published';
+type Writable = 'pf-draft' | 'pf-saved';
+interface Remote { data: unknown; rev: number; updatedAt: string }
+type All = Record<Version, Remote | null>;
+
+const URL_ALL = '/api/v1/me/portfolio';
+const VERSION: Record<PortfolioKey, Version> = { 'pf-draft': 'draft', 'pf-saved': 'saved', 'pf-published': 'published' };
+const WRITABLE: Writable[] = ['pf-draft', 'pf-saved'];
+const DEBOUNCE = 700;
+const RETRY = 5000;
 
 let mem: Partial<Record<PortfolioKey, string>> = {};
-let idb: IDBDatabase | null = null;
-let queue: [string, string | null][] = [];
+const rev: Record<Writable, number> = { 'pf-draft': 0, 'pf-saved': 0 };
+const pending: Partial<Record<Writable, string>> = {};
+let publishWanted = false;
+let timer: ReturnType<typeof setTimeout> | null = null;
+let chain: Promise<void> = Promise.resolve();
+let busy = false;
 let lsFull = false;
 let started = false;
+let conflictFn: (() => void) | null = null;
+let markReady: () => void = () => {};
+/** โหลดจากหลังบ้านเสร็จ (รู้ rev แล้ว) · ส่ง PUT ได้หลังจากนี้เท่านั้น */
+const ready = new Promise<void>((r) => { markReady = r; });
 
-function idbSet(k: string, v: string | null) {
-  if (!idb) { queue.push([k, v]); return; }
-  try {
-    const st = idb.transaction(OS, 'readwrite').objectStore(OS);
-    if (v == null) st.delete(k); else st.put(v, k);
-  } catch {}
-}
-
-/** โหลดชุดที่อยู่ใน localStorage ขึ้นหน่วยความจำ (เรียกครั้งแรกที่ใช้) */
+/** โหลด cache ใน localStorage ขึ้นหน่วยความจำ (เรียกครั้งแรกที่ใช้) */
 function init() {
   if (started || typeof window === 'undefined') return;
   started = true;
   PORTFOLIO_KEYS.forEach((k) => { const v = local.get(k); if (v) mem[k] = v; });
+  try { indexedDB.deleteDatabase('pf-store'); } catch {} // ที่เก็บเดิมก่อนมีหลังบ้าน
+  addEventListener('pagehide', flushOnLeave);
+  addEventListener('beforeunload', (e) => { if (hasUnsaved()) e.preventDefault(); });
+}
+
+function cache(k: PortfolioKey, json: string | null) {
+  if (json == null) { local.remove(k); return; }
+  if (!local.set(k, json)) { local.remove(k); lsFull = true; }
+}
+
+/** เทียบเนื้อข้อมูลโดยไม่สนลำดับ key (Postgres jsonb เรียง key ใหม่) */
+function canon(json: string | null | undefined): string {
+  if (!json) return '';
+  const sort = (v: unknown): unknown =>
+    Array.isArray(v) ? v.map(sort)
+      : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, sort((v as Record<string, unknown>)[k])]))
+        : v;
+  try { return JSON.stringify(sort(JSON.parse(json))); } catch { return json; }
+}
+
+function hasUnsaved() {
+  return busy || publishWanted || WRITABLE.some((k) => pending[k] != null);
+}
+
+/** ดึงทุกฉบับจากหลังบ้าน · keep = คีย์ที่ไม่เอาค่าจากหลังบ้านมาทับ · คืน true เมื่อเนื้อข้อมูลเปลี่ยน */
+async function pull(keep: (k: PortfolioKey) => boolean): Promise<boolean> {
+  const all = await api<All>(URL_ALL);
+  let changed = false;
+  PORTFOLIO_KEYS.forEach((k) => {
+    const r = all[VERSION[k]];
+    if (k !== 'pf-published') rev[k as Writable] = r ? r.rev : 0;
+    if (keep(k)) return;
+    const s = r ? JSON.stringify(r.data) : null;
+    if (canon(s) !== canon(mem[k])) changed = true;
+    if (s == null) delete mem[k]; else mem[k] = s;
+    cache(k, s);
+  });
+  return changed;
+}
+
+function schedule(delay = DEBOUNCE) {
+  if (timer) clearTimeout(timer);
+  timer = setTimeout(() => { timer = null; void flush(); }, delay);
+}
+
+/** ส่งของที่ค้างทั้งหมดตามลำดับ (ร่าง · ฉบับบันทึก · แล้วค่อยเผยแพร่) */
+function flush(): Promise<void> {
+  chain = chain.then(send, send);
+  return chain;
+}
+
+async function send() {
+  await ready;
+  busy = true;
+  try {
+    for (const k of WRITABLE) {
+      const body = pending[k];
+      if (body == null) continue;
+      delete pending[k];
+      try {
+        const r = await api<{ rev: number }>(URL_ALL + '/' + VERSION[k], {
+          method: 'PUT', headers: { 'Content-Type': 'application/json', 'If-Match': String(rev[k]) }, body,
+        });
+        rev[k] = r.rev;
+      } catch (e) {
+        if (pending[k] == null) pending[k] = body;
+        return fail(e);
+      }
+    }
+    if (publishWanted) {
+      publishWanted = false;
+      try {
+        await api(URL_ALL + '/publish', { method: 'POST' });
+      } catch (e) {
+        publishWanted = true;
+        return fail(e);
+      }
+    }
+  } finally {
+    busy = false;
+  }
+}
+
+async function fail(e: unknown) {
+  if (e instanceof ApiError && e.status === 401) { goAccount(); return; }
+  if (e instanceof ApiError && e.status === 409) {
+    /* มีการแก้จากแท็บหรือเครื่องอื่น: ใช้ฉบับล่าสุดจากหลังบ้าน แล้วให้ editor วาดใหม่ */
+    WRITABLE.forEach((k) => { delete pending[k]; });
+    publishWanted = false;
+    try { await pull(() => false); } catch {}
+    try { conflictFn?.(); } catch {}
+    return;
+  }
+  schedule(RETRY); // เน็ตหลุด / หลังบ้านล่ม: ลองใหม่
+}
+
+/** ปิดหน้า: ส่งของที่ค้างแบบ keepalive (เบราว์เซอร์จำกัดราว 64 KB ต่อคำขอ) */
+function flushOnLeave() {
+  WRITABLE.forEach((k) => {
+    const body = pending[k];
+    if (body == null || body.length > 60_000) return;
+    try {
+      fetch(URL_ALL + '/' + VERSION[k], {
+        method: 'PUT', keepalive: true, credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'If-Match': String(rev[k]) }, body,
+      });
+    } catch {}
+  });
 }
 
 export const portfolioStore = {
@@ -38,67 +155,57 @@ export const portfolioStore = {
     init();
     return mem[k] || null;
   },
-  /** เขียนฉบับ: หน่วยความจำ + localStorage (ถ้าใส่ได้) + IndexedDB · คืน false เมื่อเก็บไม่ได้เลย */
+  /** เขียนฉบับ: หน่วยความจำทันที แล้วทยอยส่งขึ้นหลังบ้าน · pf-published = สั่งเผยแพร่ฉบับบันทึก */
   write(k: PortfolioKey, json: string): boolean {
     init();
     mem[k] = json;
-    const ok = local.set(k, json);
-    if (!ok) { local.remove(k); lsFull = true; }
-    const ts = String(Date.now());
-    if (ok) local.set(KEYS.ts, ts);
-    idbSet(k, json);
-    idbSet(KEYS.ts, ts);
-    return ok || typeof indexedDB !== 'undefined';
+    cache(k, json);
+    local.set(KEYS.ts, String(Date.now()));
+    if (k === 'pf-published') {
+      publishWanted = true;
+      schedule(0);
+    } else {
+      pending[k] = json;
+      schedule();
+    }
+    return true;
   },
-  /** localStorage เคยเต็มในรอบนี้ (หน้าเว็บแยกอาจเห็นข้อมูลเก่า) */
+  /** localStorage เคยเต็มในรอบนี้ (หน้า /site นอกหลังบ้านอาจเห็นข้อมูลเก่า) */
   get localStorageFull() { return lsFull; },
   /**
-   * เปิด IndexedDB · ถ้าข้อมูลในนั้นใหม่กว่าใน localStorage (เช่น รอบก่อน localStorage เต็ม) ใช้ชุดนั้นแล้วเรียก onNewer
-   * `skipNewer` = ไม่เอาชุดใน IndexedDB มาทับ (เช่น เพิ่งล้างด้วย ?reset=blank)
+   * โหลดจากหลังบ้าน · เนื้อข้อมูลต่างจาก cache = ใช้ของหลังบ้านแล้วเรียก onNewer ให้ editor วาดใหม่
+   * `skipNewer` = ไม่เอาของหลังบ้านมาทับ (เช่น เพิ่งล้างด้วย ?reset=blank แล้วจะส่งค่าว่างขึ้นไป)
    */
   hydrate(onNewer: () => void, skipNewer = false): void {
     init();
-    if (typeof indexedDB === 'undefined') return;
-    try {
-      const rq = indexedDB.open(DB, 1);
-      rq.onupgradeneeded = () => { rq.result.createObjectStore(OS); };
-      rq.onsuccess = () => {
-        idb = rq.result;
-        const q = queue;
-        queue = [];
-        const tx = idb.transaction(OS, 'readonly').objectStore(OS);
-        const got: Record<string, string | undefined> = {};
-        const ks: string[] = [...PORTFOLIO_KEYS, KEYS.ts];
-        let n = 0;
-        ks.forEach((k) => {
-          const g = tx.get(k);
-          g.onsuccess = () => {
-            got[k] = g.result as string | undefined;
-            if (++n !== ks.length) return;
-            /* IndexedDB คือที่เก็บหลัก: มีข้อมูลและไม่เก่ากว่า localStorage = ใช้ชุดนั้น · เหมือนกันอยู่แล้วก็ไม่ต้องวาดใหม่ */
-            const newer = !!got[KEYS.draft] && +(got[KEYS.ts] || 0) >= (+(local.get(KEYS.ts) || 0) || 0)
-              && PORTFOLIO_KEYS.some((k2) => (got[k2] || null) !== (mem[k2] || null));
-            if (newer && !q.length && !skipNewer) {
-              mem = {};
-              PORTFOLIO_KEYS.forEach((k2) => { if (got[k2]) mem[k2] = got[k2]; });
-              try { onNewer(); } catch {}
-            }
-            q.forEach(([qk, qv]) => idbSet(qk, qv));
-            if (!got[KEYS.ts] && !q.length) PORTFOLIO_KEYS.forEach((k2) => { if (mem[k2]) idbSet(k2, mem[k2]!); });
-          };
+    const attempt = () => {
+      pull((k) => skipNewer || (k !== 'pf-published' && pending[k as Writable] != null))
+        .then((changed) => {
+          markReady();
+          if (changed) try { onNewer(); } catch {}
+        })
+        .catch((e) => {
+          if (e instanceof ApiError && e.status === 401) { goAccount(); return; }
+          setTimeout(attempt, RETRY);
         });
-      };
-    } catch {}
+    };
+    attempt();
   },
-  /** ล้างทุกอย่างของแอป (localStorage `pf-*` + IndexedDB) แล้วเรียก done (dev: ?reset=new) */
+  /** โหลดจากหลังบ้านครั้งแรกเสร็จ (รู้แล้วว่าผู้ใช้มีฉบับไหนบ้าง) */
+  whenReady(): Promise<void> { return ready; },
+  /** หลังบ้านมีฉบับใหม่กว่าตอนบันทึก (ชนกัน) → โหลดฉบับล่าสุดแล้ว เรียก fn ให้ editor วาดใหม่ */
+  onConflict(fn: () => void): void { conflictFn = fn; },
+  /** ล้างพอร์ตที่ cache ในเครื่อง (ตอนออกจากระบบ · กันคนถัดไปเห็นข้อมูล) */
+  clearLocal(): void {
+    mem = {};
+    [...PORTFOLIO_KEYS, KEYS.ts].forEach((k) => local.remove(k));
+  },
+  /** ล้างพอร์ตทั้งหมด (หลังบ้าน + เครื่องนี้) แล้วเรียก done (dev: ?reset=new) */
   resetAll(done: () => void): void {
+    WRITABLE.forEach((k) => { delete pending[k]; });
+    publishWanted = false;
+    mem = {};
     local.clear('pf-');
-    let fired = false;
-    const fin = () => { if (!fired) { fired = true; done(); } };
-    try {
-      const dq = indexedDB.deleteDatabase(DB);
-      dq.onsuccess = dq.onerror = dq.onblocked = fin;
-      setTimeout(fin, 1500);
-    } catch { fin(); }
+    api(URL_ALL, { method: 'DELETE' }).catch(() => {}).finally(done);
   },
 };

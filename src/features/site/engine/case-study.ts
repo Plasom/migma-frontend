@@ -56,7 +56,7 @@ function show(k){
  var QS=new URLSearchParams(location.search),wid=QS.get('w'),WS=(DATA&&DATA.works)||[],W=(wid&&WS.filter(function(x){return x.id===wid})[0])||WS.filter(function(x){return (x.caseIds||[]).indexOf(k)>=0})[0]||null;
  var ids=W?(W.caseIds||[]).filter(function(x){return P[x]}):[];if(ids.indexOf(k)<0)ids=[k];
  var ED=ED0,TB=function(t){return ED?'<i class="tbd-tag">'+esc(t)+'</i>':''},multi=ids.length>1,hk=ids[0],d=P[hk],pn=function(x,i){var tt=P[x].title||'';return tt&&(!W||tt!==W.title||!i)?tt:i?'ตอนที่ '+(i+1):'ภาพรวม'};
- CUR=d;document.title=((W&&W.title)||d.title)+' · Case study · phunyisa';
+ CUR=d;var SN=(DATA.site&&DATA.site.name)||(DATA.profile&&DATA.profile.name)||'';document.title=((W&&W.title)||d.title)+' · Case study'+(SN?' · '+SN:'');
  var kd=document.getElementById('cpKind');kd.textContent=(multi?'Case study · '+ids.length+' ตอน':d.lite?'รายละเอียดงาน':'Case study')+(d.cat?' · '+d.cat:'');if(!d.real){var tg=document.createElement('i');tg.className='tbd-tag cp-mock';tg.textContent='ข้อมูลตัวอย่าง แก้เป็นของคุณได้';kd.appendChild(document.createTextNode(' '));kd.appendChild(tg)}
  BP=hk==='_t'?'':'x';document.getElementById('cpTitle').innerHTML='<span'+pe((multi&&W&&W.title)?'works.'+WS.indexOf(W)+'.title':W&&(W.caseIds||[])[0]===hk&&W.title===d.title?'works.'+WS.indexOf(W)+'.title':'cases.'+hk+'.title')+'>'+esc((multi&&W&&W.title)||d.title)+'</span>';
  var sm=document.getElementById('cpSum'),hs=(multi&&W&&W.sum)||d.sum;BP=hk==='_t'?'':'x';if(hs){sm.innerHTML='<span'+((multi&&W&&W.sum)?'':pe('cases.'+hk+'.sum',1))+'>'+esc(hs)+'</span>';sm.hidden=false}else{sm.innerHTML=ED&&BP?'<span'+pe((multi&&W)?'works.'+WS.indexOf(W)+'.sum':'cases.'+hk+'.sum',1)+' data-ph="สรุปงานนี้ใน 1 ประโยค"></span>':TB('สรุป 1 ประโยค ยังว่าง');sm.hidden=!ED}
@@ -98,6 +98,9 @@ if(!P[q]&&U.get('t')){P._t={title:U.get('t'),sum:'',cat:U.get('c')||'ผลง�
  {t:'วิธีทำงานในโปรเจกต์นี้',b:[{type:'tbd',text:'ขั้นตอนที่ทำจริง และสิ่งที่ได้จากแต่ละขั้น'}]},
  {t:'ทางแก้',b:[{type:'tbd',text:'สิ่งที่ออกแบบหรือสร้าง พร้อมภาพก่อน/หลัง'}]},
  {t:'ผลลัพธ์',b:[{type:'stats',items:[['','']]}]}]};q='_t'}
-show(P[q]?q:(DATA&&P[DATA.featuredCase]?DATA.featuredCase:Object.keys(P)[0]));
+var K0=P[q]?q:(DATA&&P[DATA.featuredCase]?DATA.featuredCase:Object.keys(P)[0]);
+/* พอร์ตยังไม่มี case study เลย (ผู้ใช้ใหม่ไม่มีข้อมูลตัวอย่างแล้ว) */
+if(!K0){body.innerHTML='<div class="es"><p class="es-t">ยังไม่มี Case study</p><p class="es-d"><a href="'+ROUTES.work+'">ดูผลงานทั้งหมด</a></p></div>';return}
+show(K0);
 
 }

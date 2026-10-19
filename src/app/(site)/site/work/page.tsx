@@ -5,7 +5,7 @@ export default function Page() {
   return (
     <div className="pg pg-work">
       <WorkShell />
-      <title>ผลงานทั้งหมด · phunyisa</title>
+      <title>ผลงานทั้งหมด</title>
       <SiteEngine page="work" />
     </div>
   );

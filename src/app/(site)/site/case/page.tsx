@@ -5,7 +5,7 @@ export default function Page() {
   return (
     <div className="pg pg-case">
       <CaseShell />
-      <title>Banking app redesign · Case study · phunyisa</title>
+      <title>Case study</title>
       <SiteEngine page="case" />
     </div>
   );

@@ -1,10 +1,10 @@
 /** โครงหน้าหน้าแรก (ย้ายมาจาก markup ของต้นแบบ) · เนื้อหาในแต่ละส่วนวาดโดย engine ตอนเปิดหน้า */
 import { SiteFooter, SiteHeader } from './SiteChrome';
 
-export function HomeShell() {
+export function HomeShell({ base }: { base?: string } = {}) {
   return (
     <>
-      <SiteHeader page="home" />
+      <SiteHeader page="home" base={base} />
       <main className="wrap">
       {" "}
       <div className="hero" />
@@ -100,7 +100,7 @@ export function HomeShell() {
       {" "}
       <section id="exp" className="xp" aria-labelledby="xpH" />
       {" "}
-      <div className="ct-band">{" "}<section id="form" className="ct" aria-labelledby="ctH" />{" "}<SiteFooter page="home" />{" "}</div>
+      <div className="ct-band">{" "}<section id="form" className="ct" aria-labelledby="ctH" />{" "}<SiteFooter page="home" base={base} />{" "}</div>
       {" "}
     </main>
     </>

@@ -17,7 +17,7 @@ export function AccountShell() {
           {" "}
           <h1>{"เข้าสู่ระบบ"}</h1>
           {" "}
-          <p id="lgSub">{"ใช้บัญชี Google หรืออีเมล ไม่ต้องตั้งรหัสผ่าน ยังไม่มีบัญชีก็ใช้วิธีเดียวกัน"}</p>
+          <p id="lgSub">{"เข้าด้วยบัญชีที่มีอยู่แล้ว ไม่ต้องตั้งรหัสผ่าน ยังไม่มีบัญชีก็ใช้วิธีเดียวกัน"}</p>
           {" "}
           <button type="button" className="btn outlined lg" id="lgG">
             <svg className="g-ic" viewBox="0 0 18 18" width="18" height="18" aria-hidden="true">
@@ -29,80 +29,10 @@ export function AccountShell() {
             {"เข้าด้วย Google"}
           </button>
           {" "}
-          <div className="lg-or">{"หรือ"}</div>
-          {" "}
-          <form id="lgF" noValidate>
-            {" "}
-            <div className="fld" id="lgFld">
-              <span className="lb"><label htmlFor="lgE">{"อีเมล"}</label></span>
-              <span className="inw">
-                <input className="in" id="lgE" type="email" inputMode="email" autoComplete="email" maxLength={120} placeholder="name@company.com" />
-                <button type="button" className="clr" data-clr="" tabIndex={-1} aria-label="ล้างอีเมล"><span className="ms" aria-hidden="true">{"close"}</span></button>
-              </span>
-            </div>
-            {" "}
-            <button type="submit" className="btn filled lg" id="lgSend">{"ส่งรหัสไปที่อีเมล"}</button>
-            {" "}
-          </form>
-          {" "}
-        </div>
-        {" "}
-        <div id="lgSent" hidden>
-          {" "}
-          <h1 id="lgSentH" tabIndex={-1}>{"ใส่รหัส 6 หลัก"}</h1>
-          {" "}
-          <p>{"ส่งรหัสไปที่ "}<b id="lgTo" />{" แล้ว รหัสใช้ได้ 10 นาที ถ้าไม่เจอ ดูในกล่องจดหมายขยะ"}</p>
-          {" "}
-          <form id="lgC" noValidate>
-            {" "}
-            <div className="fld" id="lgCFld">
-              <span className="lb"><label htmlFor="lgCode">{"รหัสจากอีเมล"}</label></span>
-              <input className="in lg-code" id="lgCode" inputMode="numeric" pattern="[0-9]*" maxLength={6} autoComplete="one-time-code" placeholder="000000" />
-            </div>
-            {" "}
-            <button type="submit" className="btn filled lg" id="lgOk">{"ยืนยันรหัส"}</button>
-            {" "}
-          </form>
-          {" "}
-          <div className="lg-acts">
-            <button type="button" className="btn outlined" id="lgAgain">{"ส่งรหัสอีกครั้ง"}</button>
-            <button type="button" className="btn ghost" id="lgOther">{"ใช้อีเมลอื่น"}</button>
           </div>
-          {" "}
-        </div>
-        {" "}
-        <div id="lgName" hidden>
-          {" "}
-          <h1 id="lgNameH" tabIndex={-1}>{"ให้เรียกคุณว่าอะไรดี"}</h1>
-          {" "}
-          <p>{"ใช้ในหลังบ้านและใบเสร็จ เปลี่ยนทีหลังได้ในตั้งค่า"}</p>
-          {" "}
-          <form id="lgN" noValidate>
-            {" "}
-            <div className="fld" id="lgNFld">
-              <span className="lb"><label htmlFor="lgNm">{"ชื่อ"}</label><span className="cnt cnt-end" data-cnt="60">{"0 / 60"}</span></span>
-              <span className="inw">
-                <input className="in" id="lgNm" maxLength={60} autoComplete="name" aria-describedby="lgNmH" />
-                <button type="button" className="clr" data-clr="" tabIndex={-1} aria-label="ล้างชื่อ"><span className="ms" aria-hidden="true">{"close"}</span></button>
-              </span>
-              <span className="hint" id="lgNmH">{"ชื่อเล่นหรือชื่อจริงก็ได้ ใช้ตัวอักษรและตัวเลข"}</span>
-            </div>
-            {" "}
-            <button type="submit" className="btn filled lg">{"เริ่มใช้งาน"}</button>
-            {" "}
-          </form>
-          {" "}
-        </div>
         {" "}
         <div className="lg-ui">
           <button type="button" className="btn text sm" id="lgUi" data-ui-keep=""><span className="ms" aria-hidden="true">{"language"}</span><span id="lgUiT" /></button>
-        </div>
-        {" "}
-        <div className="proto" id="lgProto" hidden>
-          <i className="tbd-tag">{"dev"}</i>
-          <span id="lgPT">{"โหมด dev"}</span>
-          <button type="button" className="btn text sm" id="lgFill" hidden>{"ใส่รหัสให้"}</button>
-          <button type="button" className="btn text sm" id="lgSkip">{"เข้าได้เลย"}</button>
         </div>
         {" "}
       </div>

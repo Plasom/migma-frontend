@@ -4,11 +4,12 @@
  */
 import { siteTranslator } from '@/lib/i18n/site';
 import { startMotion } from '@/lib/motion/motion';
-import { PORTFOLIO_DEFAULT } from '@/lib/portfolio/defaults';
+import { blankPortfolio } from '@/lib/portfolio/defaults';
 import { dataForLang, resolveSiteLang } from '@/lib/portfolio/localize';
 import { clone, normalize } from '@/lib/portfolio/model';
 import type { Portfolio } from '@/lib/portfolio/types';
 import { readHandoff } from '@/lib/preview/protocol';
+import { setSiteBase } from '@/lib/routes';
 import { KEYS, local } from '@/lib/storage/local';
 import type { SitePage } from './components/SiteChrome';
 import { beforeAfter } from './controllers/before-after';
@@ -24,12 +25,14 @@ import { renderTemplate } from './engine/template';
 import { worksBrowser } from './engine/works-browser';
 
 /**
- * เลือกชุดข้อมูล: หลังบ้าน (?edit=1) = ร่างที่กำลังแก้ · หน้าเว็บปกติ = ฉบับเผยแพร่ล่าสุด · ไม่มี = ตัวอย่าง
- * อยู่ในตัวอย่างของหลังบ้าน = ใช้ร่างในหน่วยความจำของหลังบ้านตรงๆ (ไม่อ่าน localStorage ซึ่งเต็มได้เมื่อมีภาพเยอะ)
+ * เลือกชุดข้อมูล: เว็บสาธารณะ (/u/<slug>) = ฉบับเผยแพร่จากหลังบ้าน · หลังบ้าน (?edit=1) = ร่างที่กำลังแก้
+ * ตัวอย่างนอกหลังบ้าน (/site) = cache ในเครื่อง · ไม่มีเลย = พอร์ตเปล่า
+ * อยู่ในตัวอย่างของหลังบ้าน = ใช้ร่างในหน่วยความจำของหลังบ้านตรงๆ (ไม่อ่าน localStorage)
  */
-function pickData(edit: boolean, handoff: ReturnType<typeof readHandoff>): Portfolio {
-  /* ?example=1 = ดูเว็บตัวอย่าง (ปุ่ม "ดูตัวอย่าง" ในหลังบ้าน) */
-  if (/[?&]example=1/.test(location.search)) return normalize(clone(PORTFOLIO_DEFAULT));
+function pickData(edit: boolean, handoff: ReturnType<typeof readHandoff>, published?: Portfolio): Portfolio {
+  if (published) {
+    try { return normalize(clone(published)); } catch {}
+  }
   if (handoff) {
     try { return normalize(clone(handoff.data)); } catch {}
   }
@@ -38,13 +41,17 @@ function pickData(edit: boolean, handoff: ReturnType<typeof readHandoff>): Portf
     const s = local.get(k);
     if (s) try { return normalize(JSON.parse(s) as Portfolio); } catch {}
   }
-  return normalize(clone(PORTFOLIO_DEFAULT));
+  return normalize(blankPortfolio());
 }
 
-export function bootSite(page: SitePage): void {
-  const edit = /[?&]edit=1/.test(location.search);
+/** เว็บสาธารณะ: base = /u/<slug> (ลิงก์ระหว่างหน้า) · data = ฉบับเผยแพร่ */
+export interface PublicSite { base: string; data: Portfolio }
+
+export function bootSite(page: SitePage, pub?: PublicSite): void {
+  if (pub) setSiteBase(pub.base);
+  const edit = !pub && /[?&]edit=1/.test(location.search);
   const handoff = edit ? readHandoff() : null;
-  const d0 = pickData(edit, handoff);
+  const d0 = pickData(edit, handoff, pub?.data);
   if (handoff) document.documentElement.setAttribute('data-theme', handoff.theme);
   const lang = resolveSiteLang(d0, handoff?.lang, local.get(KEYS.siteLang));
   document.documentElement.lang = lang;

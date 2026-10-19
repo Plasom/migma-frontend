@@ -251,6 +251,10 @@ export const UI: { EN: Record<string, string>; RULES: Rule[]; TR: (t: string, de
     'เล่าเหมือนเล่าให้เพื่อนฟัง: ทำให้ใคร เจอปัญหาอะไร คุณแก้ยังไง ผลเป็นยังไง': 'Write like you are telling a friend: who it was for, what the problem was, what you did, and how it went.', 'เช่น งานนี้ทำแอปจองคิวคลินิก คนไข้โทรจองไม่ติด เลยออกแบบให้จองในแอป…': 'e.g. A clinic booking app. Patients could not get through by phone, so I designed in-app booking…',
     'ปกติคุณทำงานยังไง': 'How do you usually work?', 'เล่าขั้นตอนตั้งแต่ได้โจทย์จนส่งงาน เดี๋ยว AI แบ่งเป็นขั้นให้': 'Describe it from brief to handover. AI splits it into steps.', 'เช่น เริ่มจากคุยกับผู้ใช้ แล้ววาด flow คุยกับ dev ก่อนทำ UI…': 'e.g. I start by talking to users, then map the flow, and check with devs before the UI…', 'เล่าสั้นๆ สักประโยคก่อนนะ': 'Write at least a sentence first',
     'ให้ AI ช่วยเติม': 'Fill in with AI', 'ให้ AI เติมงานนี้': 'Fill this in with AI', 'จากไฟล์งาน': 'From work files',
+    'ให้ AI สกัดผลงานจากไฟล์': 'Extract work with AI from files', 'ให้ AI เติมข้อมูลงานจากไฟล์': 'Fill work details with AI from file',
+    'จำนวนผลงานที่ต้องการสร้าง': 'Number of projects to create', 'อัตราเครดิต AI': 'AI credit rate', 'เครดิตที่ต้องใช้': 'Credits required',
+    'เครดิตปัจจุบันของคุณ': 'Your current credits', 'เครดิตคงเหลือหลังใช้': 'Credits remaining after', 'เริ่มสกัดผลงาน': 'Start extracting work',
+    'เครดิตไม่พอ เติมเครดิต': 'Not enough credits, buy more',
     /* ตรวจช่องกรอก */
     'อีเมลยังไม่ครบ ลองเช็กว่ามี @ และโดเมน เช่น name@gmail.com ถ้าไม่อยากใส่ ลบออกให้ว่างได้': 'This email looks incomplete. Check it has an @ and a domain, like name@gmail.com. To skip it, leave the field empty.', 'ลิงก์ยังไม่ครบ เช่น linkedin.com/in/ชื่อ (ไม่ต้องพิมพ์ https://)': 'This link looks incomplete. Try something like linkedin.com/in/name (no need for https://).',
     'ใส่ปี 4 หลัก เช่น 2024 หรือ 2567 (พ.ศ. ระบบแปลงให้เอง)': 'Enter a 4-digit year, like 2024. Buddhist-era years such as 2567 are converted for you.', 'อีเมลมีเว้นวรรคไม่ได้': 'Emails cannot have spaces', 'อีเมลใช้ตัวอังกฤษ สลับแป้นพิมพ์แล้วพิมพ์ใหม่': 'Emails use Latin letters. Switch your keyboard and type it again.',
@@ -406,6 +410,52 @@ export const UI: { EN: Record<string, string>; RULES: Rule[]; TR: (t: string, de
     'คนที่ได้ลิงก์': 'Anyone who has the link', 'ไปแล้วจะเปิดไม่ได้อีก กู้คืนไม่ได้': 'will no longer be able to open it. This cannot be undone.', 'ภาพรวม': 'Overview', 'ยังไม่มีชื่อ': 'No name yet'
   };
   for (k in E3) E[k] = E3[k];
+  /* AI อ่าน Resume (หลังบ้าน → OpenRouter) และกรณี AI ใช้ไม่ได้ */
+  var E4 = {
+    'AI แยกใส่ให้ทุกแท็บแล้ว': 'AI sorted it into every tab', 'AI เติมข้อมูลให้แล้ว': 'AI filled it in',
+    'ชื่อและตำแหน่ง': 'Name and role', 'ประโยคแนะนำตัว': 'Headline', 'แทนของเดิม': 'Replaces current', 'เพิ่มต่อจากของเดิม': 'Adds to current',
+    'เพิ่มเป็นรายการใหม่': 'Adds as new items', 'เติมช่องที่ยังว่าง': 'Fills empty fields', 'ช่องทางติดต่อ': 'Contact details', 'ประวัติ': 'History', 'ติดต่อ': 'Contact', 'ปัจจุบัน': 'Present',
+    'ใช้ AI อ่านไฟล์ไม่ได้': 'AI could not read the file', 'ลองใหม่': 'Try again',
+    'ไม่เสียเครดิต กรอกข้อมูลเองในแต่ละแท็บได้เลย': 'No credits were used. You can fill in each tab yourself.',
+    'ตอนนี้ AI ใช้ไม่ได้ชั่วคราว': 'AI is unavailable right now', 'AI ใช้เวลานานเกินไป ลองใหม่อีกครั้ง': 'AI took too long. Try again.',
+    'AI อ่านไฟล์นี้ไม่ได้ อาจเป็นไฟล์สแกนที่ไม่ชัดหรือมีรหัสผ่าน': 'AI could not read this file. It may be a blurry scan or password protected.',
+    'ใช้ AI อ่านไฟล์ครบ 10 ครั้งในชั่วโมงนี้แล้ว ลองใหม่ภายหลัง': 'You have used AI file reading 10 times this hour. Try again later.',
+    'ไฟล์ใหญ่เกิน 5 MB ลองบีบอัด PDF ก่อน': 'The file is over 5 MB. Try compressing the PDF.', 'ใช้ไฟล์ PDF เท่านั้น': 'PDF files only',
+    'เซสชันหมดอายุ เข้าสู่ระบบใหม่แล้วลองอีกครั้ง': 'Your session expired. Sign in again and retry.',
+    'AI ไม่พบข้อมูลที่ใช้ได้ในไฟล์นี้': 'AI found nothing it could use in this file',
+    'ใช้ AI ไม่ได้': 'AI unavailable', 'เขียนเอง': 'Write it myself',
+    'ไม่เสียเครดิต แก้ข้อความเองในช่องได้เลย': 'No credits were used. You can edit the text in the field yourself.',
+    'AI เขียนข้อความนี้ไม่ได้ ลองเปลี่ยนคำขอ': 'AI could not write this text. Try a different request.',
+    'ใช้ AI เขียนข้อความครบ 60 ครั้งในชั่วโมงนี้แล้ว ลองใหม่ภายหลัง': 'You have used AI writing 60 times this hour. Try again later.',
+    'ข้อความยาวเกินไป ลองตัดให้สั้นลงก่อน': 'The text is too long. Shorten it first.',
+    /* เครดิต · จ่ายเงิน (Stripe) · ใบเสร็จ */
+    'เครดิต AI ไม่พอ เติมเครดิตแล้วลองอีกครั้ง': 'Not enough AI credits. Buy more and try again.',
+    'AI อ่านไฟล์แล้วแต่ไม่พบข้อมูล เครดิตถูกใช้ไปแล้ว กรอกข้อมูลเองในแต่ละแท็บได้เลย': 'AI read the file but found nothing, and the credits were used. You can fill in each tab yourself.',
+    'ตอนนี้ยังไม่มีแพ็กเครดิตที่เปิดขาย': 'No credit packs are on sale right now', 'โหลดแพ็กเครดิตไม่ได้ ลองรีเฟรชหน้านี้': 'Could not load the credit packs. Refresh this page.',
+    'กำลังโหลดแพ็กเครดิต…': 'Loading credit packs…', 'ระบบจ่ายเงินยังไม่เปิด ลองใหม่ภายหลัง': 'Payments are not open yet. Try again later.',
+    'แพ็กเกจรายเดือน/รายปียังไม่เปิดขาย ตอนนี้ซื้อได้เฉพาะเครดิต AI ที่แท็บ “เครดิต AI”': 'Monthly and yearly plans are not on sale yet. For now you can only buy AI credits, in the “AI credits” tab.',
+    'เร็วๆ นี้': 'Coming soon', 'แพ็กเกจนี้ยังไม่เปิดขาย': 'This plan is not on sale yet', 'เลือกแพ็กเครดิตก่อน': 'Choose a credit pack first',
+    'กดจ่ายเงินหลายครั้งเกินไป รอสักครู่แล้วลองใหม่': 'Too many payment attempts. Wait a moment and try again.',
+    'แพ็กนี้ปิดขายแล้ว โหลดรายการใหม่ให้แล้ว': 'This pack is no longer on sale. The list has been refreshed.',
+    'เริ่มจ่ายเงินไม่ได้ ลองอีกครั้ง': 'Could not start the payment. Try again.', 'กำลังตรวจการจ่ายเงิน…': 'Checking your payment…',
+    'ยังไม่ได้รับการยืนยันการจ่ายเงิน ถ้าตัดเงินแล้ว เครดิตจะเข้าเองภายในไม่กี่นาที': 'Your payment is not confirmed yet. If you were charged, the credits will arrive within a few minutes.',
+    'ยืนยันการจ่ายเงินไม่ได้ ถ้าตัดเงินแล้ว เครดิตจะเข้าเองภายในไม่กี่นาที': 'Could not confirm the payment. If you were charged, the credits will arrive within a few minutes.',
+    'การจ่ายเงินไม่สำเร็จ ยังไม่ได้ตัดเงิน': 'The payment did not go through. You were not charged.', 'ไม่พบใบเสร็จ': 'Receipt not found',
+    'ใบเสร็จรับเงิน': 'Receipt', 'วันที่': 'Date', 'ยอดชำระ': 'Amount paid', 'ผู้ซื้อ': 'Buyer', 'ทีมงานเพิ่มเครดิตให้': 'Credits added by the team'
+  };
+  for (k in E4) E[k] = E4[k];
+  R.unshift(
+    [/^ได้รับเครดิตแล้ว ตอนนี้มี (\d+) เครดิต$/, function (m) { return 'Credits received. You now have ' + pl(m[1], 'credit') + '.'; }],
+    [/^ใบนี้ใช้เป็นหลักฐานการจ่ายเงิน ถ้าต้องการใบกำกับภาษี เขียนมาที่ (.+) พร้อมเลขที่ใบเสร็จ$/, function (m) { return 'This is your proof of payment. For a tax invoice, write to ' + m[1] + ' with the receipt number.'; }],
+    [/^เติม (\d+) เครดิต$/, function (m) { return 'Bought ' + pl(m[1], 'credit'); }],
+    [/^ทักษะ (\d+) อัน$/, function (m) { return m[1] + (m[1] === '1' ? ' skill' : ' skills'); }],
+    [/^ประวัติงาน (\d+) ที่$/, function (m) { return m[1] + (m[1] === '1' ? ' job' : ' jobs'); }],
+    [/^การศึกษา (\d+) ที่$/, function (m) { return 'Education: ' + m[1]; }],
+    [/^จาก (.+\.pdf)$/i, function (m) { return 'From ' + m[1]; }],
+    [/^กำลังอ่าน (.+)…$/, function (m) { return 'Reading ' + m[1] + '…'; }],
+    [/^ใช้ AI อ่านไฟล์ไม่ได้ · (.+)$/, function (m) { return 'AI could not read the file · ' + T(m[1]); }],
+    [/^ใช้ AI ไม่ได้ · (.+)$/, function (m) { return 'AI unavailable · ' + T(m[1]); }]
+  );
   R.unshift(
     [/^ตามคำขอ “(.+)” \(ข้อความตัวอย่าง\)$/, function (m) { return 'For “' + T(m[1]) + '” (sample text)'; }], [/^(\d+) ส่วน$/, function (m) { return pl(m[1], 'section'); }],
     [/^แพ็ก Free โชว์บนเว็บได้ 3 ชิ้น ตอนนี้มี (\d+) ชิ้น เว็บจะโชว์ 3 ชิ้นแรก$/, function (m) { return 'The Free plan shows 3 pieces. You have ' + m[1] + ', so the site shows the first 3.'; }],

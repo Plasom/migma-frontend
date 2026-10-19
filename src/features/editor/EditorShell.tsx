@@ -72,7 +72,7 @@ export function EditorShell() {
           <button type="button" className="btn filled" id="edSaveBtn" aria-keyshortcuts="Control+S Meta+S">{"บันทึก"}</button>
         </div>
         {" "}
-        <div className="ed-rs" id="edRs" role="separator" aria-orientation="vertical" aria-label="ปรับความกว้างแผงแก้ไข (ลูกศรซ้ายขวา)" tabIndex={0} aria-valuemin={320} aria-valuemax={720} aria-valuenow={400} />
+        <div className="ed-rs" id="edRs" role="separator" aria-orientation="vertical" aria-label="ปรับความกว้างแผงแก้ไข (ลูกศรซ้ายขวา)" tabIndex={0} aria-valuemin={400} aria-valuemax={720} aria-valuenow={400} />
         {" "}
       </aside>
       {" "}
@@ -85,7 +85,7 @@ export function EditorShell() {
         {" "}
         <div className="ed-body" id="sdBody" />
         {" "}
-        <div className="ed-rs" id="sdRs" role="separator" aria-orientation="vertical" aria-label="ปรับความกว้างแผง Case study (ลูกศรซ้ายขวา)" tabIndex={0} aria-valuemin={360} aria-valuemax={720} aria-valuenow={420} />
+        <div className="ed-rs" id="sdRs" role="separator" aria-orientation="vertical" aria-label="ปรับความกว้างแผง Case study (ลูกศรซ้ายขวา)" tabIndex={0} aria-valuemin={420} aria-valuemax={720} aria-valuenow={420} />
         {" "}
         <div className="ed-foot" id="sdFoot" hidden>
           <span className="st" id="sdFootSt" />

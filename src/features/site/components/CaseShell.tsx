@@ -1,10 +1,10 @@
 /** โครงหน้าCase study (ย้ายมาจาก markup ของต้นแบบ) · เนื้อหาในแต่ละส่วนวาดโดย engine ตอนเปิดหน้า */
 import { SiteFooter, SiteHeader } from './SiteChrome';
 
-export function CaseShell() {
+export function CaseShell({ base }: { base?: string } = {}) {
   return (
     <>
-      <SiteHeader page="case" />
+      <SiteHeader page="case" base={base} />
       <main className="wrap">
       {" "}
       <article className="cp" id="cp" data-progress="">
@@ -41,7 +41,7 @@ export function CaseShell() {
         {" "}
       </article>
       {" "}
-      <SiteFooter page="case" />
+      <SiteFooter page="case" base={base} />
       {" "}
     </main>
     </>

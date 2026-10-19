@@ -1,10 +1,10 @@
 /** โครงหน้าผลงานทั้งหมด (ย้ายมาจาก markup ของต้นแบบ) · เนื้อหาในแต่ละส่วนวาดโดย engine ตอนเปิดหน้า */
 import { SiteFooter, SiteHeader } from './SiteChrome';
 
-export function WorkShell() {
+export function WorkShell({ base }: { base?: string } = {}) {
   return (
     <>
-      <SiteHeader page="work" />
+      <SiteHeader page="work" base={base} />
       <main className="wrap">
       {" "}
       <section id="work" className="wk wk-page" data-mode="all">
@@ -88,7 +88,7 @@ export function WorkShell() {
         {" "}
       </section>
       {" "}
-      <SiteFooter page="work" />
+      <SiteFooter page="work" base={base} />
       {" "}
     </main>
     </>
