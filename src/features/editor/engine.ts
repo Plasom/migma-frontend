@@ -15,6 +15,7 @@ import { EDU_LEVELS, MONTHS_TH, derive, experienceYears, normalize, skillCategor
 import { ROUTES, pageToRoute, publicBase } from '@/lib/routes';
 import { uploadMedia } from '@/lib/storage/media';
 import { portfolioStore } from '@/lib/storage/portfolio-store';
+import { applyCredits, fetchCredits, fetchPricing, spendCredits } from '@/lib/billing';
 
 /** โยนตอน ?reset=new เพื่อหยุดสคริปต์ระหว่างล้างข้อมูลแล้วโหลดหน้าใหม่ */
 export const RESETTING = 'pf: resetting';
@@ -187,12 +188,12 @@ function setTheme(t,fromPrev){var r=document.documentElement,ap=function(){r.set
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)ap();else{r.classList.add('thm');ap();setTimeout(function(){r.classList.remove('thm')},420)}
   say(t==='dark'?'โหมดมืด':'โหมดสว่าง')}
 $('edTheme').onclick=function(){setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')};themeUI();
-addEventListener('message',function(e){var m=e.data||{};if(m.type==='pf:mode'&&m.from==='preview'&&e.source===IF.contentWindow)setTheme(m.theme,1);if(m.type==='pf:lang'&&e.source===IF.contentWindow)setLang(m.lang)});
+addEventListener('message',function(e){var m=e.data||{};if(m.type==='pf:mode'&&m.from==='preview'&&IF&&IF.contentWindow&&e.source===IF.contentWindow)setTheme(m.theme,1);if(m.type==='pf:lang'&&IF&&IF.contentWindow&&e.source===IF.contentWindow)setLang(m.lang)});
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-edlang]');if(b){setLang(b.dataset.edlang);var nb=document.querySelector('[data-edlang="'+LG+'"]');if(b.closest('#edBody')){nb=document.querySelector('#edBody [data-edlang="'+LG+'"]')}nb&&nb.focus();return}if(e.target.closest&&e.target.closest('[data-trdlg]')){trDlg();return}var c=e.target.closest&&e.target.closest('[data-deflang]');if(c){D.site.lang=c.dataset.deflang;persist();render();var nc=document.querySelector('[data-deflang="'+D.site.lang+'"]');nc&&nc.focus()}});
 $('edAI').onclick=function(){hub()};$('edNavAI').onclick=function(){hub()};
 /* ---------- บัญชีและตั้งค่า (หน้า account.html ฝังในหลังบ้าน) ---------- */
 var acctOn=false,GATE=false,acctPre=false;   /* acctPre = โหลดหน้าบัญชีรอไว้ในกรอบที่ซ่อนอยู่แล้ว (เปิดแล้วเนื้อหาอยู่ครบ ไม่เห็นกรอบว่างก่อน) */
-function acctMsg(m){try{$('edAcctIf').contentWindow.postMessage(m,'*')}catch(e){}}
+function acctMsg(m){try{var f=$('edAcctIf');if(f&&f.contentWindow)f.contentWindow.postMessage(m,'*')}catch(e){}}
 function acctPlace(){if(GATE)return;var n=$('edNav').getBoundingClientRect(),v=n.height>n.width,el=$('edAcct');el.style.left=(v?n.right:0)+'px';el.style.top=(v?n.top:n.bottom)+'px'}
 function acctCoin(){var c=$('edNavCoin');try{var a=JSON.parse(LS.get('pf-acct-demo')||'null');if(a&&a.signed){c.textContent=a.coins;c.hidden=false;c.setAttribute('aria-label','เครดิต AI คงเหลือ '+a.coins);return}}catch(e){}c.hidden=true}
 (function(){var m=/[?&]dev=([01])/.exec(location.search);if(m){if(m[1]==='1')LS.set('pf-dev','1');else try{localStorage.removeItem('pf-dev')}catch(e){}}})();
@@ -214,7 +215,7 @@ $('edNavAcct').onclick=function(){var b=this;if(MN&&MN.trig===b){closeMenu(false
 $('edBack').onclick=function(){closeAcct();$('edH')&&$('edH').focus()};
 addEventListener('resize',function(){if(acctOn)acctPlace()});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&acctOn&&!GATE&&!document.querySelector('.dlg')){closeAcct();$('edNavAcct').focus()}});
-addEventListener('message',function(e){var m=e.data||{};if(e.source!==$('edAcctIf').contentWindow)return;if(m.type==='pf:acct')acctCoin();if(m.type==='pf:acct'){if(m.data){try{JSON.parse(m.data);LS.set('pf-acct-demo',m.data)}catch(x){}}crUI();if(GATE||!crGet())gate()}if(m.type==='pf:fs')fsApply();if(m.type==='pf:ui'){try{sessionStorage.setItem('pf-ui-back','1')}catch(x){}location.reload();return}if(m.type==='pf:mode'&&(m.theme==='dark'||m.theme==='light'))setTheme(m.theme);if(m.type==='pf:acct-restart'){closeAcct();onboard()}if(m.type==='pf:acct-close'){closeAcct();$('edNavAcct').focus()}if(m.type==='pf:acct-site'){var vb=document.querySelector('.ed-view');vb&&vb.click()}});
+addEventListener('message',function(e){var m=e.data||{},f=$('edAcctIf');if(!f||!f.contentWindow||e.source!==f.contentWindow)return;if(m.type==='pf:acct')acctCoin();if(m.type==='pf:acct'){if(m.data){try{JSON.parse(m.data);LS.set('pf-acct-demo',m.data)}catch(x){}}crUI();if(GATE||!crGet())gate()}if(m.type==='pf:fs')fsApply();if(m.type==='pf:ui'){try{sessionStorage.setItem('pf-ui-back','1')}catch(x){}location.reload();return}if(m.type==='pf:mode'&&(m.theme==='dark'||m.theme==='light'))setTheme(m.theme);if(m.type==='pf:acct-restart'){closeAcct();onboard()}if(m.type==='pf:acct-close'){closeAcct();$('edNavAcct').focus()}if(m.type==='pf:acct-site'){var vb=document.querySelector('.ed-view');vb&&vb.click()}});
 /* ---------- เครดิต AI (ตัวจริงอยู่ที่หลังบ้าน · ในเครื่องเก็บ cache ชุดเดียวกับหน้าบัญชีไว้แสดงผลทันที แล้วซิงก์กลับด้วย credSync) ----------
    base = ยอดหลังเติมครั้งล่าสุด · ใช้ไปกี่เปอร์เซ็นต์ = (base − คงเหลือ) / base · เตือนตอนข้าม 75% และ 90% · หมด = ปุ่ม AI พาไปเติม */
 var AICOST={polish:1,steps:2,resume:10,'case':5,tr:2};
@@ -473,7 +474,7 @@ function formTo(path){var par=path.replace(/\.\d+$/,''),val=get(D,path),el=docum
   var tg=el.classList.contains('ic')?el:(el.closest('.fld')||el);document.querySelectorAll('.fl-on').forEach(function(x){x.classList.remove('fl-on')});
   tg.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});tg.classList.add('fl-on');setTimeout(function(){tg.classList.remove('fl-on')},1600)}
 function setField(path,v){var f=document.querySelector('[data-k="'+path+'"]');if(!f||f===document.activeElement)return;f.value=v;var iw=f.closest('.inw');iw&&iw.classList.toggle('has',v!=='');var c=f.closest('.fld')&&f.closest('.fld').querySelector('[data-cnt]');if(c){var mx=+c.dataset.cnt;c.textContent=v.length+' / '+mx;c.classList.toggle('over',v.length>mx)}if(f.dataset.val||f.dataset.max)markErr(f,false)}
-var pfOpenSite=function(u,w,ex){if(!w){window.open(pageToRoute(u)+(ex?(u.indexOf('?')>=0?'&':'?')+'example=1':''),'_blank','noopener');return}w=w||window.open('','_blank');if(w&&ex)try{w.name='pfex'}catch(q){}if(!w){toast('เบราว์เซอร์ไม่ให้เปิดหน้าต่างใหม่ ดูในช่องตัวอย่างข้างๆ แทนได้');return}w.document.open();w.document.write(h);w.document.close()};
+var pfOpenSite=function(u,w,ex){if(!w){window.open(pageToRoute(u)+(ex?(u.indexOf('?')>=0?'&':'?')+'example=1':''),'_blank','noopener');return}var h=pageHtml(u,1);w=w||window.open('','_blank');if(w&&ex)try{w.name='pfex'}catch(q){}if(!w){toast('เบราว์เซอร์ไม่ให้เปิดหน้าต่างใหม่ ดูในช่องตัวอย่างข้างๆ แทนได้');return}w.document.open();w.document.write(h||'');w.document.close()};
 function prevPage(p){if(p!==curPage){curPage=p;frameTo(p)}}
 function reloadPrev(){clearTimeout(rT);rT=setTimeout(swapPrev,60)}
 document.querySelector('.ed-view').addEventListener('click',function(e){if(D.site&&D.site.i18n)LS.set('pf-lang',LG);});
@@ -481,7 +482,7 @@ frameTo(curPage);
 /* หน้าตัวอย่างใน iframe ขอข้อมูลจากตรงนี้ตอนเปิด (ร่างล่าสุดในหน่วยความจำ + ภาษาที่กำลังกรอก) */
 window.pfPreviewHandoff=function(){return {data:D,lang:D.site&&D.site.i18n?LG:D.site&&D.site.only==='en'?'en':'th',theme:document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light'}};
 addEventListener('message',function(e){var m=e.data||{};
-  if(e.source&&BK.contentWindow===e.source)return;
+  if(e.source&&BK&&BK.contentWindow===e.source)return;
   if(m.type==='pf:nav'&&m.href){var nu=/[?&]edit=1/.test(m.href)?m.href:m.href.replace(/(#.*)?$/,function(hs){return (m.href.indexOf('?')>=0?'&':'?')+'edit=1'+(hs||'')}),qs=new URLSearchParams((nu.split('?')[1]||'').split('#')[0]),pk=qs.get('p'),wk=qs.get('w'),tt=qs.get('t');
    /* กดการ์ดผลงาน / ลิงก์ case ในตัวอย่าง = เปิดฟอร์มของงานนั้นด้วย ตัวอย่างกับฟอร์มอยู่ที่เดียวกันเสมอ */
    if(/^case\.html/.test(nu)){var W=(D.works||[]).filter(function(x){return x.id===wk})[0]||(pk&&(D.works||[]).filter(function(x){return (x.caseIds||[]).indexOf(pk)>=0})[0])||(tt&&(D.works||[]).filter(function(x){return x.title===tt})[0]);
@@ -840,7 +841,7 @@ function hdl(t){return '<button type="button" class="btn ghost icon sm hdl" data
 /* รายการ: ลากที่จับเพื่อเรียง (หรือโฟกัสที่จับแล้วกด ↑↓) · ลบ = ถามยืนยัน */
 function list(path,rows,o){var a=get(D,path)||[],man=o.okey?true:o.manual!==false,show=o.order?o.order(a.slice()):a;
   var EMPTY={works:['ยังไม่มีผลงาน','เริ่มจากงานที่ภูมิใจที่สุด 1 ชิ้นก่อน ที่เหลือค่อยเติม'],process:['ยังไม่มีขั้นตอน','ใส่ 3–5 ขั้น หรือให้ AI เสนอจากด้านบน'],experience:['ยังไม่มีประวัติงาน','ใส่งานล่าสุดก่อน ระบบนับปีประสบการณ์ให้เอง'],education:['ยังไม่มีการศึกษา','ไม่ใส่ก็ได้ ส่วนนี้จะไม่ขึ้นบนเว็บ'],'contact.links':['ยังไม่มีช่องทางอื่น','เช่น LinkedIn หรือ Behance มีแค่อีเมลก็พอแล้ว']}[path];
-  if(!a.length&&EMPTY)return '<div class="es-box"><div class="es sm"><p class="es-t">'+EMPTY[0]+'</p><p class="es-d">'+EMPTY[1]+'</p><div class="es-a"><button type="button" class="btn filled" data-add="'+path+'"><span class="ms" aria-hidden="true">add</span>'+esc(o.add)+'</button></div></div></div>';
+  if(!a.length&&EMPTY)return '<div class="es-box"><div class="es sm"><p class="es-t">'+EMPTY[0]+'</p><p class="es-d">'+EMPTY[1]+'</p><div class="es-a"><button type="button" class="btn filled" data-add="'+path+'"><span class="ms" aria-hidden="true">add</span>'+esc(o.add)+'</button>'+(o.extra||'')+'</div></div></div>';
   return '<ul class="lst" aria-label="'+esc(o.label)+'" data-list="'+path+'" data-both'+(o.okey&&o.manual===false?' data-okey="'+o.okey+'"':'')+'>'+show.map(function(x,n){var i=a.indexOf(x),r=rows(ALT()?localize(x):x,n),u=U(path,x.id),dt=dirty(u),isNew=uRead(S,u)===undefined,t=r.t||'';
   var ne=ERR.filter(function(e){return e.sub&&e.sub.id===x.id}).length;
   return '<li data-i="'+i+'" data-id="'+x.id+'">'+(man?hdl(t||o.noun):'')+(r.th!==undefined?'<span class="th"'+(r.th?' data-img style="background-image:url(\''+r.th+'\')"':'')+' aria-hidden="true"></span>':'')+
@@ -1278,14 +1279,35 @@ function openDoc(){var d=$('edDoc');d.multiple=docMode==='works';d.accept=docMod
 function worksConfirmDlg(mode, files){var a=crGet();if(!a){toast('เข้าสู่ระบบก่อนใช้ AI',{label:'เข้าสู่ระบบ',fn:function(){openAcct('overview')}});return}
   var isSingle=mode==='work',rate=AICOST.case||5,fnNames=files.map(function(f){return f.name}).join(', ');
   scanWorkFiles(files).then(function(res){
-    var count=isSingle?1:Math.max(1,Math.min(10,res.count));
+    var projs=res.projects||[];
+    var hasProjs=!isSingle&&projs.length>0;
+    var count=isSingle?1:hasProjs?projs.length:Math.max(1,Math.min(10,res.count));
     var m=modal('<h2 class="dg-t" id="dgT">'+(isSingle?'ให้ AI เติมข้อมูลงานจากไฟล์':'ให้ AI สกัดผลงานจากไฟล์')+'</h2>'+
       '<p class="dg-d">'+(isSingle?'AI จะอ่านไฟล์ คัดเลือกข้อมูล และดึงรูปภาพมาใส่ในงานนี้':'AI จะอ่านไฟล์ แยกแต่ละโปรเจกต์ และดึงภาพหน้าจอมาสร้างเป็นการ์ดและ Case study ให้อัตโนมัติ')+'</p>'+
       '<div class="wk-cf-box">'+
         '<div class="wk-cf-file"><span class="ms" aria-hidden="true">'+(files.length>1?'folder_open':'description')+'</span><span class="wk-cf-fn">'+esc(fnNames)+'</span></div>'+
-        (isSingle?'':('<div class="wk-cf-stepper">'+
+        (isSingle?'':(hasProjs?(
+          '<div class="wk-cf-projs">'+
+            '<div class="wk-cf-projs-head">'+
+              '<div><span class="wk-cf-projs-title">เลือกโปรเจกต์ที่ต้องการสร้าง</span><small id="wkSelCount">เลือก '+projs.length+' จาก '+projs.length+' งาน</small></div>'+
+              '<button type="button" class="btn text sm" id="wkSelAll">ไม่เลือกเลย</button>'+
+            '</div>'+
+            '<ul class="wk-projs-list">'+
+              projs.map(function(p, i){
+                return '<li class="wk-proj-row"><label for="wkPrj'+i+'">'+
+                  '<input type="checkbox" class="cb wk-prj-cb" id="wkPrj'+i+'" data-pki="'+i+'" checked>'+
+                  '<div class="wk-proj-body">'+
+                    '<div class="wk-proj-title"><b>'+esc(p.title)+'</b>'+(p.cat?'<span class="wk-proj-cat">'+esc(p.cat)+'</span>':'')+'</div>'+
+                    (p.sum?'<small class="wk-proj-sum">'+esc(p.sum)+'</small>':'')+
+                  '</div>'+
+                '</label></li>';
+              }).join('')+
+            '</ul>'+
+            '<div style="display:none"><button type="button" id="wkStDec"></button><span id="wkStVal">'+count+'</span><button type="button" id="wkStInc"></button></div>'+
+          '</div>'
+        ):('<div class="wk-cf-stepper">'+
           '<div class="wk-cf-st-l"><span>จำนวนผลงานที่ต้องการสร้าง</span><small>'+(res.isMultiPage?'ตรวจพบประมาณ '+res.count+' งานในไฟล์ (ปรับเพิ่ม/ลดได้)':'ปรับจำนวนผลงานที่ต้องการสร้าง (1–10 งาน)')+'</small></div>'+
-          '<div class="wk-cf-st-c"><button type="button" class="btn ghost icon wk-st-btn" id="wkStDec" aria-label="ลดจำนวนผลงาน"><span class="ms" aria-hidden="true">remove</span></button><span class="wk-st-val" id="wkStVal">'+count+'</span><button type="button" class="btn ghost icon wk-st-btn" id="wkStInc" aria-label="เพิ่มจำนวนผลงาน"><span class="ms" aria-hidden="true">add</span></button></div></div>'))+
+          '<div class="wk-cf-st-c"><button type="button" class="btn ghost icon wk-st-btn" id="wkStDec" aria-label="ลดจำนวนผลงาน"><span class="ms" aria-hidden="true">remove</span></button><span class="wk-st-val" id="wkStVal">'+count+'</span><button type="button" class="btn ghost icon wk-st-btn" id="wkStInc" aria-label="เพิ่มจำนวนผลงาน"><span class="ms" aria-hidden="true">add</span></button></div></div>')))+
         '<div class="wk-cf-cr">'+
           '<div class="wk-cr-row"><span>อัตราเครดิต AI</span><b>'+rate+' เครดิต / ผลงาน</b></div>'+
           '<div class="wk-cr-row main"><span>เครดิตที่ต้องใช้</span><b id="wkCrCost">'+(count*rate)+' เครดิต</b></div>'+
@@ -1296,20 +1318,46 @@ function worksConfirmDlg(mode, files){var a=crGet();if(!a){toast('เข้า�
       '</div>'+
       '<div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" id="wkGo"><span class="ms" aria-hidden="true">auto_awesome</span><span id="wkGoTx">เริ่มเลย</span></button></div>','md');
     m.box.querySelector('[data-x]').onclick=m.close;
-    function sync(){var cost=count*rate,rem=a.coins-cost,vEl=m.box.querySelector('#wkStVal');
+    var selectedTitles = hasProjs ? projs.map(function(p){return p.title}) : [];
+    function sync(){
+      if(hasProjs){
+        var checked = [].slice.call(m.box.querySelectorAll('.wk-prj-cb:checked'));
+        count = checked.length;
+        selectedTitles = checked.map(function(cb){return projs[+cb.dataset.pki].title});
+        var scEl = m.box.querySelector('#wkSelCount');
+        if(scEl) scEl.textContent = 'เลือก ' + count + ' จาก ' + projs.length + ' งาน';
+        var saEl = m.box.querySelector('#wkSelAll');
+        if(saEl) saEl.textContent = count === 0 ? 'เลือกทั้งหมด' : 'ไม่เลือกเลย';
+      }
+      var cost=count*rate,rem=a.coins-cost,vEl=m.box.querySelector('#wkStVal');
       if(vEl)vEl.textContent=count;m.box.querySelector('#wkCrCost').textContent=cost+' เครดิต';m.box.querySelector('#wkCrRem').textContent=rem+' เครดิต';
       var go=m.box.querySelector('#wkGo'),goTx=m.box.querySelector('#wkGoTx');
-      if(a.coins<cost){go.classList.remove('filled');go.classList.add('outlined');goTx.textContent='เครดิตไม่พอ เติมเครดิต';go.onclick=function(){m.close();openAcct('credits')}}
-      else{go.classList.remove('outlined');go.classList.add('filled');goTx.textContent=isSingle?'เริ่มเติมข้อมูล ('+cost+' เครดิต)':'เริ่มสร้าง '+count+' งาน ('+cost+' เครดิต)';
-        go.onclick=function(){m.close();executeGen(mode,files,count,isSingle)}}}
+      if(count===0){
+        go.disabled=true;go.classList.remove('filled');go.classList.add('outlined');goTx.textContent='เลือกอย่างน้อย 1 งาน';
+      }else if(a.coins<cost){
+        go.disabled=false;go.classList.remove('filled');go.classList.add('outlined');goTx.textContent='เครดิตไม่พอ เติมเครดิต';go.onclick=function(){m.close();openAcct('credits')}
+      }else{
+        go.disabled=false;go.classList.remove('outlined');go.classList.add('filled');goTx.textContent=isSingle?'เริ่มเติมข้อมูล ('+cost+' เครดิต)':'เริ่มสร้าง '+count+' งาน ('+cost+' เครดิต)';
+        go.onclick=function(){m.close();executeGen(mode,files,count,isSingle,hasProjs?selectedTitles:null)}
+      }
+    }
+    var sa=m.box.querySelector('#wkSelAll');
+    if(sa){
+      sa.onclick=function(){
+        var anyChecked=m.box.querySelectorAll('.wk-prj-cb:checked').length>0;
+        m.box.querySelectorAll('.wk-prj-cb').forEach(function(c){c.checked=!anyChecked});
+        sync();
+      };
+    }
+    m.box.querySelectorAll('.wk-prj-cb').forEach(function(c){c.onchange=sync});
     var dec=m.box.querySelector('#wkStDec'),inc=m.box.querySelector('#wkStInc');
     if(dec&&inc){dec.onclick=function(){if(count>1){count--;sync()}};inc.onclick=function(){if(count<10){count++;sync()}}}
     sync();m.box.querySelector('#wkGo').focus()})}
-function executeGen(mode,files,units,isSingle){var rate=AICOST.case||5,cost=units*rate,fileNames=files.map(function(f){return f.name}).join(', '),desc=(isSingle?'อ่านไฟล์งาน ':'สกัดผลงาน '+units+' ชิ้น ')+fileNames;
+function executeGen(mode,files,units,isSingle,selectedTitles){var rate=AICOST.case||5,cost=units*rate,fileNames=files.map(function(f){return f.name}).join(', '),desc=(isSingle?'อ่านไฟล์งาน ':'สกัดผลงาน '+units+' ชิ้น ')+fileNames;
   if(!crSpend('case',cost,desc,true))return;
   var lab='กำลังให้ AI อ่านไฟล์ '+files.length+' ไฟล์ และสกัดภาพ…';
-  pickDlg({title:isSingle?'AI สกัดข้อมูลงานนี้ให้แล้ว':'AI สกัดผลงาน '+units+' ชิ้นให้แล้ว',sub:'จาก '+fileNames,loading:lab,real:1,refund:'case',refundAmount:cost,retry:function(){executeGen(mode,files,units,isSingle)},
-    load:function(){return readWorks(files,units,isSingle).then(function(works){return isSingle?genSingleWorkFromAI(works[0]):genWorksFromAI(works)})},
+  pickDlg({title:isSingle?'AI สกัดข้อมูลงานนี้ให้แล้ว':'AI สกัดผลงาน '+units+' ชิ้นให้แล้ว',sub:'จาก '+fileNames,loading:lab,real:1,refund:'case',refundAmount:cost,retry:function(){executeGen(mode,files,units,isSingle,selectedTitles)},
+    load:function(){return readWorks(files,units,isSingle,selectedTitles).then(function(works){return isSingle?genSingleWorkFromAI(works[0]):genWorksFromAI(works)})},
     after:isSingle?null:function(){go('works',null)}})}
 function genWorksFromAI(works){return works.map(function(rw,i){return{group:'ผลงาน',title:rw.title||('ผลงานชิ้นที่ '+(i+1)),mode:'ผลงานใหม่',
   html:(rw.cover?'<div class="pk-cover"><img src="'+esc(rw.cover)+'" alt="" /></div>':'')+'<p><b>'+esc(rw.cat?rw.cat+' · ':'')+esc(rw.sum||'')+'</b></p>'+(rw.tags&&rw.tags.length?tg(rw.tags):'')+
@@ -1609,7 +1657,7 @@ function cpkOpen(){if(CPK){cpkClose(true);return}var btn=$('edClr'),el=document.
   th.addEventListener('keydown',function(e){var st=e.shiftKey?.1:.01,k=e.key;if(k==='ArrowLeft')CPK.s-=st;else if(k==='ArrowRight')CPK.s+=st;else if(k==='ArrowUp')CPK.v+=st;else if(k==='ArrowDown')CPK.v-=st;else return;e.preventDefault();CPK.s=Math.max(0,Math.min(1,CPK.s));CPK.v=Math.max(0,Math.min(1,CPK.v));cpkSet()});
   el.querySelector('.cpk-hue').addEventListener('input',function(e){CPK.h=+e.target.value;cpkSet()});
   el.querySelector('.cpk-hex').addEventListener('input',function(e){var v=e.target.value.trim();if(v&&v[0]!=='#')v='#'+v;var c=hx2rgb(v);if(c){var hv=rgb2hsv(c);if(hv[1]>0)CPK.h=hv[0];CPK.s=hv[1];CPK.v=hv[2];setBrand(v,'pk');cpkPaint(true)}});
-  var eye=el.querySelector('.cpk-eye');if(eye)eye.onclick=function(){new EyeDropper().open().then(function(r){var c=hx2rgb(r.sRGBHex);if(!c)return;var hv=rgb2hsv(c);if(hv[1]>0)CPK.h=hv[0];CPK.s=hv[1];CPK.v=hv[2];cpkSet()}).catch(function(){})};
+  var eye=el.querySelector('.cpk-eye');if(eye)eye.onclick=function(){if(window.EyeDropper){new window.EyeDropper().open().then(function(r){var c=hx2rgb(r.sRGBHex);if(!c)return;var hv=rgb2hsv(c);if(hv[1]>0)CPK.h=hv[0];CPK.s=hv[1];CPK.v=hv[2];cpkSet()}).catch(function(){})}};
   el.addEventListener('keydown',function(e){if(e.key==='Escape'){e.stopPropagation();cpkClose(true)}if(e.key==='Tab'){var f=[].slice.call(el.querySelectorAll('[tabindex="0"],input,button')),i=f.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();f[f.length-1].focus()}else if(!e.shiftKey&&i===f.length-1){e.preventDefault();f[0].focus()}}});
   CPK.out=function(e){if(!el.contains(e.target)&&e.target!==btn&&!btn.contains(e.target))cpkClose(false)};document.addEventListener('pointerdown',CPK.out,true);
   CPK.blur=function(){setTimeout(function(){var a=document.activeElement;if(CPK&&a&&a.tagName==='IFRAME')cpkClose(false)},0)};addEventListener('blur',CPK.blur);
@@ -1645,7 +1693,7 @@ layoutNav();setW(+(LS.get('pf-ed-w')||PW));setS(+(LS.get('pf-sd-w')||SW));
 addEventListener('beforeunload',function(e){if(allUnits().some(dirty)){e.preventDefault();e.returnValue=''}});
 /* บอกครั้งแรกครั้งเดียว: ข้อความในตัวอย่างกดแก้ได้ตรงนั้นเลย (ข้อ 2) */
 var ACQ=(location.search.match(/[?&]acct=([a-z]+)/)||[])[1];if(ACQ){try{history.replaceState(null,'',location.pathname)}catch(e){}}
-setTimeout(function(){if(crGet()){if(ACQ)openAcct(ACQ);else{firstRun();setTimeout(function(){if(acctOn||GATE)return;var pf=$('edAcctIf');pf.addEventListener('load',function(){acctPre=!!pf.getAttribute('src')},{once:true});pf.src=ROUTES.account+'?embed=1&h=overview'},1500)}}else fetchMe().catch(function(){return null}).then(function(me){gate(!!me)})},400);
+setTimeout(function(){if(crGet()){if(ACQ)openAcct(ACQ);else{firstRun();setTimeout(function(){if(acctOn||GATE)return;var pf=$('edAcctIf');if(!pf)return;pf.addEventListener('load',function(){acctPre=!!pf.getAttribute('src')},{once:true});pf.src=ROUTES.account+'?embed=1&h=overview'},1500)}}else fetchMe().catch(function(){return null}).then(function(me){gate(!!me)})},400);
 if(false)setTimeout(function(){if(document.querySelector('.dlg'))return;LS.set('pf-tip-inline','1');toast('แก้ได้สองทาง: พิมพ์ในฟอร์มด้านซ้าย หรือกดที่ข้อความในตัวอย่างแล้วพิมพ์ตรงนั้นเลย')},1800);
 tabs();render();
 try{if(sessionStorage.getItem('pf-ui-back')){sessionStorage.removeItem('pf-ui-back');setTimeout(function(){openAcct('settings')},700)}}catch(e){}

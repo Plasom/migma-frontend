@@ -69,10 +69,18 @@ export interface WorkData {
   chapters: WorkChapterData[];
 }
 
+export interface WorkProjectSummary {
+  id?: number;
+  title: string;
+  cat?: string;
+  sum?: string;
+}
+
 export interface WorkScanResult {
   count: number;
   isMultiPage: boolean;
   fileNames: string[];
+  projects?: WorkProjectSummary[];
 }
 
 export class AiError extends Error {
@@ -117,19 +125,42 @@ export async function readResume(file: File): Promise<ResumeData> {
   }
 }
 
+/** สแกนค้นหารายชื่อโปรเจกต์ที่มีในไฟล์จากหลังบ้าน */
+export async function scanWorksApi(files: File[]): Promise<WorkProjectSummary[]> {
+  const fd = new FormData();
+  for (const f of files) {
+    fd.append('files', f, f.name);
+    fd.append('file', f, f.name);
+  }
+  try {
+    const r = await api<{ projects: WorkProjectSummary[] }>('/api/v1/me/ai/works/scan', {
+      method: 'POST',
+      body: fd,
+    });
+    return r.projects || [];
+  } catch {
+    return [];
+  }
+}
+
 /** ส่งไฟล์ผลงาน (PDF / ภาพ) ให้ AI สกัดเป็นผลงานพร้อมรูปภาพ · ล้มเหลว = AiError */
 export async function readWorks(
   files: File[],
   units: number = 1,
-  single: boolean = false
+  single: boolean = false,
+  selectedTitles?: string[]
 ): Promise<WorkData[]> {
   const fd = new FormData();
   for (const f of files) {
     fd.append('files', f, f.name);
+    fd.append('file', f, f.name);
   }
   fd.append('units', String(units));
   if (single) {
     fd.append('single', 'true');
+  }
+  if (selectedTitles && selectedTitles.length > 0) {
+    fd.append('selected', JSON.stringify(selectedTitles));
   }
   try {
     const r = await api<{ model: string; works: WorkData[] }>('/api/v1/me/ai/works', {
@@ -147,11 +178,36 @@ export async function readWorks(
 export async function scanWorkFiles(files: File[]): Promise<WorkScanResult> {
   const fileNames = files.map(f => f.name);
   if (files.length > 1) {
+    const projs: WorkProjectSummary[] = files.map((f, i) => {
+      const t = f.name.replace(/\.[a-z0-9]+$/i, '').replace(/[_-]+/g, ' ').trim() || `ผลงานชิ้นที่ ${i + 1}`;
+      return {
+        id: i + 1,
+        title: t,
+        cat: f.type.startsWith('image/') ? 'ภาพผลงาน' : 'งานจากไฟล์',
+        sum: `จากไฟล์ ${f.name}`,
+      };
+    });
     return {
       count: Math.min(Math.max(files.length, 1), 10),
       isMultiPage: false,
       fileNames,
+      projects: projs,
     };
+  }
+
+  // ตรวจสอบกับหลังบ้านว่าพบโปรเจกต์อะไรบ้าง
+  try {
+    const apiProjects = await scanWorksApi(files);
+    if (apiProjects && apiProjects.length > 0) {
+      return {
+        count: Math.min(apiProjects.length, 10),
+        isMultiPage: true,
+        fileNames,
+        projects: apiProjects,
+      };
+    }
+  } catch {
+    // fallback
   }
 
   const f = files[0];
