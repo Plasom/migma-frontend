@@ -176,7 +176,7 @@ document.addEventListener('click',function(e){var t=e.target.closest&&e.target.c
   if(t.dataset.rc!==undefined){receipt(t.dataset.rc);return}
   if(t.dataset.soon!==undefined){toast('ส่วนนี้ยังไม่เปิดใช้');return}
 });
-function setThm(n){var r=document.documentElement;r.setAttribute('data-theme',n);LS.set('theme',n);[].forEach.call(document.querySelectorAll('[data-thm]'),function(b){b.setAttribute('aria-checked',b.dataset.thm===n)});var tb=$('acTheme');if(tb){tb.setAttribute('aria-label',n==='dark'?'สลับโหมดสว่าง':'สลับโหมดมืด');tb.firstChild.textContent=n==='dark'?'light_mode':'dark_mode'}}
+function setThm(n){var r=document.documentElement,ap=function(){r.setAttribute('data-theme',n);LS.set('theme',n);[].forEach.call(document.querySelectorAll('[data-thm]'),function(b){b.setAttribute('aria-checked',b.dataset.thm===n)});var tb=$('acTheme');if(tb){tb.setAttribute('aria-label',n==='dark'?'สลับโหมดสว่าง':'สลับโหมดมืด');tb.firstChild.textContent=n==='dark'?'light_mode':'dark_mode'}};if(r.getAttribute('data-theme')===n)return;if(matchMedia('(prefers-reduced-motion: reduce)').matches)ap();else{r.classList.add('thm');ap();setTimeout(function(){r.classList.remove('thm')},200)}}
 function fsApply(){document.documentElement.classList.toggle('fs-lg',LS.get('pf-fs')==='lg')}fsApply();
 /* ภาษาของหลังบ้าน: สลับแล้วโหลดใหม่ ถ้าหน้านี้ฝังอยู่ในตัวแก้ ให้ตัวแก้เป็นคนโหลด */
 function uiSet(l){if(l===uiLang())return;try{localStorage.setItem('pf-ui',l)}catch(e){}if(EMB)up({type:'pf:ui'});else location.reload()}

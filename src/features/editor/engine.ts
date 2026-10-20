@@ -182,10 +182,10 @@ function saveAll(quiet){var E=errs();if(E.length){goErr(E[0]);toast('ยัง�
   S=clone(D);persistS();persist();render();if(!quiet){say('บันทึกแล้ว');toast('บันทึกแล้ว กด “เผยแพร่” เมื่อพร้อมขึ้นเว็บ')}return true}
 /* โหมดสว่าง/มืด: ทั้งหลังบ้านและตัวอย่างใช้ค่าเดียวกัน (localStorage theme) */
 function themeUI(){var dk=document.documentElement.getAttribute('data-theme')==='dark',b=$('edTheme');b.querySelector('.ms').textContent=dk?'light_mode':'dark_mode';b.setAttribute('aria-label',dk?'เปลี่ยนเป็นโหมดสว่าง':'เปลี่ยนเป็นโหมดมืด')}
-/* สลับโหมด: หลังบ้านกับตัวอย่างค่อยๆ เปลี่ยนสีไปพร้อมกัน 360ms · ตัวอย่างไม่โหลดใหม่ */
+/* สลับโหมด: หลังบ้านกับตัวอย่างค่อยๆ เปลี่ยนสีไปพร้อมกัน 160ms · ตัวอย่างไม่โหลดใหม่ */
 function setTheme(t,fromPrev){var r=document.documentElement,ap=function(){r.setAttribute('data-theme',t);LS.set('theme',t);themeUI();acctMsg({type:'pf:mode',theme:t})};if(r.getAttribute('data-theme')===t)return;
   if(!fromPrev)msg({type:'pf:mode',theme:t});
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches)ap();else{r.classList.add('thm');ap();setTimeout(function(){r.classList.remove('thm')},420)}
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)ap();else{r.classList.add('thm');ap();setTimeout(function(){r.classList.remove('thm')},200)}
   say(t==='dark'?'โหมดมืด':'โหมดสว่าง')}
 $('edTheme').onclick=function(){setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')};themeUI();
 addEventListener('message',function(e){var m=e.data||{};if(m.type==='pf:mode'&&m.from==='preview'&&IF&&IF.contentWindow&&e.source===IF.contentWindow)setTheme(m.theme,1);if(m.type==='pf:lang'&&IF&&IF.contentWindow&&e.source===IF.contentWindow)setLang(m.lang)});

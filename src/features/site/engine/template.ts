@@ -234,8 +234,8 @@ export function renderTemplate(env: TemplateEnv): SiteRuntime {
   if (hero && nm) document.title = nm + ' · ' + ((D.profile && D.profile.role) || 'Portfolio');
 
   if (!EDIT) ['case', 'exp', 'form'].forEach(function (id) { var el = document.getElementById(id); if (el && !el.hidden) el.setAttribute('data-rv', ''); });
-  /* ---------- สลับโหมดสว่าง/มืด: สีทั้งหน้าค่อยๆ เปลี่ยน 360ms (duration-slow · ease-standard) แทนการตัดฉับ ----------
-     ไล่สีพื้น ตัวอักษร เส้นขอบ เงา ของทุกชิ้นพร้อมกัน (ใช้ได้ทุกเบราว์เซอร์) · ขอลดการเคลื่อนไหว = เปลี่ยนทันที */
+  /* ---------- สลับโหมดสว่าง/มืด: สีทั้งหน้าค่อยๆ เปลี่ยน 160ms (duration-fast · ease-standard) แทนการตัดฉับ ----------
+     ไล่สีพื้น ตัวอักษร เส้นขอบ ของทุกชิ้นพร้อมกัน (ใช้ได้ทุกเบราว์เซอร์) · ขอลดการเคลื่อนไหว = เปลี่ยนทันที */
   var setMode = function (v, quiet) {
     var root = document.documentElement, apply = function () {
       root.setAttribute('data-theme', v); var ic = document.getElementById('tl'), bt = document.getElementById('theme');
@@ -243,7 +243,7 @@ export function renderTemplate(env: TemplateEnv): SiteRuntime {
       try { localStorage.setItem('theme', v); } catch (e) {} };
     if (root.getAttribute('data-theme') === v) return;
     if (quiet || matchMedia('(prefers-reduced-motion: reduce)').matches) { apply(); return; }
-    root.classList.add('pf-thm'); apply(); setTimeout(function () { root.classList.remove('pf-thm'); }, 420);
+    root.classList.add('pf-thm'); apply(); setTimeout(function () { root.classList.remove('pf-thm'); }, 200);
   };
   PF.setMode = setMode;
   /* ---------- ปุ่มสลับภาษา (เฉพาะเว็บที่เปิดสองภาษา): ป้ายบนปุ่ม = ภาษาที่จะสลับไป ----------

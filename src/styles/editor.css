@@ -815,8 +815,8 @@ button.ed-save{border:0;background:none;padding:var(--space-1) var(--space-2);bo
 .hl-add{margin:calc(var(--space-2) * -1) 0 var(--space-4) calc(var(--space-3) * -1)}
 .ic>span,.ic-h{line-height:1.6}
 .lb .seg.hsz{height:var(--btn-h-sm);margin-left:var(--space-2)}.lb .seg.hsz button{padding:0 var(--space-2);font:var(--label-md)}.lb .seg.hsz button[aria-checked=true]{font-weight:var(--seg-weight-selected)}.hsz-n{margin:0 0 var(--space-3)}
-/* สลับโหมดสว่าง/มืด: ไล่สี 360ms */
-html.thm,html.thm *,html.thm *::before,html.thm *::after{transition:background-color 360ms var(--ease-standard),color 360ms var(--ease-standard),border-color 360ms var(--ease-standard),box-shadow 360ms var(--ease-standard)!important}
+/* สลับโหมดสว่าง/มืด: ไล่สี 160ms (duration-fast) */
+html.thm,html.thm *{transition:background-color 160ms var(--ease-standard),color 160ms var(--ease-standard),border-color 160ms var(--ease-standard)!important}
 /* หน้าฟอร์มเลื่อนเข้าแบบนุ่มตอนเปลี่ยนแท็บหรือเปิดรายการ */
 @keyframes slUp{from{opacity:0;transform:translateY(var(--space-6))}to{opacity:1;transform:none}}
 @keyframes slDown{from{opacity:0;transform:translateY(calc(var(--space-6) * -1))}to{opacity:1;transform:none}}

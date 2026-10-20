@@ -314,4 +314,6 @@ html.fs-lg .btn.sm{font-size:16px}html.fs-lg .hint,html.fs-lg .err-msg,html.fs-l
 .ch figcaption{font:var(--body-sm);color:var(--text-2);margin-top:var(--space-2)}
 .sec-h .seg{flex:none}
 @media (max-width:719px){.kp{grid-template-columns:minmax(0,1fr);gap:var(--space-4)}.kp b{font:var(--headline-lg)}}
+/* สลับโหมดสว่าง/มืด: ไล่สี 160ms (duration-fast) */
+html.thm,html.thm *{transition:background-color 160ms var(--ease-standard),color 160ms var(--ease-standard),border-color 160ms var(--ease-standard)!important}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
