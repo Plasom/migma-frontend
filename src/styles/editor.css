@@ -875,6 +875,13 @@ html.thm,html.thm *,html.thm *::before,html.thm *::after{transition:background-c
 .pk-cover img{width:100%;height:100%;object-fit:cover;display:block}
 .pk-det{font:var(--caption);color:var(--text-2);margin-top:var(--space-1)}
 
+/* สถานะกำลังสแกนหาโปรเจกต์ในไฟล์ */
+.wk-scan-load{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-5) var(--space-4);border:1px dashed var(--border);border-radius:var(--radius-md);background:var(--surface);justify-content:center;text-align:left}
+.wk-scan-load .spin{width:24px;height:24px;border-width:2.5px;color:var(--primary);flex-shrink:0}
+.wk-scan-load-t{display:flex;flex-direction:column;gap:2px}
+.wk-scan-load-t b{font:var(--label-md);color:var(--ink)}
+.wk-scan-load-t small{font:var(--caption);color:var(--text-2)}
+
 /* รายการโปรเจกต์ที่สแกนพบในไฟล์ ให้เลือกก่อนสกัดจริง */
 .wk-cf-projs{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-3) var(--space-4);border:1px solid var(--border);border-radius:var(--radius-md);background:var(--surface);max-height:220px;overflow-y:auto}
 .wk-cf-projs-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:var(--space-2);border-bottom:1px solid var(--border)}

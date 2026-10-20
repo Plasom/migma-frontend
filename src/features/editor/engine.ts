@@ -1278,11 +1278,28 @@ function hub(){var m=modal('<h2 class="dg-t" id="dgT">ให้ AI ช่วย�
 function openDoc(){var d=$('edDoc');d.multiple=docMode==='works';d.accept=docMode==='all'?'application/pdf,.pdf':'application/pdf,.pdf,image/*';d.click()}
 function worksConfirmDlg(mode, files){var a=crGet();if(!a){toast('เข้าสู่ระบบก่อนใช้ AI',{label:'เข้าสู่ระบบ',fn:function(){openAcct('overview')}});return}
   var isSingle=mode==='work',rate=AICOST.case||5,fnNames=files.map(function(f){return f.name}).join(', ');
+  var cancelled=false;
+  var m=modal('<h2 class="dg-t" id="dgT">'+(isSingle?'ให้ AI เติมข้อมูลงานจากไฟล์':'ให้ AI สกัดผลงานจากไฟล์')+'</h2>'+
+    '<p class="dg-d">'+(isSingle?'AI จะอ่านไฟล์ คัดเลือกข้อมูล และดึงรูปภาพมาใส่ในงานนี้':'AI จะอ่านไฟล์ แยกแต่ละโปรเจกต์ และดึงภาพหน้าจอมาสร้างเป็นการ์ดและ Case study ให้อัตโนมัติ')+'</p>'+
+    '<div class="wk-cf-box">'+
+      '<div class="wk-cf-file"><span class="ms" aria-hidden="true">'+(files.length>1?'folder_open':'description')+'</span><span class="wk-cf-fn">'+esc(fnNames)+'</span></div>'+
+      '<div class="wk-scan-load" role="status">'+
+        '<span class="spin" aria-hidden="true"></span>'+
+        '<div class="wk-scan-load-t">'+
+          '<b>กำลังสแกนหาโปรเจกต์ในไฟล์…</b>'+
+          '<small>AI กำลังวิเคราะห์เอกสารเพื่อแยกชิ้นงานให้อัตโนมัติ (ใช้เวลาครู่หนึ่ง)</small>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button></div>','md');
+  m.box.querySelector('[data-x]').onclick=function(){cancelled=true;m.close()};
+
   scanWorkFiles(files).then(function(res){
+    if(cancelled||!document.body.contains(m.el))return;
     var projs=res.projects||[];
     var hasProjs=!isSingle&&projs.length>0;
     var count=isSingle?1:hasProjs?projs.length:Math.max(1,Math.min(10,res.count));
-    var m=modal('<h2 class="dg-t" id="dgT">'+(isSingle?'ให้ AI เติมข้อมูลงานจากไฟล์':'ให้ AI สกัดผลงานจากไฟล์')+'</h2>'+
+    m.box.innerHTML='<h2 class="dg-t" id="dgT">'+(isSingle?'ให้ AI เติมข้อมูลงานจากไฟล์':'ให้ AI สกัดผลงานจากไฟล์')+'</h2>'+
       '<p class="dg-d">'+(isSingle?'AI จะอ่านไฟล์ คัดเลือกข้อมูล และดึงรูปภาพมาใส่ในงานนี้':'AI จะอ่านไฟล์ แยกแต่ละโปรเจกต์ และดึงภาพหน้าจอมาสร้างเป็นการ์ดและ Case study ให้อัตโนมัติ')+'</p>'+
       '<div class="wk-cf-box">'+
         '<div class="wk-cf-file"><span class="ms" aria-hidden="true">'+(files.length>1?'folder_open':'description')+'</span><span class="wk-cf-fn">'+esc(fnNames)+'</span></div>'+
@@ -1316,7 +1333,7 @@ function worksConfirmDlg(mode, files){var a=crGet();if(!a){toast('เข้า�
         '</div>'+
         '<p class="wk-cf-note"><span class="ms" aria-hidden="true">verified_user</span>หากอ่านไฟล์ไม่สำเร็จหรือไม่พบข้อมูล ระบบจะคืนเครดิตให้อัตโนมัติ</p>'+
       '</div>'+
-      '<div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" id="wkGo"><span class="ms" aria-hidden="true">auto_awesome</span><span id="wkGoTx">เริ่มเลย</span></button></div>','md');
+      '<div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" id="wkGo"><span class="ms" aria-hidden="true">auto_awesome</span><span id="wkGoTx">เริ่มเลย</span></button></div>';
     m.box.querySelector('[data-x]').onclick=m.close;
     var selectedTitles = hasProjs ? projs.map(function(p){return p.title}) : [];
     function sync(){
@@ -1352,7 +1369,12 @@ function worksConfirmDlg(mode, files){var a=crGet();if(!a){toast('เข้า�
     m.box.querySelectorAll('.wk-prj-cb').forEach(function(c){c.onchange=sync});
     var dec=m.box.querySelector('#wkStDec'),inc=m.box.querySelector('#wkStInc');
     if(dec&&inc){dec.onclick=function(){if(count>1){count--;sync()}};inc.onclick=function(){if(count<10){count++;sync()}}}
-    sync();m.box.querySelector('#wkGo').focus()})}
+    sync();m.box.querySelector('#wkGo').focus()
+  }).catch(function(err){
+    if(cancelled||!document.body.contains(m.el))return;
+    m.close();
+    toast('ไม่สามารถสแกนไฟล์ได้: '+(err&&err.message?err.message:'ข้อผิดพลาดเครือข่าย'));
+  })}
 function executeGen(mode,files,units,isSingle,selectedTitles){var rate=AICOST.case||5,cost=units*rate,fileNames=files.map(function(f){return f.name}).join(', '),desc=(isSingle?'อ่านไฟล์งาน ':'สกัดผลงาน '+units+' ชิ้น ')+fileNames;
   if(!crSpend('case',cost,desc,true))return;
   var lab='กำลังให้ AI อ่านไฟล์ '+files.length+' ไฟล์ และสกัดภาพ…';
