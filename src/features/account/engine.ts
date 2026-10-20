@@ -4,7 +4,7 @@
 //   `pf-acct-demo` ใน localStorage เป็นแค่ cache ให้ editor อ่านยอดเครดิต (ตัวจริงอยู่ที่หลังบ้านเสมอ)
 //   ฝังในหลังบ้าน (?embed=1) = คุยกับหลังบ้านผ่าน postMessage (pf:acct*)
 /* eslint-disable */
-import { updateSlug, type Me } from '@/lib/api';
+import { updateSlug, fetchStats, createPortfolioLink, deletePortfolioLink, type Me, type StatsResponse, type LinkItem } from '@/lib/api';
 import { applyCredits, baht, confirmCheckout, fetchCredits, fetchPricing, startCheckout } from '@/lib/billing';
 import { uiLang } from '@/lib/i18n/ui';
 import { publicBase } from '@/lib/routes';
@@ -55,15 +55,25 @@ var crPct=function(){var b=Math.max(A.base||A.coins,1);return Math.min(100,Math.
 function meter(big){var p=crPct(),lv=crLv(),b=Math.max(A.base||A.coins,1),W={warn:['warning','ใช้ไปเกิน 75% แล้ว เติมไว้ก่อนได้ เครดิตไม่มีวันหมดอายุ'],crit:['warning','เหลือไม่ถึง 10% ใช้ AI ได้อีกไม่กี่ครั้ง'],out:['error','เครดิตหมดแล้ว ปุ่ม AI ใช้ไม่ได้จนกว่าจะเติม ส่วนอื่นของเว็บใช้ได้ปกติ']}[lv];
   return '<div class="mt'+(big?' big':'')+'"><p class="mt-n"><span class="ms" aria-hidden="true">toll</span><b id="balN">'+A.coins+'</b><span>เครดิตคงเหลือ</span></p><div class="cr-bar"'+(lv?' data-lv="'+lv+'"':'')+' role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+p+'" aria-label="ใช้ไปแล้ว '+p+' เปอร์เซ็นต์"><i style="width:'+p+'%"></i></div><p class="cr-s"><span>ใช้ไป '+(b-A.coins)+' จาก '+b+' เครดิต</span><span>'+p+'%</span></p>'+(W?'<p class="cr-w" data-lv="'+lv+'"><span class="ms" aria-hidden="true">'+W[0]+'</span><span>'+W[1]+'</span></p>':'')+'</div>'}
 var logRows=function(a){return a.length?'<div class="tb-w"><table class="tb2"><thead><tr><th scope="col">ใช้ทำอะไร</th><th scope="col">เมื่อ</th><th scope="col" class="num">เครดิต</th></tr></thead><tbody>'+a.map(function(l){var c=costOf(l.k)||{n:l.k};return '<tr><td class="main">'+(l.refund?'คืนเครดิต · ':'')+esc(c.n)+'<small>'+esc(l.d)+'</small></td><td class="sub">'+fd(l.t,1)+'</td><td class="num">'+(l.c<0?'−':'+')+Math.abs(l.c)+'</td></tr>'}).join('')+'</tbody></table></div>':'<div class="es sm"><p class="es-t">ยังไม่ได้ใช้ AI</p><p class="es-d">กดปุ่ม AI ในตัวแก้ Portfolio แล้วรายการจะขึ้นที่นี่</p></div>'};
-/* ---------- สถิติ ---------- */
-var RNG=30,SEGK='src';
-var dayV=function(i){
-  var x=Math.sin((i+3)*12.9898)*43758.5453;x=x-Math.floor(x);
-  var wd=new Date(Date.now()-i*864e5).getDay();
-  return Math.round((wd===0||wd===6?3:8)+x*12+(i<10?5:1));
-};
-function series(n,off){var a=[];for(var i=n-1;i>=0;i--)a.push({d:new Date(Date.now()-(i+(off||0))*864e5),v:dayV(i+(off||0))});return a}
-var sum=function(a){return a.reduce(function(x,y){return x+y.v},0)};
+/* ---------- สถิติ (ข้อมูลจริงจากหลังบ้าน /api/v1/me/stats) ---------- */
+var RNG=30,SEGK='src',STATS=null,STATS_LOADING=false,STATS_ERR=null,STATS_LAST_LOADED=0;
+function loadStats(days,force){
+  if(STATS_LOADING&&!force)return Promise.resolve();
+  STATS_LOADING=true;STATS_ERR=null;
+  return fetchStats(days).then(function(res){
+    STATS=res;STATS_LOADING=false;STATS_LAST_LOADED=Date.now();
+    if(res&&res.links){
+      A.links=res.links.map(function(l){
+        return {id:l.id,name:l.name,slug:l.slug,last:l.lastOpenedAt||'',opens:l.opens||0,top:'',dur:''};
+      });
+      save();
+    }
+    route();
+  }).catch(function(err){
+    STATS_LOADING=false;STATS_ERR=err;
+    route();
+  });
+}
 function delta(now,prev,unit){var d=now-prev;return '<span class="dl"><span class="ms" aria-hidden="true">'+(d>0?'trending_up':d<0?'trending_down':'trending_flat')+'</span>'+(d===0?'เท่ากับช่วงก่อนหน้า':(d>0?'มากกว่า':'น้อยกว่า')+'ช่วงก่อนหน้า '+Math.abs(d)+(unit||''))+'</span>'}
 function chart(a){
   var wk=a.length>31,pts=[];if(wk){for(var i=0;i<a.length;i+=7){var c=a.slice(i,i+7);pts.push({d:c[0].d,v:sum(c)})}}else pts=a;
@@ -73,15 +83,55 @@ function chart(a){
    '<text x="'+(L-6)+'" y="'+(y(top)+4)+'" text-anchor="end">'+top+'</text><text x="'+(L-6)+'" y="'+(y(top/2)+4)+'" text-anchor="end">'+(top/2)+'</text><text x="'+(L-6)+'" y="'+(H-B+4)+'" text-anchor="end">0</text>'+
    pts.map(function(p,i){var h=Math.max(1,(H-B)-y(p.v));return '<rect class="bar" x="'+(x(i)+bw*.18).toFixed(1)+'" y="'+(H-B-h).toFixed(1)+'" width="'+(bw*.64).toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2"><title>'+lab(p.d)+(wk?' (สัปดาห์)':'')+' · '+p.v+' คน</title></rect>'}).join('')+
    ti.map(function(i,k){return '<text x="'+(k===0?x(i):k===2?W:x(i)+bw/2)+'" y="'+(H-4)+'" text-anchor="'+(k===0?'start':k===2?'end':'middle')+'">'+lab(pts[i].d)+'</text>'}).join('')+'</svg><figcaption>'+(wk?'รวมเป็นรายสัปดาห์':'รายวัน')+' ชี้ที่แท่งเพื่อดูตัวเลข</figcaption></figure>'}
-function bars(rows){var mx=Math.max.apply(null,rows.map(function(r){return r[1]}).concat([1]));return '<ul class="use">'+rows.map(function(r){return '<li><span>'+esc(r[0])+'</span><span class="v">'+r[1]+'</span><span class="bar" aria-hidden="true"><i style="width:'+Math.round(r[1]/mx*100)+'%"></i></span></li>'}).join('')+'</ul>'}
-function workNames(){try{var p=JSON.parse(LS.get('pf-saved')||LS.get('pf-published')||'null'),w=(p&&p.works||[]).map(function(x){return x.title}).filter(Boolean);if(w.length)return w.slice(0,5)}catch(e){}return ['Banking app redesign','Clinic queue','Onboarding study','Kit for teams']}
-function lkSlug(name){var b=String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24);if(b.length<2)b='to-'+Math.random().toString(36).slice(2,6);var s2=b,n=2;while((A.links||[]).some(function(l){return l.slug===s2}))s2=b+'-'+(n++);return s2}
+function bars(rows){
+  if(!rows||!rows.length||!rows.some(function(r){return r[1]>0;})){
+    return '<p class="empty" style="padding:var(--space-4) 0;color:var(--text-3)">ยังไม่มีข้อมูลในช่วงเวลานี้</p>';
+  }
+  var mx=Math.max.apply(null,rows.map(function(r){return r[1]}).concat([1]));
+  return '<ul class="use">'+rows.map(function(r){return '<li><span>'+esc(r[0])+'</span><span class="v">'+r[1]+'</span><span class="bar" aria-hidden="true"><i style="width:'+Math.round(r[1]/mx*100)+'%"></i></span></li>'}).join('')+'</ul>';
+}
 function copyText(t,okMsg){var ok=function(){toast(okMsg)},no=function(){toast('คัดลอกไม่ได้ ลองเลือกข้อความเอง')};if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,no);else no()}
-function lkNew(){var m=modal('<h2 class="dg-t" id="dgT">สร้างลิงก์แยก</h2><p class="dg-d">ตั้งชื่อให้รู้ว่าส่งให้ใคร ชื่อนี้เห็นแค่คุณ คนเปิดลิงก์ไม่เห็น</p><div class="fld" id="lkFld"><span class="lb"><label for="lkNm">ส่งให้</label><span class="cnt cnt-end" data-cnt="40">0 / 40</span></span><span class="inw"><input class="in" id="lkNm" maxlength="40" placeholder="เช่น ชื่อบริษัท หรือชื่อคนที่ส่งให้" autocomplete="off"><button type="button" class="clr" data-clr tabindex="-1" aria-label="ล้างชื่อ"><span class="ms" aria-hidden="true">close</span></button></span><span class="hint" id="lkPv">ลิงก์จะเป็น '+esc(siteHost())+'/?to=…</span></div><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" data-ok>สร้างและคัดลอกลิงก์</button></div>');
-  var inp=m.box.querySelector('#lkNm'),pv=m.box.querySelector('#lkPv'),make=function(){var v=inp.value.trim(),f=m.box.querySelector('#lkFld'),o=f.querySelector('.err-msg');o&&o.remove();f.classList.remove('err');if(!v){f.classList.add('err');f.insertAdjacentHTML('beforeend','<span class="err-msg"><span class="ms" aria-hidden="true">error</span><span>ใส่ชื่อก่อน จะได้รู้ว่าลิงก์นี้ส่งให้ใคร</span></span>');inp.focus();return}
-    var l={id:'k'+Date.now().toString(36),name:v,slug:lkSlug(v),last:'',opens:0,top:'',dur:''};if(!A.links)A.links=[];A.links.unshift(l);save();m.close();route();var fullU=(A.siteUrl||('https://'+(A.slug||'yourname')+'.migma.site'))+'?to='+l.slug;copyText(fullU,'สร้างลิงก์ของ '+v+' และคัดลอกแล้ว')};
-  inp.addEventListener('input',function(){var v=inp.value.trim();var lat=v.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').length>=2;pv.textContent=!v?'ลิงก์จะเป็น '+siteHost()+'/?to=…':lat?'ลิงก์จะเป็น '+siteHost()+'/?to='+lkSlug(v):'ชื่อเป็นภาษาไทย ลิงก์จะใช้รหัสสั้นแทน เช่น ?to=to-k7f2'});inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.isComposing){e.preventDefault();make()}});
-  m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('[data-ok]').onclick=make;inp.focus()}
+function lkNew(){
+  var m=modal('<h2 class="dg-t" id="dgT">สร้างลิงก์แยก</h2><p class="dg-d">ตั้งชื่อให้รู้ว่าส่งให้ใคร ชื่อนี้เห็นแค่คุณ คนเปิดลิงก์ไม่เห็น</p><div class="fld" id="lkFld"><span class="lb"><label for="lkNm">ส่งให้</label><span class="cnt cnt-end" data-cnt="40">0 / 40</span></span><span class="inw"><input class="in" id="lkNm" maxlength="40" placeholder="เช่น ชื่อบริษัท หรือชื่อคนที่ส่งให้" autocomplete="off"><button type="button" class="clr" data-clr tabindex="-1" aria-label="ล้างชื่อ"><span class="ms" aria-hidden="true">close</span></button></span><span class="hint" id="lkPv">ลิงก์จะเป็น '+esc(siteHost())+'/?to=…</span></div><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled" data-ok>สร้างและคัดลอกลิงก์</button></div>');
+  var inp=m.box.querySelector('#lkNm'),pv=m.box.querySelector('#lkPv'),okBtn=m.box.querySelector('[data-ok]');
+  var make=function(){
+    var v=inp.value.trim(),f=m.box.querySelector('#lkFld'),o=f.querySelector('.err-msg');
+    o&&o.remove();f.classList.remove('err');
+    if(!v){
+      f.classList.add('err');
+      f.insertAdjacentHTML('beforeend','<span class="err-msg"><span class="ms" aria-hidden="true">error</span><span>ใส่ชื่อก่อน จะได้รู้ว่าลิงก์นี้ส่งให้ใคร</span></span>');
+      inp.focus();return;
+    }
+    okBtn.disabled=true;okBtn.textContent='กำลังสร้าง…';
+    createPortfolioLink(v).then(function(created){
+      m.close();
+      if(!A.links)A.links=[];
+      var item={id:created.id,name:created.name,slug:created.slug,last:'',opens:0,top:'',dur:''};
+      A.links.unshift(item);
+      save();
+      if(STATS){
+        if(!STATS.links)STATS.links=[];
+        STATS.links.unshift(created);
+      }
+      route();
+      var fullU=(A.siteUrl||('https://'+(A.slug||'yourname')+'.migma.site'))+'?to='+created.slug;
+      copyText(fullU,'สร้างลิงก์ของ '+v+' และคัดลอกแล้ว');
+    }).catch(function(err){
+      okBtn.disabled=false;okBtn.textContent='สร้างและคัดลอกลิงก์';
+      f.classList.add('err');
+      f.insertAdjacentHTML('beforeend','<span class="err-msg"><span class="ms" aria-hidden="true">error</span><span>'+esc(err.message||'สร้างไม่สำเร็จ')+'</span></span>');
+    });
+  };
+  inp.addEventListener('input',function(){
+    var v=inp.value.trim();
+    var lat=v.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').length>=2;
+    pv.textContent=!v?'ลิงก์จะเป็น '+siteHost()+'/?to=…':lat?'ลิงก์จะเป็น '+siteHost()+'/?to='+v.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24):'ชื่อเป็นภาษาไทย ลิงก์จะใช้รหัสสั้นแทน เช่น ?to=to-k7f2';
+  });
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.isComposing){e.preventDefault();make()}});
+  m.box.querySelector('[data-x]').onclick=m.close;
+  okBtn.onclick=make;
+  inp.focus();
+}
 /* ---------- หน้าต่างๆ ---------- */
 var V={
 overview:function(){var mu=monthUse();return '<h1 class="ac-h" tabindex="-1">ภาพรวม</h1><p class="ac-sub">'+(A.name?esc(A.name)+' · ':'')+esc(A.email||'')+'</p>'+
@@ -90,23 +140,48 @@ overview:function(){var mu=monthUse();return '<h1 class="ac-h" tabindex="-1">ภ
  '<div class="row"><dt>เครดิต AI</dt><dd><b>'+A.coins+' เครดิต</b><span>ใช้ไปแล้ว '+crPct()+'% ของที่เติมล่าสุด เดือนนี้ใช้ '+mu.tot+' เครดิต</span></dd><div class="act"><a class="btn '+(crLv()?'filled':'outlined')+' sm" href="#credits">เติมเครดิต</a></div></div></dl>'+
  '<section class="sec" style="margin-top:var(--space-6)"><div class="sec-h"><h2>ใช้ AI ล่าสุด</h2><a class="btn text sm" href="#usage">ดูทั้งหมด</a></div>'+logRows(A.log.slice(0,3))+'</section>'},
 stats:function(){
- var isPaid=A.plan==='pass'||A.plan==='pro';
- var cur=series(RNG),prev=series(RNG,RNG),v=sum(cur),pv=sum(prev),cs=Math.round(v*.46),pcs=Math.round(pv*.41),ct=Math.round(v*.045),pct=Math.round(pv*.05),f=RNG/30,W=workNames();
- var SEG={src:[['LinkedIn',Math.round(v*.38)],['เปิดลิงก์ตรง',Math.round(v*.27)],['Google',Math.round(v*.14)],['JobsDB',Math.round(v*.12)],['อื่นๆ',Math.round(v*.09)]],dev:[['คอมพิวเตอร์',Math.round(v*.61)],['มือถือ',Math.round(v*.35)],['แท็บเล็ต',Math.round(v*.04)]],geo:[['ไทย',Math.round(v*.72)],['สิงคโปร์',Math.round(v*.11)],['สหรัฐอเมริกา',Math.round(v*.08)],['ญี่ปุ่น',Math.round(v*.05)],['อื่นๆ',Math.round(v*.04)]]};
- if(!A.links){A.links=[];save()}var LK=A.links,MAXL=20;
- var banner=isPaid
-   ?'<div class="note" style="margin-bottom:var(--space-6);background:var(--surface);border:1px solid var(--border)"><span class="ms" aria-hidden="true" style="color:var(--primary)">analytics</span><div><b>ระบบนับคนเข้าดูเปิดใช้งานแล้วสำหรับแพ็กเกจ '+PLAN[A.plan]+'</b><p style="margin:4px 0 0;font:var(--body-sm);color:var(--text-2)">สถิติจะอัปเดตอัตโนมัติเมื่อมีคนเปิดดูพอร์ตหรือคลิกลิงก์ที่คุณสร้าง</p></div></div>'
-   :'<div class="note" style="margin-bottom:var(--space-6);background:var(--primary-tint);border:1px solid var(--primary)"><span class="ms" aria-hidden="true">lock</span><div><b>สถิติคนเข้าดูเป็นฟีเจอร์สำหรับ Job Hunt Pass และ Pro รายปี</b><p style="margin:4px 0 0;font:var(--body-sm);color:var(--text-2)">ด้านล่างนี้คือตัวอย่างการแสดงผลสถิติเมื่อมีผู้เปิดดูพอร์ตของคุณ</p></div><a class="btn filled sm" href="#plan" style="margin-left:auto;flex:none">ดูแพ็กเกจ</a></div>';
- return '<h1 class="ac-h" tabindex="-1">สถิติ</h1><p class="ac-sub">ดูว่ามีคนเปิด portfolio ไหม มาจากไหน และดูงานชิ้นไหน</p>'+
-  banner+
-  '<div class="an-top">'+seg('rng',RNG,[[7,'7 วัน'],[30,'30 วัน'],[90,'90 วัน']],'rngL')+'<span class="vh" id="rngL">ช่วงเวลา</span><span class="upd">อัปเดตล่าสุด '+fd(new Date().toISOString(),1)+'<button type="button" class="btn ghost sm icon" data-refresh aria-label="โหลดตัวเลขใหม่"><span class="ms" aria-hidden="true">refresh</span></button></span></div>'+
-  '<dl class="kp"><div><dt>คนเข้าดู</dt><dd><b>'+v+'</b>'+delta(v,pv,' คน')+'</dd></div><div><dt>เปิดอ่าน Case study</dt><dd><b>'+cs+'</b>'+delta(cs,pcs,' ครั้ง')+'</dd></div><div><dt>กดติดต่อหรือคัดลอกอีเมล</dt><dd><b>'+ct+'</b>'+delta(ct,pct,' ครั้ง')+'</dd></div></dl>'+
-  '<section class="sec" style="border-top:0;padding-top:0"><div class="sec-h"><h2>คนเข้าดู</h2></div>'+chart(cur)+'</section>'+
-  '<section class="sec"><div class="sec-h"><h2>ลิงก์ที่ส่งให้แต่ละบริษัท</h2><button type="button" class="btn outlined sm" data-lknew'+(LK.length>=MAXL?' disabled':'')+'><span class="ms" aria-hidden="true">add_link</span>สร้างลิงก์</button></div><p class="sec-d">สร้างลิงก์แยกให้แต่ละที่ที่สมัคร แล้วดูว่าเปิดหรือยัง คัดลอกลิงก์เดิมไปส่งซ้ำได้เรื่อยๆ ไม่เก็บชื่อหรืออีเมลของคนเปิด</p>'+
-  (LK.length?'<div class="tb-w"><table class="tb2"><thead><tr><th scope="col">ส่งให้</th><th scope="col">เปิดล่าสุด</th><th scope="col">งานที่ดูนานสุด</th><th scope="col" class="num">เปิด</th><th scope="col" class="num"><span class="vh">คัดลอกหรือลบ</span></th></tr></thead><tbody>'+LK.map(function(l){var u=(A.siteUrl||('https://'+(A.slug||'yourname')+'.migma.site'))+'?to='+l.slug;return '<tr><td class="main">'+esc(l.name)+'<small>'+esc(u)+'</small></td><td class="sub">'+(l.last?fd(l.last,1):'ยังไม่เปิด')+'</td><td class="sub hide-m">'+(l.top?esc(l.top)+' · '+esc(l.dur):'')+'</td><td class="num">'+(l.opens?Math.max(1,Math.round(l.opens*f))+' ครั้ง':'0')+'</td><td class="num act"><button type="button" class="btn ghost icon sm" data-lkcopy="'+esc(u)+'" aria-label="คัดลอกลิงก์ของ '+esc(l.name)+'" title="คัดลอกลิงก์"><span class="ms" aria-hidden="true">content_copy</span></button><button type="button" class="btn ghost icon sm" data-lkrm="'+l.id+'" aria-label="ลบลิงก์ของ '+esc(l.name)+'" title="ลบลิงก์"><span class="ms" aria-hidden="true">delete</span></button></td></tr>'}).join('')+'</tbody></table></div>':'<div class="es sm"><p class="es-t">ยังไม่มีลิงก์แยก</p><p class="es-d">สร้างลิงก์แรกให้บริษัทที่กำลังจะสมัคร แล้วกลับมาดูว่าเขาเปิดหรือยัง</p></div>')+'</section>'+
-  '<section class="sec"><div class="sec-h"><h2>งานที่คนดู</h2></div><div class="tb-w"><table class="tb2"><thead><tr><th scope="col">งาน</th><th scope="col">อ่านถึงท้ายหน้า</th><th scope="col" class="num">คนดู</th><th scope="col" class="num">เวลาเฉลี่ย</th></tr></thead><tbody>'+W.map(function(w,i){var n=Math.round(cs*[.42,.27,.18,.09,.04][i]||1),r=[64,51,47,38,30][i];return '<tr><td class="main">'+esc(w)+'</td><td class="sub">'+r+'% ของคนที่เปิด</td><td class="num">'+n+'</td><td class="num">'+['3:40','2:15','2:50','1:20','0:55'][i]+' นาที</td></tr>'}).join('')+'</tbody></table></div></section>'+
-  '<section class="sec"><div class="sec-h"><h2 id="segL">คนดูมาจากไหน</h2>'+seg('seg',SEGK,[['src','ช่องทาง'],['dev','อุปกรณ์'],['geo','ประเทศ']],'segL')+'</div>'+bars(SEG[SEGK])+'</section>'+
-  '<p class="note" style="margin:var(--space-8) 0 0"><span class="ms" aria-hidden="true">shield</span><span>นับแบบไม่ใช้คุกกี้ ไม่เก็บ IP และไม่รู้ว่าคนดูเป็นใคร คนเดิมที่กลับมาอีกวันนับเป็นคนใหม่ ตัวเลขจึงเป็นค่าประมาณ</span></p>'
+  var isPaid=A.plan==='pass'||A.plan==='pro';
+  var banner=isPaid
+    ?'<div class="note" style="margin-bottom:var(--space-6);background:var(--surface);border:1px solid var(--border)"><span class="ms" aria-hidden="true" style="color:var(--primary)">analytics</span><div><b>ระบบนับคนเข้าดูเปิดใช้งานแล้วสำหรับแพ็กเกจ '+PLAN[A.plan]+'</b><p style="margin:4px 0 0;font:var(--body-sm);color:var(--text-2)">สถิติจะอัปเดตอัตโนมัติเมื่อมีคนเปิดดูพอร์ตหรือคลิกลิงก์ที่คุณสร้าง</p></div></div>'
+    :'<div class="note" style="margin-bottom:var(--space-6);background:var(--primary-tint);border:1px solid var(--primary)"><span class="ms" aria-hidden="true">lock</span><div><b>สถิติคนเข้าดูเป็นฟีเจอร์สำหรับ Job Hunt Pass และ Pro รายปี</b><p style="margin:4px 0 0;font:var(--body-sm);color:var(--text-2)">อัปเกรดเพื่อดูสถิติและสร้างลิงก์แยกส่งบริษัทได้อย่างเต็มรูปแบบ</p></div><a class="btn filled sm" href="#plan" style="margin-left:auto;flex:none">ดูแพ็กเกจ</a></div>';
+
+  if(STATS_LOADING&&!STATS){
+    return '<h1 class="ac-h" tabindex="-1">สถิติ</h1><p class="ac-sub">ดูว่ามีคนเปิด portfolio ไหม มาจากไหน และดูงานชิ้นไหน</p>'+banner+
+      '<div class="es sm" style="padding:var(--space-12) var(--space-4)"><p class="es-t">กำลังโหลดข้อมูลสถิติจริงจากฐานข้อมูล…</p></div>';
+  }
+  if(STATS_ERR&&!STATS){
+    return '<h1 class="ac-h" tabindex="-1">สถิติ</h1><p class="ac-sub">ดูว่ามีคนเปิด portfolio ไหม มาจากไหน และดูงานชิ้นไหน</p>'+banner+
+      '<div class="es sm" style="padding:var(--space-12) var(--space-4)"><p class="es-t">โหลดข้อมูลสถิติไม่สำเร็จ</p><p class="es-d">'+esc(STATS_ERR.message||'ลองอีกครั้ง')+'</p><button type="button" class="btn outlined sm" data-refresh style="margin-top:var(--space-3)">ลองใหม่</button></div>';
+  }
+
+  var S=STATS||{summary:{views:0,prevViews:0,caseViews:0,prevCaseViews:0,contactClicks:0,prevContactClicks:0},daily:[],referrers:[],devices:[],countries:[],topWorks:[],links:[]};
+  var cur=S.daily.map(function(p){return {d:new Date(p.date+'T00:00:00'),v:p.views}});
+  var v=S.summary.views,pv=S.summary.prevViews,cs=S.summary.caseViews,pcs=S.summary.prevCaseViews,ct=S.summary.contactClicks,pct=S.summary.prevContactClicks;
+  var LK=S.links||[],MAXL=20;
+  var SEG={
+    src:(S.referrers||[]).map(function(r){return [r.name==='direct'?'เปิดลิงก์ตรง':r.name,r.views]}),
+    dev:(S.devices||[]).map(function(r){return [r.name,r.views]}),
+    geo:(S.countries||[]).map(function(r){return [r.name,r.views]})
+  };
+
+  var topWorksHtml='';
+  if(S.topWorks&&S.topWorks.length){
+    topWorksHtml='<div class="tb-w"><table class="tb2"><thead><tr><th scope="col">หน้าหรือชิ้นงาน</th><th scope="col" class="num">คนดู</th></tr></thead><tbody>'+
+      S.topWorks.map(function(w){return '<tr><td class="main">'+esc(w.name)+'</td><td class="num">'+w.views+' ครั้ง</td></tr>'}).join('')+'</tbody></table></div>';
+  } else {
+    topWorksHtml='<div class="es sm"><p class="es-t">ยังไม่มีคนเปิดอ่าน Case study</p><p class="es-d">เมื่อมีคนคลิกอ่านรายละเอียดผลงาน ตัวเลขจะขึ้นที่นี่</p></div>';
+  }
+
+  return '<h1 class="ac-h" tabindex="-1">สถิติ</h1><p class="ac-sub">ดูว่ามีคนเปิด portfolio ไหม มาจากไหน และดูงานชิ้นไหน</p>'+
+   banner+
+   '<div class="an-top">'+seg('rng',RNG,[[7,'7 วัน'],[30,'30 วัน'],[90,'90 วัน']],'rngL')+'<span class="vh" id="rngL">ช่วงเวลา</span><span class="upd">อัปเดตล่าสุด '+fd(new Date(STATS_LAST_LOADED||Date.now()).toISOString(),1)+'<button type="button" class="btn ghost sm icon" data-refresh aria-label="โหลดตัวเลขใหม่"><span class="ms" aria-hidden="true">refresh</span></button></span></div>'+
+   '<dl class="kp"><div><dt>คนเข้าดู</dt><dd><b>'+v+'</b>'+delta(v,pv,' คน')+'</dd></div><div><dt>เปิดอ่าน Case study</dt><dd><b>'+cs+'</b>'+delta(cs,pcs,' ครั้ง')+'</dd></div><div><dt>กดติดต่อหรือคัดลอกอีเมล</dt><dd><b>'+ct+'</b>'+delta(ct,pct,' ครั้ง')+'</dd></div></dl>'+
+   '<section class="sec" style="border-top:0;padding-top:0"><div class="sec-h"><h2>คนเข้าดู</h2></div>'+chart(cur)+'</section>'+
+   '<section class="sec"><div class="sec-h"><h2>ลิงก์ที่ส่งให้แต่ละบริษัท</h2><button type="button" class="btn outlined sm" data-lknew'+(LK.length>=MAXL?' disabled':'')+'><span class="ms" aria-hidden="true">add_link</span>สร้างลิงก์</button></div><p class="sec-d">สร้างลิงก์แยกให้แต่ละที่ที่สมัคร แล้วดูว่าเปิดหรือยัง คัดลอกลิงก์เดิมไปส่งซ้ำได้เรื่อยๆ ไม่เก็บชื่อหรืออีเมลของคนเปิด</p>'+
+   (LK.length?'<div class="tb-w"><table class="tb2"><thead><tr><th scope="col">ส่งให้</th><th scope="col">เปิดล่าสุด</th><th scope="col" class="num">เปิด</th><th scope="col" class="num"><span class="vh">คัดลอกหรือลบ</span></th></tr></thead><tbody>'+LK.map(function(l){var u=(A.siteUrl||('https://'+(A.slug||'yourname')+'.migma.site'))+'?to='+l.slug;return '<tr><td class="main">'+esc(l.name)+'<small>'+esc(u)+'</small></td><td class="sub">'+(l.lastOpenedAt?fd(l.lastOpenedAt,1):l.last?fd(l.last,1):'ยังไม่เปิด')+'</td><td class="num">'+(l.opens?l.opens+' ครั้ง':'0')+'</td><td class="num act"><button type="button" class="btn ghost icon sm" data-lkcopy="'+esc(u)+'" aria-label="คัดลอกลิงก์ของ '+esc(l.name)+'" title="คัดลอกลิงก์"><span class="ms" aria-hidden="true">content_copy</span></button><button type="button" class="btn ghost icon sm" data-lkrm="'+l.id+'" aria-label="ลบลิงก์ของ '+esc(l.name)+'" title="ลบลิงก์"><span class="ms" aria-hidden="true">delete</span></button></td></tr>'}).join('')+'</tbody></table></div>':'<div class="es sm"><p class="es-t">ยังไม่มีลิงก์แยก</p><p class="es-d">สร้างลิงก์แรกให้บริษัทที่กำลังจะสมัคร แล้วกลับมาดูว่าเขาเปิดหรือยัง</p></div>')+'</section>'+
+   '<section class="sec"><div class="sec-h"><h2>งานที่คนดู</h2></div>'+topWorksHtml+'</section>'+
+   '<section class="sec"><div class="sec-h"><h2 id="segL">คนดูมาจากไหน</h2>'+seg('seg',SEGK,[['src','ช่องทาง'],['dev','อุปกรณ์'],['geo','ประเทศ']],'segL')+'</div>'+bars(SEG[SEGK])+'</section>'+
+   '<p class="note" style="margin:var(--space-8) 0 0"><span class="ms" aria-hidden="true">shield</span><span>นับแบบไม่ใช้คุกกี้ ไม่เก็บ IP และไม่รู้ว่าคนดูเป็นใคร คนเดิมที่กลับมาอีกวันนับเป็นคนใหม่ ตัวเลขจึงเป็นค่าประมาณ</span></p>'
 },
 credits:function(){return '<h1 class="ac-h" tabindex="-1">เครดิต AI</h1><p class="ac-sub">ใช้เฉพาะตอนกดให้ AI ช่วย ฟีเจอร์อื่นของเว็บไม่ใช้เครดิต</p>'+
  meter(1)+'<p class="hint">แท่งนี้นับจากการเติมครั้งล่าสุด เครดิตไม่มีวันหมดอายุ</p>'+
@@ -162,7 +237,7 @@ settings:function(){return '<h1 class="ac-h" tabindex="-1">ตั้งค่า
 var HASH=(location.search.match(/[?&]h=([a-z]+)/)||[])[1];HASH=HASH?'#'+HASH:null;
 var ALONE=/[?&]alone=1/.test(location.search),toApp=function(h){h=(h||'').replace('#','');location.replace('/editor'+(h&&h!=='overview'?'?acct='+h:''))};
 function route(){var h=((EMB&&HASH)||location.hash||'').slice(1);up({type:'pf:acct',coins:A.coins,signed:A.signed});if(!A.signed){$('app').hidden=true;$('lg').hidden=false;document.title='เข้าสู่ระบบ · Migma';return}
-  if(!V[h])h='overview';$('lg').hidden=true;$('app').hidden=false;$('acMain').innerHTML='<div class="ac-pg">'+V[h]()+'</div>';$('acCoinN').textContent=A.coins;
+  if(!V[h])h='overview';if(h==='stats'&&!STATS&&!STATS_LOADING){loadStats(RNG)}$('lg').hidden=true;$('app').hidden=false;$('acMain').innerHTML='<div class="ac-pg">'+V[h]()+'</div>';$('acCoinN').textContent=A.coins;
   [].forEach.call(document.querySelectorAll('#acNav a'),function(a){if(a.getAttribute('href')==='#'+h)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   document.documentElement.classList.toggle('pg-settings',h==='settings');
   var TB=[['overview','ภาพรวม'],['stats','สถิติ'],['credits','เครดิต AI'],['usage','การใช้ AI'],['plan','แพ็กเกจและใบเสร็จ']],tl=$('acTabs');tl.hidden=!EMB||h==='settings';tl.innerHTML=TB.map(function(t){return '<button type="button" class="tb" role="tab" data-h="'+t[0]+'" data-label="'+t[1]+'" aria-selected="'+(h===t[0])+'" tabindex="'+(h===t[0]?0:-1)+'">'+t[1]+'</button>'}).join('');
@@ -233,15 +308,27 @@ document.addEventListener('input',function(e){var t=e.target,w=t.closest&&t.clos
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-clr]');if(b){var inp=b.parentNode.querySelector('.in');inp.value='';inp.dispatchEvent(new Event('input',{bubbles:true}));var cid=inp.id;inp.dispatchEvent(new Event('change',{bubbles:true}));(document.getElementById(cid)||inp).focus();return}
   var l=e.target.closest&&e.target.closest('[data-low]');if(l){A.low=+l.dataset.low;save();[].forEach.call(l.parentNode.children,function(x){x.setAttribute('aria-checked',x===l)});return}
   var tb=e.target.closest&&e.target.closest('.tb[data-h]');if(tb){if(EMB){HASH='#'+tb.dataset.h;go(true)}else location.hash='#'+tb.dataset.h}
-  var r=e.target.closest&&e.target.closest('[data-rng]');if(r){RNG=+r.dataset.rng;route();var nr=document.querySelector('[data-rng="'+RNG+'"]');nr&&nr.focus();return}
+  var r=e.target.closest&&e.target.closest('[data-rng]');if(r){RNG=+r.dataset.rng;loadStats(RNG);var nr=document.querySelector('[data-rng="'+RNG+'"]');nr&&nr.focus();return}
   var g=e.target.closest&&e.target.closest('[data-seg]');if(g){SEGK=g.dataset.seg;route();var ng=document.querySelector('[data-seg="'+SEGK+'"]');ng&&ng.focus();return}
-  if(e.target.closest&&e.target.closest('[data-refresh]')){route();toast('อัปเดตตัวเลขล่าสุดแล้ว');return}
+  if(e.target.closest&&e.target.closest('[data-refresh]')){loadStats(RNG,true).then(function(){toast('อัปเดตตัวเลขล่าสุดแล้ว')});return}
 });
 document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-lknew],[data-lkcopy],[data-lkrm]');if(!t)return;
   if(t.dataset.lknew!==undefined){lkNew();return}
   if(t.dataset.lkcopy){copyText(t.dataset.lkcopy,'คัดลอกลิงก์แล้ว');return}
-  var i=-1;(A.links||[]).forEach(function(l,n){if(l.id===t.dataset.lkrm)i=n});if(i<0)return;var l=A.links[i],u=(A.siteUrl||('https://'+(A.slug||'yourname')+'.migma.site'))+'?to='+l.slug,m=modal('<h2 class="dg-t" id="dgT">ลบลิงก์ของ “'+esc(l.name)+'”?</h2><p class="dg-d">คนที่ได้ลิงก์ <b>'+esc(u)+'</b> ไปแล้วจะเปิดไม่ได้อีก'+(l.opens?' และสถิติการเปิด '+l.opens+' ครั้งของลิงก์นี้จะหายไป':'')+' กู้คืนไม่ได้</p><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled danger" data-ok>ลบลิงก์</button></div>');
-  m.box.querySelector('[data-x]').onclick=m.close;m.box.querySelector('[data-ok]').onclick=function(){var k=-1;A.links.forEach(function(x,n){if(x.id===l.id)k=n});if(k>=0)A.links.splice(k,1);save();m.close();route();toast('ลบลิงก์ของ '+l.name+' แล้ว')};m.box.querySelector('[data-x]').focus()});
+  var i=-1;(A.links||[]).forEach(function(l,n){if(l.id===t.dataset.lkrm)i=n});if(i<0)return;var l=A.links[i],u=(A.siteUrl||('https://'+(A.slug||'yourname')+'.migma.site'))+'?to='+l.slug,m=modal('<h2 class="dg-t" id="dgT">ลบลิงก์ของ “'+esc(l.name)+'”?</h2><p class="dg-d">คนที่ได้ลิงก์ <b>'+esc(u)+'</b> ไปแล้วจะไม่ถูกบันทึกการเปิดอีก'+(l.opens?' และสถิติการเปิด '+l.opens+' ครั้งของลิงก์นี้จะหายไป':'')+'</p><div class="dg-a"><button type="button" class="btn cancel" data-x>ยกเลิก</button><button type="button" class="btn filled danger" data-ok>ลบลิงก์</button></div>');
+  var okB=m.box.querySelector('[data-ok]');
+  m.box.querySelector('[data-x]').onclick=m.close;
+  okB.onclick=function(){
+    okB.disabled=true;okB.textContent='กำลังลบ…';
+    deletePortfolioLink(l.id).then(function(){
+      var k=-1;A.links.forEach(function(x,n){if(x.id===l.id)k=n});if(k>=0)A.links.splice(k,1);save();
+      if(STATS&&STATS.links){STATS.links=STATS.links.filter(function(x){return x.id!==l.id});}
+      m.close();route();toast('ลบลิงก์ของ '+l.name+' แล้ว');
+    }).catch(function(err){
+      toast('ลบไม่สำเร็จ: '+(err.message||'ลองใหม่'));m.close();
+    });
+  };
+  m.box.querySelector('[data-x]').focus()});
 document.addEventListener('keydown',function(e){var t=e.target;if(!t.matches||!t.matches('.tb[data-h]')||(e.key!=='ArrowRight'&&e.key!=='ArrowLeft'))return;var a=[].slice.call(t.parentNode.children),n=a[(a.indexOf(t)+(e.key==='ArrowRight'?1:a.length-1))%a.length];e.preventDefault();n.click();setTimeout(function(){var x=document.querySelector('.tb[data-h="'+n.dataset.h+'"]');x&&x.focus()},0)});
 document.addEventListener('change',function(e){var t=e.target;if(t.dataset.sw){var k=t.dataset.sw.split('.');if(k.length>1)A[k[0]][k[1]]=t.checked;else A[k[0]]=t.checked;save();if(t.dataset.sw!=='mail.low')return}
   if(t.dataset.sw==='mail.low'){route();return}
@@ -284,7 +371,7 @@ document.addEventListener('input',function(e){
 if(!EMB&&!ALONE&&A.signed){toApp(location.hash);return}
 route();
 /* ---------- ข้อมูลจากหลังบ้าน: ราคา AI · แพ็กเครดิต · ยอดเครดิต · ประวัติ · ใบเสร็จ ---------- */
-function redraw(){var h=((EMB&&HASH)||location.hash||'').slice(1);if(!V[h])h='overview';if(A.signed&&h!=='settings'&&h!=='stats')route()}
+function redraw(){var h=((EMB&&HASH)||location.hash||'').slice(1);if(!V[h])h='overview';if(A.signed&&h!=='settings')route()}
 function loadData(){if(!A.signed)return Promise.resolve();return Promise.all([fetchPricing(),fetchCredits()]).then(function(r){
   COST=r[0].costs.map(function(c){return{k:c.kind,n:c.label,w:c.place,c:c.credits,u:c.unit}});PACKS=r[0].packages.map(function(p){return{k:p.id,coin:p.credits,thb:p.priceSatang/100}});PAYON=r[0].paymentsEnabled;
   applyCredits(A,r[1]);LOADED=1;save();redraw()},function(){LOADED=-1;redraw()})}

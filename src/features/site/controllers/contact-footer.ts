@@ -1,3 +1,5 @@
+import { trackSiteView } from '@/lib/api';
+
 /** ปุ่มคัดลอกอีเมล (#ctCopy) + ปุ่มกลับขึ้นบนท้ายเว็บ (.ftr-top) */
 export function contactFooter(): void {
   const b = document.getElementById('ctCopy');
@@ -5,6 +7,10 @@ export function contactFooter(): void {
     const lab = b.querySelector('.lb')!, ic = b.querySelector('.ms')!, st = document.getElementById('ctSt')!;
     let t: ReturnType<typeof setTimeout> | undefined;
     b.onclick = () => {
+      const slug = typeof window !== 'undefined' ? (window as unknown as { __migma_slug?: string }).__migma_slug : null;
+      if (slug) {
+        trackSiteView(slug, { path: '/contact' });
+      }
       const v = b.dataset.v || '';
       const done = (ok: boolean) => {
         lab.textContent = ok ? 'คัดลอกแล้ว' : 'คัดลอกไม่ได้';

@@ -2,6 +2,7 @@
  * เปิดหน้า portfolio: เลือกข้อมูล → เลือกภาษา → วาดหน้า → ผูกสคริปต์ของหน้า → ลูกเล่นการเคลื่อนไหว
  * ลำดับเดียวกับสคริปต์ท้ายหน้าของต้นแบบ (ลำดับมีผล เช่น ปุ่มสลับธีมของ template ต้องผูกก่อน)
  */
+import { trackSiteView } from '@/lib/api';
 import { siteTranslator } from '@/lib/i18n/site';
 import { startMotion } from '@/lib/motion/motion';
 import { blankPortfolio } from '@/lib/portfolio/defaults';
@@ -58,24 +59,28 @@ export function bootSite(page: SitePage, pub?: PublicSite): void {
   const data = dataForLang(d0, lang);
   if (lang === 'en') siteTranslator().start();
 
-  try {
-    const params = new URLSearchParams(location.search);
-    const to = params.get('to');
-    if (to) {
-      const raw = localStorage.getItem('pf-acct-demo');
-      if (raw) {
-        const a = JSON.parse(raw);
-        if (a && Array.isArray(a.links)) {
-          const item = a.links.find((l: { slug: string }) => l.slug === to);
-          if (item) {
-            item.opens = (item.opens || 0) + 1;
-            item.last = new Date().toISOString();
-            localStorage.setItem('pf-acct-demo', JSON.stringify(a));
-          }
-        }
+  if (pub) {
+    const slug = pub.base.replace(/^\/u\//, '').split('/')[0];
+    if (slug && !edit) {
+      if (typeof window !== 'undefined') {
+        (window as unknown as { __migma_slug?: string }).__migma_slug = slug;
       }
+      try {
+        const params = new URLSearchParams(location.search);
+        const to = params.get('to') || undefined;
+        const device = window.innerWidth <= 640 ? 'mobile' : window.innerWidth <= 1024 ? 'tablet' : 'desktop';
+        const relPath = location.pathname.startsWith(pub.base)
+          ? location.pathname.slice(pub.base.length) || '/'
+          : location.pathname;
+        trackSiteView(slug, {
+          path: relPath,
+          referrer: document.referrer || '',
+          device,
+          to,
+        });
+      } catch {}
     }
-  } catch {}
+  }
 
   const PF = renderTemplate({ data, lang, embedded: !!handoff });
   themeToggle();

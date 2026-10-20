@@ -84,3 +84,70 @@ export async function updateSlug(slug: string): Promise<Me> {
 export async function signOut(): Promise<void> {
   await api('/auth/logout', { method: 'POST' });
 }
+
+export interface DailyPoint {
+  date: string;
+  views: number;
+}
+
+export interface BreakItem {
+  name: string;
+  views: number;
+}
+
+export interface LinkItem {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: string;
+  opens: number;
+  lastOpenedAt?: string;
+}
+
+export interface StatsSummary {
+  views: number;
+  prevViews: number;
+  caseViews: number;
+  prevCaseViews: number;
+  contactClicks: number;
+  prevContactClicks: number;
+}
+
+export interface StatsResponse {
+  days: number;
+  summary: StatsSummary;
+  daily: DailyPoint[];
+  referrers: BreakItem[];
+  devices: BreakItem[];
+  countries: BreakItem[];
+  topWorks: BreakItem[];
+  links: LinkItem[];
+}
+
+export async function trackSiteView(slug: string, data: { path?: string; referrer?: string; device?: string; country?: string; linkSlug?: string; to?: string }): Promise<void> {
+  try {
+    await fetch('/api/v1/sites/' + encodeURIComponent(slug) + '/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      keepalive: true,
+    });
+  } catch {}
+}
+
+export async function fetchStats(days = 30): Promise<StatsResponse> {
+  return api<StatsResponse>('/api/v1/me/stats?days=' + days);
+}
+
+export async function createPortfolioLink(name: string, slug?: string): Promise<LinkItem> {
+  return api<LinkItem>('/api/v1/me/links', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, slug }),
+  });
+}
+
+export async function deletePortfolioLink(id: string): Promise<void> {
+  await api('/api/v1/me/links/' + encodeURIComponent(id), { method: 'DELETE' });
+}
+
