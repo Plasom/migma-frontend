@@ -225,39 +225,8 @@ export async function scanWorkFiles(files: File[]): Promise<WorkScanResult> {
     const bytes = new Uint8Array(buf);
     const latin = new TextDecoder('latin1').decode(bytes);
 
-    let streamText = '';
-    let pos = 0;
-    while (pos < bytes.length) {
-      const idx = latin.indexOf('/ObjStm', pos);
-      if (idx === -1) break;
-      pos = idx + 7;
-      const s1 = latin.indexOf('stream\r\n', idx);
-      const s2 = latin.indexOf('stream\n', idx);
-      let sStart = -1;
-      if (s1 !== -1 && (s2 === -1 || s1 <= s2)) sStart = s1 + 8;
-      else if (s2 !== -1) sStart = s2 + 7;
-      if (sStart === -1) continue;
-      const eIdx = latin.indexOf('endstream', sStart);
-      if (eIdx === -1) continue;
-      const streamBytes = bytes.subarray(sStart, eIdx);
-      if (typeof DecompressionStream !== 'undefined') {
-        try {
-          const ds = new DecompressionStream('deflate-raw');
-          const writer = ds.writable.getWriter();
-          writer.write(streamBytes.subarray(2));
-          writer.close();
-          const res = await new Response(ds.readable).arrayBuffer();
-          streamText += new TextDecoder('latin1').decode(res) + '\n';
-        } catch {
-          // ข้ามถ้าถอด zlib stream ไม่สำเร็จ
-        }
-      }
-    }
-
-    const fullText = latin + '\n' + streamText;
-
     // 1. ตรวจสอบ /Count ใน /Pages
-    const countMatch = fullText.match(/\/Type\s*\/Pages[^>]*\/Count\s+(\d+)/);
+    const countMatch = latin.match(/\/Type\s*\/Pages[^>]*\/Count\s+(\d+)/) || latin.match(/\/Count\s+(\d+)/);
     if (countMatch && countMatch[1]) {
       const p = parseInt(countMatch[1], 10);
       if (p > 1) {
@@ -267,14 +236,14 @@ export async function scanWorkFiles(files: File[]): Promise<WorkScanResult> {
     }
 
     // 2. ตรวจสอบ /Type /Page
-    const pageOccurrences = (fullText.match(/\/Type\s*\/Page\b/g) || []).length;
+    const pageOccurrences = (latin.match(/\/Type\s*\/Page\b/g) || []).length;
     if (pageOccurrences > 1) {
       const est = Math.max(1, Math.min(10, Math.round(pageOccurrences / 3)));
       return { count: est, isMultiPage: true, fileNames };
     }
 
     // 3. ตรวจสอบ MediaBox ในกรณีที่เป็นหน้ายาวต่อเนื่อง (Figma / Canva export)
-    const mbMatch = fullText.match(/\/MediaBox\s*\[\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\]/);
+    const mbMatch = latin.match(/\/MediaBox\s*\[\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\]/);
     if (mbMatch) {
       const w = Math.abs(parseFloat(mbMatch[3]) - parseFloat(mbMatch[1]));
       const h = Math.abs(parseFloat(mbMatch[4]) - parseFloat(mbMatch[2]));
