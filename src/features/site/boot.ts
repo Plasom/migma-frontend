@@ -58,6 +58,25 @@ export function bootSite(page: SitePage, pub?: PublicSite): void {
   const data = dataForLang(d0, lang);
   if (lang === 'en') siteTranslator().start();
 
+  try {
+    const params = new URLSearchParams(location.search);
+    const to = params.get('to');
+    if (to) {
+      const raw = localStorage.getItem('pf-acct-demo');
+      if (raw) {
+        const a = JSON.parse(raw);
+        if (a && Array.isArray(a.links)) {
+          const item = a.links.find((l: { slug: string }) => l.slug === to);
+          if (item) {
+            item.opens = (item.opens || 0) + 1;
+            item.last = new Date().toISOString();
+            localStorage.setItem('pf-acct-demo', JSON.stringify(a));
+          }
+        }
+      }
+    }
+  } catch {}
+
   const PF = renderTemplate({ data, lang, embedded: !!handoff });
   themeToggle();
   textareaAutosize();
