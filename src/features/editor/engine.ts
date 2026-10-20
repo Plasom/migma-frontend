@@ -50,8 +50,8 @@ if(RESET){var rb='#4C45D2';try{rb=(JSON.parse(getS('pf-draft')||getS('pf-saved')
 portfolioStore.hydrate(function(){S=load(['pf-saved','pf-published']);D=load(['pf-draft','pf-saved','pf-published']);tabs();render();frameTo(curPage)},RESET);
 var S=load(['pf-saved','pf-published']),D=load(['pf-draft','pf-saved','pf-published']);
 portfolioStore.onConflict(function(){S=load(['pf-saved','pf-published']);D=load(['pf-draft','pf-saved','pf-published']);tabs();render();frameTo(curPage);toast('พอร์ตถูกแก้จากที่อื่น โหลดฉบับล่าสุดมาให้แล้ว')});
-/* slug จริงมาจากหลังบ้านเสมอ: ถ้าไม่ซิงก์ ลิงก์ที่โชว์ตอนเผยแพร่จะเป็นชื่อที่เดาเอง แล้วเปิดไม่เจอ (/u/<slug> 404) */
-fetchMe().then(function(m){if(!m)return;var a=acctData()||{};a.slug=m.slug;a.siteUrl=location.origin+publicBase(m.slug);LS.set('pf-acct-demo',JSON.stringify(a));credSync()}).catch(function(){});
+/* slug และ plan จริงมาจากหลังบ้านเสมอ: ซิงก์เพื่อให้ลิงก์และสิทธิ์การใช้งานตรงกับหลังบ้าน */
+fetchMe().then(function(m){if(!m)return;var a=acctData()||{};a.slug=m.slug;a.siteUrl=location.origin+publicBase(m.slug);if(m.plan)a.plan=m.plan;if(m.planExpiresAt)a.passEnd=m.planExpiresAt;LS.set('pf-acct-demo',JSON.stringify(a));credSync()}).catch(function(){});
 if(LS.get('pf-edlang')==='en'&&D&&D.site&&D.site.i18n)LG='en';
 var $=function(id){return document.getElementById(id)};
 var esc=function(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};

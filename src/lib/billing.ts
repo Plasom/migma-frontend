@@ -130,6 +130,8 @@ export interface AdminUser {
   email: string;
   name: string;
   credits: number;
+  plan?: 'free' | 'pass' | 'pro';
+  planExpiresAt?: string;
 }
 
 export type PackageInput = Pick<CreditPackage, 'name' | 'credits' | 'priceSatang' | 'active' | 'sort'>;
@@ -144,4 +146,5 @@ export const admin = {
   orders: () => api<{ orders: AdminOrder[] }>('/api/v1/admin/orders'),
   users: (q: string) => api<{ users: AdminUser[] }>(`/api/v1/admin/users?q=${encodeURIComponent(q)}`),
   adjustCredits: (id: string, delta: number, note: string) => post<{ balance: number }>(`/api/v1/admin/users/${id}/credits`, { delta, note }),
+  updatePlan: (id: string, plan: string, days?: number) => post<AdminUser>(`/api/v1/admin/users/${id}/plan`, { plan, days }),
 };

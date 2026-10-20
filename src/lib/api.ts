@@ -21,6 +21,8 @@ export interface Me {
   credits: number;
   /** อีเมลอยู่ใน ADMIN_EMAILS ของหลังบ้าน (เปิด /admin ได้) */
   isAdmin: boolean;
+  plan?: 'free' | 'pass' | 'pro';
+  planExpiresAt?: string;
 }
 
 /** พาไปเข้าสู่ระบบ แล้วกลับมาที่หน้าเดิม · อยู่ใน iframe = พาทั้งหน้า (Google ไม่ยอมเปิดในกรอบ) */
@@ -69,6 +71,14 @@ export async function fetchMe(): Promise<Me | null> {
     if (e instanceof ApiError && e.status === 401) return null;
     throw e;
   }
+}
+
+export async function updateSlug(slug: string): Promise<Me> {
+  return api<Me>('/api/v1/me/slug', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug }),
+  });
 }
 
 export async function signOut(): Promise<void> {

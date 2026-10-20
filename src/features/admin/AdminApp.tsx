@@ -268,10 +268,25 @@ function Orders({ fail }: Pick<Tools, 'fail'>) {
   );
 }
 
+const PLAN_LABELS: Record<string, string> = {
+  free: 'Free',
+  pass: 'Job Hunt Pass',
+  pro: 'Pro yearly',
+};
+
+const PLAN_OPTIONS = [
+  { value: 'free:0', label: 'Free (ฟรี)' },
+  { value: 'pass:90', label: 'Job Hunt Pass (3 เดือน)' },
+  { value: 'pass:30', label: 'Job Hunt Pass (1 เดือน)' },
+  { value: 'pro:365', label: 'Pro yearly (1 ปี)' },
+  { value: 'pro:0', label: 'Pro (ไม่หมดอายุ)' },
+];
+
 function Users({ say, fail }: Tools) {
   const [q, setQ] = useState('');
   const [rows, setRows] = useState<AdminUser[] | null>(null);
   const [adj, setAdj] = useState<Record<string, { delta: string; note: string }>>({});
+  const [planSel, setPlanSel] = useState<Record<string, string>>({});
 
   const search = useCallback((text: string) => { admin.users(text).then((r) => setRows(r.users), fail); }, [fail]);
   useEffect(() => { search(''); }, [search]);
@@ -289,13 +304,27 @@ function Users({ say, fail }: Tools) {
     }, fail);
   };
 
+  const applyPlan = (u: AdminUser) => {
+    const sel = planSel[u.id];
+    if (!sel) return;
+    const [targetPlan, daysStr] = sel.split(':');
+    const days = daysStr ? parseInt(daysStr, 10) : 0;
+    const planName = PLAN_LABELS[targetPlan] || targetPlan;
+    if (!confirm(`เปลี่ยนแพ็กเกจของ ${u.email} เป็น ${planName}?`)) return;
+    admin.updatePlan(u.id, targetPlan, days).then((updated) => {
+      say(`เปลี่ยนแพ็กเกจของ ${u.email} เป็น ${PLAN_LABELS[updated.plan || 'free']} แล้ว`);
+      setPlanSel({ ...planSel, [u.id]: '' });
+      search(q);
+    }, fail);
+  };
+
   const upd = (id: string, k: 'delta' | 'note') => (e: React.ChangeEvent<HTMLInputElement>) =>
     setAdj({ ...adj, [id]: { ...(adj[id] ?? { delta: '', note: '' }), [k]: e.target.value } });
 
   return (
     <section>
-      <h2>ผู้ใช้และเครดิต</h2>
-      <p className="ad-d">ค้นจากอีเมลหรือชื่อ ใช้ปรับเครดิตด้วยมือ เช่น คืนเงิน ชดเชย หรือแจกโปรโมชัน (ลงประวัติของลูกค้าพร้อมอีเมลคุณ)</p>
+      <h2>ผู้ใช้ เครดิต และแพ็กเกจ</h2>
+      <p className="ad-d">ค้นจากอีเมลหรือชื่อ ใช้ปรับเครดิตและเปลี่ยนแพ็กเกจ (Free / Job Hunt Pass / Pro) ให้ผู้ใช้โดยตรง</p>
       <form className="ad-f" onSubmit={(e) => { e.preventDefault(); search(q.trim()); }}>
         <label>ค้นหา<input className="ad-in" value={q} onChange={(e) => setQ(e.target.value)} placeholder="อีเมลหรือชื่อ" maxLength={100} /></label>
         <div className="acts"><button type="submit" className="ad-btn pri">ค้นหา</button></div>
@@ -303,17 +332,64 @@ function Users({ say, fail }: Tools) {
       {rows && (rows.length === 0 ? <p className="ad-empty">ไม่พบผู้ใช้</p> : (
         <div className="ad-tw">
           <table className="ad-t">
-            <thead><tr><th>ผู้ใช้</th><th className="r">เครดิตคงเหลือ</th><th>ปรับเครดิต (+/−)</th><th>เหตุผล</th><th /></tr></thead>
+            <thead>
+              <tr>
+                <th>ผู้ใช้</th>
+                <th>แพ็กเกจ</th>
+                <th>เปลี่ยนแพ็กเกจ</th>
+                <th className="r">เครดิตคงเหลือ</th>
+                <th>ปรับเครดิต (+/−)</th>
+                <th>เหตุผล</th>
+                <th />
+              </tr>
+            </thead>
             <tbody>
-              {rows.map((u) => (
-                <tr key={u.id}>
-                  <td>{u.email}<small>{u.name}</small></td>
-                  <td className="r">{u.credits.toLocaleString('en-US')}</td>
-                  <td><input className="ad-in num" aria-label={`ปรับเครดิต ${u.email}`} value={adj[u.id]?.delta ?? ''} onChange={upd(u.id, 'delta')} inputMode="numeric" placeholder="+50" /></td>
-                  <td><input className="ad-in" aria-label={`เหตุผล ${u.email}`} value={adj[u.id]?.note ?? ''} onChange={upd(u.id, 'note')} maxLength={150} placeholder="เช่น ชดเชยระบบล่ม" /></td>
-                  <td><button type="button" className="ad-btn sm pri" onClick={() => apply(u)}>ปรับ</button></td>
-                </tr>
-              ))}
+              {rows.map((u) => {
+                const planKey = u.plan || 'free';
+                const planLabel = PLAN_LABELS[planKey] || 'Free';
+                return (
+                  <tr key={u.id}>
+                    <td>{u.email}<small>{u.name}</small></td>
+                    <td>
+                      <span className={`ad-tag ${planKey === 'free' ? '' : 'act'}`}>
+                        {planLabel}
+                      </span>
+                      {u.planExpiresAt && (
+                        <small style={{ display: 'block', color: 'var(--text-2)', marginTop: '2px' }}>
+                          ถึง {new Date(u.planExpiresAt).toLocaleDateString('th-TH')}
+                        </small>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <select
+                          className="ad-in"
+                          style={{ width: 'auto', minWidth: '150px' }}
+                          value={planSel[u.id] ?? ''}
+                          onChange={(e) => setPlanSel({ ...planSel, [u.id]: e.target.value })}
+                        >
+                          <option value="">-- เลือกแพ็กเกจ --</option>
+                          {PLAN_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          className="ad-btn sm pri"
+                          disabled={!planSel[u.id]}
+                          onClick={() => applyPlan(u)}
+                        >
+                          เปลี่ยน
+                        </button>
+                      </div>
+                    </td>
+                    <td className="r">{u.credits.toLocaleString('en-US')}</td>
+                    <td><input className="ad-in num" aria-label={`ปรับเครดิต ${u.email}`} value={adj[u.id]?.delta ?? ''} onChange={upd(u.id, 'delta')} inputMode="numeric" placeholder="+50" /></td>
+                    <td><input className="ad-in" aria-label={`เหตุผล ${u.email}`} value={adj[u.id]?.note ?? ''} onChange={upd(u.id, 'note')} maxLength={150} placeholder="เช่น ชดเชยระบบล่ม" /></td>
+                    <td><button type="button" className="ad-btn sm pri" onClick={() => apply(u)}>ปรับ</button></td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -4,7 +4,7 @@
 //   `pf-acct-demo` ใน localStorage เป็นแค่ cache ให้ editor อ่านยอดเครดิต (ตัวจริงอยู่ที่หลังบ้านเสมอ)
 //   ฝังในหลังบ้าน (?embed=1) = คุยกับหลังบ้านผ่าน postMessage (pf:acct*)
 /* eslint-disable */
-import type { Me } from '@/lib/api';
+import { updateSlug, type Me } from '@/lib/api';
 import { applyCredits, baht, confirmCheckout, fetchCredits, fetchPricing, startCheckout } from '@/lib/billing';
 import { uiLang } from '@/lib/i18n/ui';
 import { publicBase } from '@/lib/routes';
@@ -35,7 +35,7 @@ var A;try{A=JSON.parse(LS.get('pf-acct-demo')||'null')}catch(e){}if(!A||A.v!==1)
 var EMB=/(^| )emb( |$)/.test(document.documentElement.className),up=function(m){if(EMB)try{parent.postMessage(m,'*')}catch(e){}};
 function save(){LS.set('pf-acct-demo',JSON.stringify(A));up({type:'pf:acct',coins:A.coins,signed:A.signed,data:JSON.stringify(A)})}
 /* session ที่หลังบ้านเป็นตัวตัดสิน · บัญชีใหม่ใช้ชื่อจาก Google · คนละบัญชีกับที่จำไว้ = เริ่มแบบจำลองเครดิตใหม่ */
-var U=AUTH.user;if(U){if(A.email!==U.email){A=seed();A.email=U.email;A.name=U.name||''}if(!A.name)A.name=U.name||'';A.slug=U.slug;A.siteUrl=location.origin+publicBase(U.slug);A.signed=true}else A.signed=false;LS.set('pf-acct-demo',JSON.stringify(A));
+var U=AUTH.user;if(U){if(A.email!==U.email){A=seed();A.email=U.email;A.name=U.name||''}if(!A.name)A.name=U.name||'';A.slug=U.slug;A.siteUrl=location.origin+publicBase(U.slug);A.signed=true;if(U.plan)A.plan=U.plan;if(U.planExpiresAt)A.passEnd=U.planExpiresAt}else A.signed=false;LS.set('pf-acct-demo',JSON.stringify(A));
 var siteHost=function(){return String(A.siteUrl||'').replace(/^https?:\/\//,'')};
 var costOf=function(k){return COST.filter(function(x){return x.k===k})[0]};
 var tT=0;function toast(t,act){var el=$('edToast');el.innerHTML='<span>'+esc(t)+'</span>'+(act?'<button type="button" class="act">'+esc(act.label)+'</button>':'');el.classList.add('on');if(act)el.querySelector('.act').onclick=function(){el.classList.remove('on');act.fn()};clearTimeout(tT);tT=setTimeout(function(){el.classList.remove('on')},act?6000:4000)}
@@ -87,8 +87,21 @@ settings:function(){return '<h1 class="ac-h" tabindex="-1">ตั้งค่า
  fld('stE','บัญชี Google ที่ใช้เข้าสู่ระบบ',A.email,{type:'email',dis:1,hint:'ใช้บัญชี Google อื่นได้ <button type="button" class="btn text sm" id="acSwitch">เปลี่ยนบัญชี Google</button>'})+'</section>'+
  '<section class="sec"><div class="sec-h"><h2>การแสดงผล</h2></div><div class="lg-row"><span class="lab" id="thL">โหมดสีของหลังบ้าน</span>'+seg('thm',document.documentElement.getAttribute('data-theme'),[['light','สว่าง','light_mode'],['dark','มืด','dark_mode']],'thL')+'</div><div class="lg-row" style="margin-top:var(--space-3)"><span class="lab" id="fsL">ขนาดตัวหนังสือในหลังบ้าน</span>'+seg('fs',LS.get('pf-fs')==='lg'?'lg':'md',[['md','ปกติ'],['lg','ใหญ่']],'fsL')+'</div><div class="lg-row" style="margin-top:var(--space-3)"><span class="lab" id="uiL">ภาษาของหลังบ้าน</span>'+seg('uil',uiLang(),[['en','English'],['th','ไทย']],'uiL')+'</div></section>'+
  '<section class="sec"><div class="sec-h"><h2>ที่อยู่เว็บ</h2></div>'+
- fld('stS','ที่อยู่ที่ได้มากับบัญชี',siteHost(),{dis:1,hint:'ตั้งจากอีเมลตอนสมัคร ยังเปลี่ยนเองไม่ได้'})+
- ''+'</section>'+
+ ((A.plan==='pass'||A.plan==='pro')?(
+   '<p class="sec-d">คุณใช้งานแพ็กเกจ <b>'+PLAN[A.plan]+'</b> สามารถตั้งชื่อที่อยู่เว็บของตัวเองได้</p>'+
+   '<div class="fld" id="stSlugFld">'+
+     '<span class="lb"><label for="stSlugIn">ชื่อที่อยู่เว็บ (URL Slug)</label><span class="cnt cnt-end" id="stSlugCnt">'+(A.slug||'').length+' / 30</span></span>'+
+     '<div style="display:flex;gap:var(--space-2);align-items:center;margin-top:var(--space-1)">'+
+       '<span style="font:var(--body-md);color:var(--text-2);user-select:none;white-space:nowrap">'+location.origin+'/u/</span>'+
+       '<span class="inw" style="flex:1"><input class="in" id="stSlugIn" type="text" value="'+esc(A.slug||'')+'" maxlength="30" placeholder="เช่น your-name" autocomplete="off"></span>'+
+       '<button type="button" class="btn filled" id="stSlugSave">บันทึกที่อยู่</button>'+
+     '</div>'+
+     '<span class="hint" id="stSlugHint">ใช้ตัวอักษรพิมพ์เล็ก ตัวเลข และขีดกลาง 3–30 ตัวอักษร</span>'+
+   '</div>'
+ ):(
+   fld('stS','ที่อยู่ที่ได้มากับบัญชี',siteHost(),{dis:1,hint:'ตั้งจากอีเมลตอนสมัคร · <a class="btn text sm btn-inline" href="#plan">อัปเกรดเป็น Job Hunt Pass หรือ Pro เพื่อตั้งที่อยู่เว็บเองได้</a>'})
+ ))+
+ '</section>'+
  ''+
 '</section>'+
  '<section class="sec"><div class="sec-h"><h2>เตือนเมื่อเครดิตเหลือน้อย</h2></div><p class="sec-d">ส่งอีเมลหาคุณ 1 ครั้งเมื่อเครดิตลดต่ำกว่าจำนวนที่ตั้ง และมีป้ายเตือนในตัวแก้ Portfolio</p>'+
@@ -183,6 +196,37 @@ document.addEventListener('change',function(e){var t=e.target;if(t.dataset.sw){v
    if(t.dataset.set==='low'){var n=+t.value;if(!/^\d+$/.test(t.value.trim())||n<1||n>9999){bad('ใส่ตัวเลข 1 ถึง 9999');return}A.low=n;save();toast('เตือนเมื่อเหลือน้อยกว่า '+n+' เครดิต')}
    else{var tv=t.value.trim(),m=tv.match(/^(\d{1,2})[:.](\d{2})$/)||tv.match(/^(\d{1,2})(\d{2})$/)||(tv.match(/^(\d{1,2})$/)?[0,tv,'00']:null);if(!m||+m[1]>23||+m[2]>59){bad('ใส่เวลาเป็น ชั่วโมง:นาที เช่น 09:00');return}A.lowAt=('0'+m[1]).slice(-2)+':'+m[2];t.value=A.lowAt;save();toast('ส่งอีเมลเตือนเวลา '+A.lowAt+' น.')}return}
   if(t.dataset.set==='name'){A.name=t.value.trim();save();route();toast('บันทึกชื่อแล้ว');return}
+});
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('#stSlugSave');
+  if(!b)return;
+  var inp=$('stSlugIn');if(!inp)return;
+  var v=inp.value.trim().toLowerCase(),hint=$('stSlugHint');
+  if(v===A.slug){toast('ที่อยู่เว็บนี้เป็นชื่อเดิมของคุณอยู่แล้ว');return}
+  if(v.length<3||v.length>30||!/^[a-z0-9]([a-z0-9-]{0,28}[a-z0-9])?$/.test(v)){
+    if(hint){hint.style.color='var(--danger-tint-foreground, #ef4444)';hint.textContent='ที่อยู่เว็บต้องเป็นตัวพิมพ์เล็ก ตัวเลข หรือขีดกลาง 3–30 ตัว และไม่ขึ้น/ลงท้ายด้วยขีด'}
+    inp.focus();return;
+  }
+  b.disabled=true;b.textContent='กำลังบันทึก…';
+  updateSlug(v).then(function(updated){
+    b.disabled=false;b.textContent='บันทึกที่อยู่';
+    A.slug=updated.slug;
+    A.siteUrl=location.origin+publicBase(updated.slug);
+    save();
+    toast('เปลี่ยนที่อยู่เว็บเป็น /u/'+updated.slug+' แล้ว');
+    if(hint){hint.style.color='';hint.textContent='ตัวอย่างลิงก์เต็ม: '+siteHost()}
+  }).catch(function(err){
+    b.disabled=false;b.textContent='บันทึกที่อยู่';
+    var msg=(err&&err.message)||'ไม่สามารถเปลี่ยนที่อยู่เว็บได้';
+    if(hint){hint.style.color='var(--danger-tint-foreground, #ef4444)';hint.textContent=msg}
+    toast(msg);
+  });
+});
+document.addEventListener('input',function(e){
+  if(e.target&&e.target.id==='stSlugIn'){
+    var cnt=$('stSlugCnt');if(cnt)cnt.textContent=e.target.value.length+' / 30';
+    var hint=$('stSlugHint');if(hint&&hint.style.color){hint.style.color='';hint.textContent='ใช้ตัวอักษรพิมพ์เล็ก ตัวเลข และขีดกลาง 3–30 ตัวอักษร'}
+  }
 });
 if(!EMB&&!ALONE&&A.signed){toApp(location.hash);return}
 route();
