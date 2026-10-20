@@ -21,6 +21,8 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="th" {...fontHtmlProps} suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
         <HeadScript code={SITE_HEAD} />
         <IconFont />
       </head>

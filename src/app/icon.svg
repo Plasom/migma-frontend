@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34">
+  <style>
+    .m-stroke { stroke: #4C45D2; }
+    .m-dot { fill: #E44464; }
+    @media (prefers-color-scheme: dark) {
+      .m-stroke { stroke: #817AF8; }
+      .m-dot { fill: #F0708A; }
+    }
+  </style>
+  <g transform="translate(0, 5)">
+    <path class="m-stroke" d="M3 21V11a5.5 5.5 0 0 1 11 0v10M14 11a5.5 5.5 0 0 1 11 0v10" fill="none" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" />
+    <circle class="m-dot" cx="30.6" cy="19.6" r="2.6" />
+  </g>
+</svg>
