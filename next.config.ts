@@ -3,6 +3,9 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    agentUpgrade: 'security',
+  },
   async redirects() {
     // เส้นทางเดิมของต้นแบบ (ไฟล์ .html) → route ใหม่ ลิงก์เก่าที่แชร์ไปแล้วยังใช้ได้
     return [
