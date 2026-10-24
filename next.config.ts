@@ -6,6 +6,9 @@ const API_ORIGIN = (process.env.API_ORIGIN || 'http://localhost:8080').replace(/
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    agentUpgrade: 'security',
+  },
   async rewrites() {
     return [
       { source: '/api/v1/:path*', destination: `${API_ORIGIN}/api/v1/:path*` },
