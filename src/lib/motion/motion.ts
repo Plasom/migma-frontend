@@ -146,8 +146,11 @@ export function startMotion(): () => void {
     let tick = 0;
     const upd = () => {
       tick = 0;
-      const r = art.getBoundingClientRect(), total = r.height - innerHeight * 0.6;
-      const p = Math.max(0, Math.min(1, (-r.top + 80) / Math.max(1, total)));
+      /* เต็มพอดีเมื่อท้ายบทความชนขอบล่างจอ หรือเลื่อนสุดหน้าแล้ว (เผื่อมีส่วนท้ายเพจต่อจากบทความ) */
+      const r = art.getBoundingClientRect(), total = r.height - innerHeight;
+      const maxY = document.documentElement.scrollHeight - innerHeight;
+      const end = maxY > 1 && scrollY >= maxY - 1;
+      const p = end ? 1 : Math.max(0, Math.min(1, total > 0 ? -r.top / total : 0));
       fill.style.transform = `scaleX(${p.toFixed(4)})`;
     };
     listen(window, 'scroll', () => { if (!tick) tick = requestAnimationFrame(upd); }, { passive: true });
